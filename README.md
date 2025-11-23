@@ -1,6 +1,28 @@
 # Luna AI v10 - AI Streamer with VTube Studio Integration
 
+<div align="center">
+  <!-- Logo -->
+  <img src="./public/images/logo/logo.png" alt="Luna AI Logo" width="200" style="border-radius: 50%;"/>
+  
+  ![Version](https://img.shields.io/badge/version-1.0.0-blue)
+  ![License](https://img.shields.io/badge/license-MIT-green)
+  ![Node](https://img.shields.io/badge/node-18%2B-brightgreen)
+  ![Status](https://img.shields.io/badge/status-active-success)
+</div>
+
 Luna เป็น AI streamer ที่สามารถแชตกับผู้ชม แสดงอารมณ์ และควบคุม VTube Studio character ได้อัตโนมัติ
+
+## 📑 Table of Contents
+
+- [Features](#-features)
+- [Rock Paper Scissors Game](#-rock-paper-scissors-game)
+- [Requirements](#-requirements)
+- [Quick Start](#-quick-start)
+- [API Endpoints](#-api-endpoints)
+- [Configuration](#-configuration)
+- [Troubleshooting](#-troubleshooting)
+- [Project Structure](#-project-structure)
+- [License](#-license)
 
 ## ✨ Features
 
@@ -35,6 +57,36 @@ Luna เป็น AI streamer ที่สามารถแชตกับผ�
 - 🔧 **Admin Endpoints** - จัดการระบบ, ดู logs, reset statistics
 - 📈 **Enhanced Health Check** - ตรวจสอบระบบแบบละเอียด
 - 🐛 **Error Tracking** - บันทึกและติดตาม errors
+- 🎮 **Rock Paper Scissors Game** - เกมเป่ายิงฉุบ 3 โหมด (PvP, VS Luna, Betting)
+
+## 🎮 Rock Paper Scissors Game
+
+Luna มีเกม Rock Paper Scissors 3 โหมด:
+
+### 🎯 PvP Mode
+- เล่นกับผู้เล่นอื่น
+- ต้องการ **100K+ Luna tokens**
+- Auto-matchmaking (รอ 15 วินาทีเพื่อเจอ bot ถ้าไม่มีคน)
+- URL: `/rps_game.html`
+
+### 🤖 VS Luna Mode
+- เล่นกับ Luna (AI)
+- ต้องการ **1M+ Luna tokens**
+- เล่นได้ทันทีไม่ต้องรอ
+- URL: `/rps_vs_luna.html`
+
+### 💰 Betting Mode
+- สร้างห้องเดิมพันด้วย Luna tokens
+- ผู้เล่นสามารถสร้างและเข้าร่วมห้องได้
+- ชนะได้ Luna tokens
+- URL: `/rps_betting.html`
+
+**Features:**
+- ✅ Real-time balance checking
+- ✅ WebSocket for live updates
+- ✅ Phantom Wallet integration
+- ✅ Auto-matchmaking with bot fallback
+- ✅ Room-based betting system
 
 ## 📋 Requirements
 
@@ -267,8 +319,12 @@ LunaAI_v10_Project/
 │   ├── memory.js        # User memory
 │   ├── personality.js   # Personality system
 │   ├── db.js            # Database
-│   └── ...
+│   ├── solana.js        # Solana integration
+│   └── pumpfun.js       # Pump.fun integration
 ├── public/              # Static files
+│   ├── rps_game.html    # PvP Mode
+│   ├── rps_vs_luna.html # VS Luna Mode
+│   ├── rps_betting.html # Betting Mode
 │   ├── chat_tester.html
 │   ├── overlay.html
 │   └── tts/            # TTS audio files
