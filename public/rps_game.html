@@ -681,9 +681,8 @@
   <script>
     const API_BASE = window.location.origin;
     const RPS_MIN_BALANCE = 100000; // 100K Luna tokens (for PvP mode)
-    // ต้องตั้งค่า Luna token mint address ใน environment variable หรือตรงนี้
-    // ตัวอย่าง: const LUNA_TOKEN_MINT = "YOUR_LUNA_TOKEN_MINT_ADDRESS";
-    const LUNA_TOKEN_MINT = "CbB4ivri6wLfqx4NwrWY3ArD7mXv1e91HeYeq3KBpump";
+    // Mint address จะถูกอ่านจาก backend (.env) อัตโนมัติ
+    // ไม่ต้อง hardcode ที่นี่แล้ว
     
     let playerBalance = 0;
     let gameActive = false;
@@ -1502,16 +1501,11 @@
       let balanceUpdateInterval = null;
       
       // Check real balance from blockchain
-      if (LUNA_TOKEN_MINT === "YOUR_LUNA_TOKEN_MINT_ADDRESS") {
-        balanceCheck.className = 'balance-check error';
-        balanceCheck.textContent = '❌ Error: LUNA_TOKEN_MINT is not configured. Please set the token mint address.';
-        disableGame();
-        return;
-      }
-
+      // Mint address จะถูกอ่านจาก backend (.env) อัตโนมัติ
       try {
         // Use backend API to check balance (bypasses RPC rate limiting)
-        const response = await fetch(`${API_BASE}/luna/rps/balance?wallet=${walletPublicKey}&mint=${LUNA_TOKEN_MINT}`);
+        // Backend จะอ่าน mint address จาก .env อัตโนมัติ
+        const response = await fetch(`${API_BASE}/luna/rps/balance?wallet=${walletPublicKey}`);
         const data = await response.json();
         
         if (!data.ok) {
@@ -1546,7 +1540,7 @@
       } catch (error) {
         console.error('Balance check error:', error);
         balanceCheck.className = 'balance-check error';
-        balanceCheck.textContent = `❌ Error checking balance: ${error.message}. Please make sure LUNA_TOKEN_MINT is set correctly.`;
+        balanceCheck.textContent = `❌ Error checking balance: ${error.message}`;
         disableGame();
       }
     }

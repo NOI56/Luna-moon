@@ -2726,7 +2726,8 @@ const BALANCE_CACHE_TTL = 30000; // 30 seconds cache
 app.get("/luna/rps/balance", async (req, res) => {
   try {
     const wallet = req.query.wallet;
-    const mint = req.query.mint || "CbB4ivri6wLfqx4NwrWY3ArD7mXv1e91HeYeq3KBpump";
+    // ใช้ LUNA_TOKEN_MINT จาก .env หรือ query parameter หรือ default
+    const mint = req.query.mint || process.env.LUNA_TOKEN_MINT || "CbB4ivri6wLfqx4NwrWY3ArD7mXv1e91HeYeq3KBpump";
     
     // If wallet is provided, check balance from blockchain
     if (wallet) {
@@ -2799,8 +2800,22 @@ app.get("/luna/rps/balance", async (req, res) => {
         throw new Error('Failed to connect to Solana RPC: ' + (lastError?.message || 'Unknown error'));
       }
       
-      const mintPublicKey = new PublicKey(mint);
-      const walletPubKey = new PublicKey(wallet);
+      // Validate mint address format
+      if (!mint || mint === "your_token_mint_address_from_pumpfun_here" || mint.length < 32) {
+        throw new Error(`Invalid mint address: ${mint}. Please set LUNA_TOKEN_MINT in .env with a valid Solana token mint address.`);
+      }
+      
+      let mintPublicKey;
+      let walletPubKey;
+      try {
+        mintPublicKey = new PublicKey(mint);
+        walletPubKey = new PublicKey(wallet);
+      } catch (error) {
+        if (error.message.includes("Non-base58")) {
+          throw new Error(`Invalid mint address format: ${mint}. Please check LUNA_TOKEN_MINT in .env. It should be a valid Solana address (base58 format).`);
+        }
+        throw error;
+      }
       
       try {
         // Get token accounts
