@@ -1,0 +1,70 @@
+{
+    "Type": "Live2D Expression",
+    "Parameters": [
+        {
+            "Id": "ParamAngleZ",
+            "Value": -8.855545043945313,
+            "Blend": "Add"
+        },
+        {
+            "Id": "ParamBodyAngleZ",
+            "Value": -3.0589680671691896,
+            "Blend": "Add"
+        },
+        {
+            "Id": "ParamBodyAngleX",
+            "Value": 7.029167175292969,
+            "Blend": "Add"
+        },
+        {
+            "Id": "ParamBodyAngleY",
+            "Value": 10.0,
+            "Blend": "Add"
+        },
+        {
+            "Id": "ParamMouthForm",
+            "Value": -0.9957965612411499,
+            "Blend": "Add"
+        },
+        {
+            "Id": "ParamEyeNormalVisible",
+            "Value": -1.0,
+            "Blend": "Add"
+        },
+        {
+            "Id": "ParamEyeShockVisible",
+            "Value": 1.0,
+            "Blend": "Add"
+        },
+        {
+            "Id": "ParamAngrySign",
+            "Value": 0.3579661250114441,
+            "Blend": "Add"
+        },
+        {
+            "Id": "ParamTearsMovement",
+            "Value": 0.0,
+            "Blend": "Add"
+        },
+        {
+            "Id": "ParamEyeXDVisible",
+            "Value": 0.9339656829833984,
+            "Blend": "Add"
+        },
+        {
+            "Id": "ParamCheek",
+            "Value": -1.0,
+            "Blend": "Add"
+        },
+        {
+            "Id": "ParamTears",
+            "Value": 1.0,
+            "Blend": "Add"
+        },
+        {
+            "Id": "ParamEyeShine",
+            "Value": 0.0,
+            "Blend": "Add"
+        }
+    ]
+}

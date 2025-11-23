@@ -1,0 +1,25 @@
+{
+    "Type": "Live2D Expression",
+    "Parameters": [
+        {
+            "Id": "ParamAngleY",
+            "Value": -10.934228897094727,
+            "Blend": "Add"
+        },
+        {
+            "Id": "ParamBodyAngleX",
+            "Value": 10.0,
+            "Blend": "Add"
+        },
+        {
+            "Id": "ParamEyeNormalVisible",
+            "Value": -1.0,
+            "Blend": "Add"
+        },
+        {
+            "Id": "ParamEyeShockVisible",
+            "Value": 1.0,
+            "Blend": "Add"
+        }
+    ]
+}

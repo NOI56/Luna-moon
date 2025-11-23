@@ -1,0 +1,14 @@
+[Unit]
+Description=Luna AI Streamer v10
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/luna-v10
+ExecStart=/usr/bin/node index.js
+Restart=always
+RestartSec=5
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target

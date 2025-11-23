@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Luna Mood – Cyberpunk HUD v2</title>
+<style>
+  :root {
+    --bg-glass: rgba(4, 6, 20, 0.8);
+    --border-neon: linear-gradient(135deg, #00f5ff, #ff00ff, #ffcc00);
+    --text-main: #e6f7ff;
+    --text-sub: #8ef0ff;
+    --shadow-neon: 0 0 18px rgba(0, 255, 255, 0.8),
+                   0 0 28px rgba(255, 0, 255, 0.5);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    overflow: hidden;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  .hud-root {
+    position: fixed;
+    left: 24px;
+    bottom: 24px;
+    width: 360px;
+    height: 160px;
+    background:
+      radial-gradient(circle at top left, rgba(0,255,255,0.16), transparent 60%),
+      radial-gradient(circle at bottom right, rgba(255,0,255,0.22), transparent 65%),
+      var(--bg-glass);
+    border-radius: 18px;
+    border: 1px solid rgba(0, 255, 255, 0.4);
+    box-shadow: 0 0 24px rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    overflow: hidden;
+  }
+
+  .hud-border {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    pointer-events: none;
+  }
+
+  .hud-border::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-image: var(--border-neon);
+    opacity: 0.9;
+    mix-blend-mode: screen;
+    filter: blur(1px);
+    animation: borderFlow 8s linear infinite;
+  }
+
+  @keyframes borderFlow {
+    0% { opacity: 0.4; filter: blur(1px); }
+    50% { opacity: 0.9; filter: blur(2px); }
+    100% { opacity: 0.4; filter: blur(1px); }
+  }
+
+  .hud-inner {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    padding: 8px 10px 10px 10px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto 1fr;
+    column-gap: 10px;
+    row-gap: 4px;
+  }
+
+  /* mini Luna icon */
+  .avatar-wrap {
+    grid-row: 1 / span 2;
+    grid-column: 1 / 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .avatar-orbit {
+    position: relative;
+    width: 52px;
+    height: 52px;
+    border-radius: 999px;
+    background: radial-gradient(circle at 30% 30%, #ffffff, #9999ff 40%, transparent 70%);
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+    overflow: hidden;
+  }
+
+  .avatar-orbit::before {
+    /* วงแหวนหมุน */
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    border: 2px solid rgba(255, 255, 255, 0.45);
+    border-top-color: transparent;
+    border-left-color: transparent;
+    mix-blend-mode: screen;
+    animation: orbitSpin 4s linear infinite;
+  }
+
+  @keyframes orbitSpin {
+    0%   { transform: rotate(0deg);   }
+    100% { transform: rotate(360deg); }
+  }
+
+  .avatar-core {
+    position: absolute;
+    inset: 8px;
+    border-radius: inherit;
+    background: radial-gradient(circle at 30% 20%, #fff, #ffe6ff 30%, transparent 60%);
+    box-shadow: 0 0 16px rgba(255, 255, 255, 0.8);
+  }
+
+  .avatar-eye {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 26px;
+    height: 12px;
+    margin-left: -13px;
+    margin-top: -6px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.8);
+    overflow: hidden;
+  }
+
+  .avatar-eye-inner {
+    position: absolute;
+    inset: 2px;
+    border-radius: inherit;
+    background: radial-gradient(circle at 20% 50%, #fff, #00f5ff 40%, #ff00ff 80%);
+    opacity: 0.0;
+    transition: opacity 0.2s ease-out;
+  }
+
+  /* header */
+  .hud-header {
+    grid-column: 2 / 3;
+    grid-row: 1 / 2;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .hud-title {
+    font-size: 13px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-main);
+    text-shadow: var(--shadow-neon);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hud-title::after {
+    content: "";
+    position: absolute;
+    left: -40%;
+    top: 50%;
+    width: 40%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #00f5ff, transparent);
+    opacity: 0.7;
+    animation: scan 2.4s linear infinite;
+  }
+
+  @keyframes scan {
+    0%   { left: -40%; }
+    100% { left: 110%; }
+  }
+
+  .hud-tag {
+    font-size: 10px;
+    color: var(--text-sub);
+    opacity: 0.9;
+    text-transform: uppercase;
+  }
+
+  .mood-value {
+    grid-column: 2 / 3;
+    grid-row: 2 / 3;
+    font-size: 16px;
+    color: var(--text-main);
+    text-shadow: var(--shadow-neon);
+  }
+
+  .mood-value span {
+    font-weight: 600;
+  }
+
+  /* mood bar */
+  .mood-bar-shell {
+    position: relative;
+    grid-column: 1 / 3;
+    grid-row: 3 / 4;
+    height: 22px;
+    border-radius: 999px;
+    background: rgba(6, 10, 30, 0.95);
+    overflow: hidden;
+    border: 1px solid rgba(0, 180, 255, 0.45);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6);
+  }
+
+  .mood-bar-track {
+    position: absolute;
+    inset: 0;
+    background:
+      repeating-linear-gradient(
+        135deg,
+        rgba(0, 255, 255, 0.15) 0,
+        rgba(0, 255, 255, 0.15) 4px,
+        transparent 4px,
+        transparent 8px
+      );
+    opacity: 0.4;
+    mix-blend-mode: screen;
+    animation: trackMove 9s linear infinite;
+  }
+
+  @keyframes trackMove {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-32px); }
+  }
+
+  .mood-bar-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 50%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #00f5ff, #ff00ff);
+    box-shadow: var(--shadow-neon);
+    transform-origin: left center;
+    transition:
+      width 0.18s ease-out,
+      background 0.18s ease-out,
+      box-shadow 0.18s ease-out;
+  }
+
+  .mood-bar-zero {
+    position: absolute;
+    top: 2px;
+    bottom: 2px;
+    left: 50%;
+    width: 2px;
+    border-radius: 999px;
+    background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.5), transparent);
+    opacity: 0.7;
+  }
+
+  .mood-scale {
+    position: absolute;
+    bottom: 2px;
+    left: 9px;
+    right: 9px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 9px;
+    color: rgba(200, 240, 255, 0.7);
+    text-transform: uppercase;
+    pointer-events: none;
+  }
+
+  .mood-state {
+    position: absolute;
+    top: 2px;
+    left: 9px;
+    right: 9px;
+    font-size: 10px;
+    color: rgba(200, 240, 255, 0.9);
+    text-shadow: 0 0 6px rgba(0, 255, 255, 0.4);
+    display: flex;
+    justify-content: space-between;
+    gap: 6px;
+  }
+
+  #moodDelta {
+    min-width: 60px;
+    text-align: right;
+    letter-spacing: 0.03em;
+  }
+
+  #moodState {
+    color: #000000 !important;
+    text-shadow: none !important;
+  }
+
+  .mood-state span {
+    opacity: 0.9;
+  }
+
+  /* graph */
+  .graph-wrap {
+    position: absolute;
+    inset: auto 8px 8px 8px;
+    height: 40px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(0, 220, 255, 0.35);
+    background: radial-gradient(circle at top, rgba(0,0,0,0.6), transparent 70%);
+  }
+
+  #moodGraph {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  /* alerts */
+  .alerts {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    pointer-events: none;
+  }
+
+  .alert-chip {
+    font-size: 10px;
+    text-transform: uppercase;
+    padding: 3px 7px;
+    border-radius: 999px;
+    background: rgba(10, 18, 40, 0.92);
+    border: 1px solid rgba(0, 255, 255, 0.7);
+    color: #e6ffff;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.7);
+    animation: alertIn 0.18s ease-out, alertOut 0.6s ease-in forwards;
+    animation-delay: 0s, 2.4s;
+    white-space: nowrap;
+  }
+
+  @keyframes alertIn {
+    0%   { transform: translateY(-8px); opacity: 0; }
+    100% { transform: translateY(0);   opacity: 1; }
+  }
+
+  @keyframes alertOut {
+    0%   { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-6px); }
+  }
+
+  /* particles */
+  .particle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    pointer-events: none;
+    mix-blend-mode: screen;
+    opacity: 0.9;
+    animation: particleFly 700ms ease-out forwards;
+  }
+
+  @keyframes particleFly {
+    0%   { transform: translate(0,0) scale(1); opacity: 1; }
+    100% { transform: translate(var(--dx), var(--dy)) scale(0.2); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hud-root">
+  <div class="hud-border"></div>
+  <div class="hud-inner">
+    <!-- mini Luna icon -->
+    <div class="avatar-wrap">
+      <div class="avatar-orbit" id="avatarOrbit">
+        <div class="avatar-core"></div>
+        <div class="avatar-eye">
+          <div class="avatar-eye-inner" id="avatarEye"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- header -->
+    <div class="hud-header">
+      <div class="hud-title">LUNA MOOD</div>
+    </div>
+
+    <!-- numeric mood -->
+    <div class="mood-value">
+      mood: <span id="moodValue">0.0</span>
+    </div>
+
+    <!-- mood bar -->
+    <div class="mood-bar-shell">
+      <div class="mood-bar-track"></div>
+      <div class="mood-bar-fill" id="moodFill"></div>
+      <div class="mood-bar-zero"></div>
+      <div class="mood-state">
+        <span id="moodState">status: idle</span>
+      </div>
+      <div class="mood-scale">
+        <span>-10</span>
+        <span>0</span>
+        <span>+10</span>
+      </div>
+    </div>
+
+    <!-- graph -->
+    <div class="graph-wrap">
+      <canvas id="moodGraph"></canvas>
+    </div>
+
+    <!-- alerts + particles container -->
+    <div class="alerts" id="alerts"></div>
+  </div>
+</div>
+
+<script>
+  // WebSocket to Luna server
+  const ws = new WebSocket("ws://localhost:8787");
+
+  ws.onopen = () => {
+    console.log("[mood HUD] connected to Luna");
+  };
+
+  ws.onmessage = (msg) => {
+    try {
+      const data = JSON.parse(msg.data);
+      if (data.type === "mood_update" && data.mood && typeof data.mood.value === "number") {
+        handleMoodUpdate(data.mood.value);
+      }
+      if (data.type === "audio_react" && typeof data.level === "number") {
+        audioTarget = Math.max(0, Math.min(1, data.level));
+      }
+      // ถ้าอนาคตมี event อื่น broadcast มา ก็จับเพิ่มได้ที่นี่
+    } catch (e) {
+      console.warn("[mood HUD] parse error:", e);
+    }
+  };
+
+  ws.onerror = (e) => {
+    console.warn("[mood HUD] ws error:", e);
+  };
+
+  // --- audio sfx (ไม่มีไฟล์ ใช้ WebAudio สร้างเสียงสั้น ๆ) ---
+  let audioCtx = null;
+  function playChime(delta) {
+    if (!audioCtx) {
+      try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      } catch {
+        return; // browser ไม่รองรับก็เงียบไป
+      }
+    }
+    const ctx = audioCtx;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    const abs = Math.abs(delta);
+    let baseFreq = delta > 0 ? 880 : 440;
+    if (abs >= 2) baseFreq *= 1.4;
+    else if (abs <= 0.5) baseFreq *= 0.7;
+
+    osc.frequency.value = baseFreq;
+    gain.gain.value = 0.18;
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    const now = ctx.currentTime;
+    osc.start(now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+    osc.stop(now + 0.26);
+  }
+
+  // --- state & helpers ---
+  let lastMood = 0;
+  let moodHistory = []; // { t, v }
+  let audioLevel = 0;       // smoothed value 0..1
+  let audioTarget = 0;      // last target from server
+
+  const moodValueEl = document.getElementById("moodValue");
+  const moodFillEl = document.getElementById("moodFill");
+  const moodStateEl = document.getElementById("moodState");
+  const avatarOrbitEl = document.getElementById("avatarOrbit");
+  const avatarEyeEl = document.getElementById("avatarEye");
+  const alertsEl = document.getElementById("alerts");
+
+  const graphCanvas = document.getElementById("moodGraph");
+  const gctx = graphCanvas.getContext("2d");
+
+  function clamp(v, min, max) {
+    return Math.min(max, Math.max(min, v));
+  }
+
+  function resizeGraph() {
+    const rect = graphCanvas.getBoundingClientRect();
+    graphCanvas.width = rect.width * window.devicePixelRatio;
+    graphCanvas.height = rect.height * window.devicePixelRatio;
+    gctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+    drawGraph();
+  }
+
+  window.addEventListener("resize", resizeGraph);
+
+  function handleMoodUpdate(val) {
+    const v = clamp(val, -10, 10);
+    const delta = v - lastMood;
+    lastMood = v;
+
+    const now = Date.now();
+    moodHistory.push({ t: now, v });
+    // เก็บประมาณ 60 วิ ล่าสุด
+    const cutoff = now - 60000;
+    moodHistory = moodHistory.filter((p) => p.t >= cutoff);
+
+    updateHUD(v, delta);
+    drawGraph();
+    if (Math.abs(delta) >= 0.3) {
+      playChime(delta);
+      spawnAlert(delta);
+      if (Math.abs(delta) >= 2) {
+        spawnParticles();
+      }
+    }
+  }
+
+  function updateHUD(v, delta) {
+    moodValueEl.textContent = v.toFixed(1);
+
+    const t = (v + 10) / 20;
+    const pct = clamp(t, 0, 1);
+    const minWidth = 0.05;
+    const width = minWidth + pct * (1 - minWidth);
+    moodFillEl.style.width = (width * 100) + "%";
+
+    let gradient;
+    let stateText;
+    let avatarGlow;
+    let eyeIntensity;
+
+    if (v >= 4) {
+      gradient = "linear-gradient(90deg, #ff00ff, #ffcc00)";
+      stateText = "status: OVERDRIVE / HYPE";
+      avatarGlow = "0 0 25px rgba(255, 0, 255, 0.95)";
+      eyeIntensity = 1.0;
+    } else if (v >= 2) {
+      gradient = "linear-gradient(90deg, #00f5ff, #ff66ff)";
+      stateText = "status: upbeat / playful";
+      avatarGlow = "0 0 22px rgba(0, 245, 255, 0.9)";
+      eyeIntensity = 0.9;
+    } else if (v > -1) {
+      gradient = "linear-gradient(90deg, #00f0ff, #7bffea)";
+      stateText = "status: stable / neutral";
+      avatarGlow = "0 0 16px rgba(0, 230, 255, 0.75)";
+      eyeIntensity = 0.6;
+    } else if (v <= -4) {
+      gradient = "linear-gradient(90deg, #ff0044, #7b00ff)";
+      stateText = "status: low energy / hurt";
+      avatarGlow = "0 0 22px rgba(255, 0, 80, 0.9)";
+      eyeIntensity = 0.8;
+    } else {
+      gradient = "linear-gradient(90deg, #ff8844, #ff3377)";
+      stateText = "status: stressed / moody";
+      avatarGlow = "0 0 20px rgba(255, 136, 68, 0.9)";
+      eyeIntensity = 0.7;
+    }
+
+    moodFillEl.style.background = gradient;
+    moodStateEl.textContent = stateText;
+
+    avatarOrbitEl.style.boxShadow = avatarGlow;
+    avatarEyeEl.style.opacity = eyeIntensity;
+  }
+
+  function drawGraph() {
+    const w = graphCanvas.width / window.devicePixelRatio;
+    const h = graphCanvas.height / window.devicePixelRatio;
+    gctx.clearRect(0, 0, w, h);
+
+    if (moodHistory.length < 2) return;
+
+    const now = Date.now();
+    const span = 60000; // 60 วิ
+    const minV = -10;
+    const maxV = 10;
+
+    gctx.lineWidth = 1.4;
+    gctx.strokeStyle = "rgba(0, 255, 255, 0.85)";
+    gctx.beginPath();
+
+    moodHistory.forEach((p, idx) => {
+      const tNorm = clamp((p.t - (now - span)) / span, 0, 1);
+      const x = tNorm * w;
+      const vNorm = (p.v - minV) / (maxV - minV);
+      const y = h - vNorm * h;
+      if (idx === 0) gctx.moveTo(x, y);
+      else gctx.lineTo(x, y);
+    });
+
+    gctx.stroke();
+
+    // baseline 0
+    const zeroNorm = (0 - minV) / (maxV - minV);
+    const zy = h - zeroNorm * h;
+    gctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
+    gctx.lineWidth = 1;
+    gctx.beginPath();
+    gctx.moveTo(0, zy);
+    gctx.lineTo(w, zy);
+    gctx.stroke();
+  }
+
+  function spawnAlert(delta) {
+    const chip = document.createElement("div");
+    chip.className = "alert-chip";
+
+    let label;
+    const abs = Math.abs(delta);
+    if (abs >= 2) {
+      label = delta > 0 ? "spike ++" : "crash --";
+    } else if (abs >= 1) {
+      label = delta > 0 ? "boost +" : "drop -";
+    } else {
+      label = delta > 0 ? "tick up" : "tick down";
+    }
+
+    chip.textContent = label + " (" + (delta >= 0 ? "+" : "") + delta.toFixed(1) + ")";
+    alertsEl.appendChild(chip);
+
+    setTimeout(() => {
+      chip.remove();
+    }, 3200);
+  }
+
+  function spawnParticles() {
+    const root = document.querySelector(".hud-root");
+    const rect = root.getBoundingClientRect();
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+
+    for (let i = 0; i < 16; i++) {
+      const p = document.createElement("div");
+      p.className = "particle";
+
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 40 + Math.random() * 40;
+      const dx = Math.cos(angle) * dist;
+      const dy = Math.sin(angle) * dist * 0.7;
+
+      p.style.left = centerX + "px";
+      p.style.top = centerY + "px";
+      p.style.setProperty("--dx", dx + "px");
+      p.style.setProperty("--dy", dy + "px");
+
+      const colorStops = [
+        "rgba(0,255,255,1)",
+        "rgba(255,0,255,1)",
+        "rgba(255,255,0,1)",
+      ];
+      const c = colorStops[Math.floor(Math.random() * colorStops.length)];
+      p.style.background = c;
+      p.style.boxShadow = "0 0 12px " + c;
+
+      root.appendChild(p);
+      setTimeout(() => p.remove(), 800);
+    }
+  }
+
+  function applyAudioReactVisual(level) {
+    const clamped = Math.max(0, Math.min(1, level));
+
+    // Pulse the avatar a bit
+    const avatar = document.getElementById("avatarOrbit");
+    if (avatar) {
+      const scale = 1 + clamped * 0.12; // up to +12%
+      avatar.style.transform = `scale(${scale})`;
+    }
+
+    // Boost the mood bar glow by audio level
+    const barFill = document.getElementById("moodFill");
+    if (barFill) {
+      const baseShadow = "0 0 18px rgba(0, 255, 255, 0.6), 0 0 28px rgba(255, 0, 255, 0.4)";
+      const strongShadow = "0 0 26px rgba(0, 255, 255, 0.9), 0 0 40px rgba(255, 0, 255, 0.9)";
+      // interpolate between two shadows
+      barFill.style.boxShadow = clamped > 0.35 ? strongShadow : baseShadow;
+    }
+
+    // Optionally, we can also pulse the whole HUD slightly
+    const hudRoot = document.querySelector(".hud-root");
+    if (hudRoot) {
+      const s = 1 + clamped * 0.04; // subtle scale for entire HUD
+      hudRoot.style.transform = `scale(${s})`;
+    }
+  }
+
+  function audioReactLoop() {
+    // simple smoothing: move 15% towards target each frame
+    audioLevel += (audioTarget - audioLevel) * 0.15;
+    applyAudioReactVisual(audioLevel);
+    requestAnimationFrame(audioReactLoop);
+  }
+
+  // initial setup
+  resizeGraph();
+  handleMoodUpdate(0);
+  audioReactLoop();
+</script>
+
+</body>
+</html>

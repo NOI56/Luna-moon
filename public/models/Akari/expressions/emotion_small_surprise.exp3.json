@@ -1,0 +1,25 @@
+{
+    "Type": "Live2D Expression",
+    "Parameters": [
+        {
+            "Id": "ParamAngleX",
+            "Value": 12.10573959350586,
+            "Blend": "Add"
+        },
+        {
+            "Id": "ParamAngleY",
+            "Value": 17.963397979736329,
+            "Blend": "Add"
+        },
+        {
+            "Id": "ParamAngleZ",
+            "Value": 9.372178077697754,
+            "Blend": "Add"
+        },
+        {
+            "Id": "ParamShockSign",
+            "Value": 1.0,
+            "Blend": "Add"
+        }
+    ]
+}

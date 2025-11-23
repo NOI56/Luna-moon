@@ -1,0 +1,25 @@
+{
+    "Type": "Live2D Expression",
+    "Parameters": [
+        {
+            "Id": "ParamMouthForm",
+            "Value": -0.8786443471908569,
+            "Blend": "Add"
+        },
+        {
+            "Id": "ParamCheek",
+            "Value": -1.0,
+            "Blend": "Add"
+        },
+        {
+            "Id": "ParamEyeROpen",
+            "Value": -0.42955946922302248,
+            "Blend": "Add"
+        },
+        {
+            "Id": "ParamEyeLOpen",
+            "Value": -0.4328133463859558,
+            "Blend": "Add"
+        }
+    ]
+}

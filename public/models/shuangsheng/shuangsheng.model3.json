@@ -1,0 +1,27 @@
+{
+	"Version": 3,
+	"FileReferences": {
+		"Moc": "shuangsheng.moc3",
+		"Textures": [
+			"shuangsheng.4096/texture_00.png",
+			"shuangsheng.4096/texture_01.png",
+			"shuangsheng.4096/texture_02.png",
+			"shuangsheng.4096/texture_03.png",
+			"shuangsheng.4096/texture_04.png"
+		],
+		"Physics": "shuangsheng.physics3.json",
+		"DisplayInfo": "shuangsheng.cdi3.json"
+	},
+	"Groups": [
+		{
+			"Target": "Parameter",
+			"Name": "LipSync",
+			"Ids": []
+		},
+		{
+			"Target": "Parameter",
+			"Name": "EyeBlink",
+			"Ids": []
+		}
+	]
+}

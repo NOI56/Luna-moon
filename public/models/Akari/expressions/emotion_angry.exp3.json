@@ -1,0 +1,70 @@
+{
+    "Type": "Live2D Expression",
+    "Parameters": [
+        {
+            "Id": "ParamMouthX",
+            "Value": 0.6183053255081177,
+            "Blend": "Add"
+        },
+        {
+            "Id": "ParamMouthForm",
+            "Value": -2.0,
+            "Blend": "Add"
+        },
+        {
+            "Id": "ParamBreath",
+            "Value": 1.0,
+            "Blend": "Add"
+        },
+        {
+            "Id": "ParamShockSign",
+            "Value": 1.0,
+            "Blend": "Add"
+        },
+        {
+            "Id": "ParamAngrySign",
+            "Value": 0.9372208714485169,
+            "Blend": "Add"
+        },
+        {
+            "Id": "ParamCheek",
+            "Value": -1.0,
+            "Blend": "Add"
+        },
+        {
+            "Id": "ParamTears",
+            "Value": 1.0,
+            "Blend": "Add"
+        },
+        {
+            "Id": "ParamEyeROpen",
+            "Value": -0.26033908128738406,
+            "Blend": "Add"
+        },
+        {
+            "Id": "ParamEyeLOpen",
+            "Value": -0.26033830642700198,
+            "Blend": "Add"
+        },
+        {
+            "Id": "ParamEyeBallX",
+            "Value": 1.0,
+            "Blend": "Add"
+        },
+        {
+            "Id": "ParamEyeBallY",
+            "Value": 0.39050817489624026,
+            "Blend": "Add"
+        },
+        {
+            "Id": "ParamBrowRForm",
+            "Value": -1.0,
+            "Blend": "Add"
+        },
+        {
+            "Id": "ParamBrowLForm",
+            "Value": -1.0,
+            "Blend": "Add"
+        }
+    ]
+}

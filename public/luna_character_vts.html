@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Luna Character (VTube Studio)</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: transparent;
+      font-family: Arial, sans-serif;
+    }
+
+    #character-container {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+    }
+
+    #status-overlay {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 10px;
+      font-size: 12px;
+      border-radius: 5px;
+      display: none;
+    }
+
+    #status-overlay.active {
+      display: block;
+    }
+
+    #instructions {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      max-width: 500px;
+    }
+
+    #instructions h2 {
+      margin-bottom: 15px;
+      color: #4CAF50;
+    }
+
+    #instructions p {
+      margin-bottom: 10px;
+      line-height: 1.6;
+    }
+
+    #instructions code {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+
+    .status-indicator {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 5px;
+    }
+
+    .status-indicator.connected {
+      background: #4CAF50;
+    }
+
+    .status-indicator.disconnected {
+      background: #f44336;
+    }
+
+    .status-indicator.connecting {
+      background: #ff9800;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+  </style>
+</head>
+<body>
+  <div id="character-container">
+    <div id="status-overlay">
+      <div>
+        <span class="status-indicator" id="status-indicator"></span>
+        <span id="status-text">Connecting to VTube Studio...</span>
+      </div>
+      <div style="margin-top: 5px; font-size: 10px;">
+        Model: <span id="model-name">-</span> | 
+        Parameters: <span id="param-count">0</span>
+      </div>
+    </div>
+
+    <div id="instructions">
+      <h2>🎭 Luna Character (VTube Studio Mode)</h2>
+      <p>This viewer controls VTube Studio via WebSocket API.</p>
+      <p><strong>Setup Instructions:</strong></p>
+      <ol style="text-align: left; margin: 15px 0; padding-left: 20px;">
+        <li>Open <strong>VTube Studio</strong></li>
+        <li>Load your model (e.g., <code>shuangsheng</code>)</li>
+        <li>Enable <strong>API</strong> in VTube Studio settings</li>
+        <li>Set <code>VTS_ENABLED=true</code> in your <code>.env</code> file</li>
+        <li>Restart Luna AI server</li>
+      </ol>
+      <p style="margin-top: 15px; color: #ff9800;">
+        <strong>Note:</strong> The model will be displayed in VTube Studio window, not in this browser.
+        This page is for control and monitoring only.
+      </p>
+      <p style="margin-top: 10px; font-size: 12px; color: #bbb;">
+        Status: <span id="connection-status">Not connected</span>
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // ============================================
+    // VTube Studio WebSocket Connection
+    // ============================================
+    const VTS_HOST = window.location.hostname || 'localhost';
+    const VTS_PORT = '8001'; // VTube Studio default port
+    const VTS_URL = `ws://${VTS_HOST}:${VTS_PORT}`;
+    
+    let vtsSocket = null;
+    let isConnected = false;
+    let isAuthenticated = false;
+    let requestIdCounter = 0;
+    let currentModel = null;
+    let availableParameters = [];
+
+    // UI Elements
+    const statusOverlay = document.getElementById('status-overlay');
+    const statusIndicator = document.getElementById('status-indicator');
+    const statusText = document.getElementById('status-text');
+    const connectionStatus = document.getElementById('connection-status');
+    const modelNameEl = document.getElementById('model-name');
+    const paramCountEl = document.getElementById('param-count');
+    const instructions = document.getElementById('instructions');
+
+    // ============================================
+    // VTS API Functions
+    // ============================================
+    function nextRequestId() {
+      return `luna_char_${Date.now()}_${++requestIdCounter}`;
+    }
+
+    function sendVTSRequest(messageType, data = {}) {
+      if (!vtsSocket || vtsSocket.readyState !== WebSocket.OPEN) {
+        console.warn('[VTS] Socket not connected');
+        return;
+      }
+
+      const request = {
+        apiName: 'VTubeStudioPublicAPI',
+        apiVersion: '1.0',
+        requestID: nextRequestId(),
+        messageType: messageType,
+        data: data
+      };
+
+      vtsSocket.send(JSON.stringify(request));
+      console.log('[VTS] Sent:', messageType, data);
+      return request.requestID;
+    }
+
+    // ============================================
+    // Connection Management
+    // ============================================
+    function connectToVTS() {
+      if (vtsSocket && vtsSocket.readyState === WebSocket.OPEN) {
+        return; // Already connected
+      }
+
+      console.log('[VTS] Connecting to:', VTS_URL);
+      updateStatus('connecting', 'Connecting to VTube Studio...');
+      
+      vtsSocket = new WebSocket(VTS_URL);
+
+      vtsSocket.onopen = () => {
+        console.log('[VTS] ✅ Connected to VTube Studio');
+        isConnected = true;
+        updateStatus('connected', 'Connected to VTube Studio');
+        
+        // Request API state (triggers authentication if needed)
+        sendVTSRequest('APIStateRequest');
+        
+        // Request current model info
+        sendVTSRequest('CurrentModelRequest');
+        
+        // Request available parameters
+        sendVTSRequest('InputParameterListRequest');
+      };
+
+      vtsSocket.onmessage = (event) => {
+        try {
+          const response = JSON.parse(event.data);
+          handleVTSResponse(response);
+        } catch (e) {
+          console.error('[VTS] Parse error:', e);
+        }
+      };
+
+      vtsSocket.onerror = (error) => {
+        console.error('[VTS] Error:', error);
+        updateStatus('disconnected', 'Connection error');
+      };
+
+      vtsSocket.onclose = () => {
+        console.log('[VTS] Disconnected');
+        isConnected = false;
+        isAuthenticated = false;
+        updateStatus('disconnected', 'Disconnected from VTube Studio');
+        
+        // Try to reconnect after 3 seconds
+        setTimeout(() => {
+          if (!isConnected) {
+            connectToVTS();
+          }
+        }, 3000);
+      };
+    }
+
+    function handleVTSResponse(response) {
+      console.log('[VTS] Received:', response.messageType, response.data);
+
+      switch (response.messageType) {
+        case 'APIStateResponse':
+          if (response.data.authenticated) {
+            isAuthenticated = true;
+            updateStatus('connected', 'Authenticated with VTube Studio');
+            console.log('[VTS] ✅ Authenticated');
+          } else {
+            updateStatus('connected', 'Connected (authentication pending)');
+            console.warn('[VTS] ⚠️ Not authenticated. Check VTS_AUTH_TOKEN in .env');
+          }
+          break;
+
+        case 'CurrentModelResponse':
+          if (response.data.modelLoaded) {
+            currentModel = response.data.modelName;
+            modelNameEl.textContent = currentModel || 'Unknown';
+            updateStatus('connected', `Model: ${currentModel || 'Unknown'}`);
+            instructions.style.display = 'none';
+            statusOverlay.classList.add('active');
+          } else {
+            modelNameEl.textContent = 'No model loaded';
+            updateStatus('connected', 'No model loaded in VTube Studio');
+          }
+          break;
+
+        case 'InputParameterListResponse':
+          if (response.data.defaultParameters) {
+            availableParameters = response.data.defaultParameters;
+            paramCountEl.textContent = availableParameters.length;
+            console.log('[VTS] Available parameters:', availableParameters.length);
+          }
+          break;
+
+        case 'AuthenticationResponse':
+          if (response.data.authenticated) {
+            isAuthenticated = true;
+            updateStatus('connected', 'Authenticated');
+            console.log('[VTS] ✅ Authentication successful');
+          }
+          break;
+      }
+    }
+
+    function updateStatus(state, text) {
+      statusIndicator.className = `status-indicator ${state}`;
+      statusText.textContent = text;
+      connectionStatus.textContent = text;
+    }
+
+    // ============================================
+    // Connect to Luna Server (for character state)
+    // ============================================
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsHost = window.location.hostname || 'localhost';
+    const wsPort = window.location.port || '8787';
+    const lunaWS = new WebSocket(`${wsProtocol}//${wsHost}:${wsPort}`);
+
+    lunaWS.onopen = () => {
+      console.log('[Luna] Connected to server');
+    };
+
+    lunaWS.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        handleLunaMessage(data);
+      } catch (e) {
+        console.error('[Luna] Parse error:', e);
+      }
+    };
+
+    function handleLunaMessage(data) {
+      // Forward character state to VTube Studio
+      if (!isAuthenticated || !isConnected) return;
+
+      switch (data.type) {
+        case 'character_state':
+        case 'face_angle':
+        case 'emotion_update':
+          // VTS will handle these through the main server
+          // This viewer just monitors
+          break;
+      }
+    }
+
+    // ============================================
+    // Initialize
+    // ============================================
+    window.addEventListener('load', () => {
+      console.log('[Character] Starting VTube Studio character viewer...');
+      connectToVTS();
+    });
+
+    // Expose for debugging
+    window.vtsController = {
+      connect: connectToVTS,
+      sendRequest: sendVTSRequest,
+      getStatus: () => ({ isConnected, isAuthenticated, currentModel, availableParameters })
+    };
+  </script>
+</body>
+</html>
+
+
+
+
+

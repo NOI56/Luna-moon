@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: luna-rps-server
+    env: node
+    buildCommand: npm install
+    startCommand: node index.js
+    envVars:
+      - key: PORT
+        value: 8787
+      - key: NODE_ENV
+        value: production
+    healthCheckPath: /luna/health
+
+

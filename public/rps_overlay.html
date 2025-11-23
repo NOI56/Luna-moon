@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Luna RPS Game Overlay</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Courier New', 'Monaco', monospace;
+      background: transparent;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      color: #00ffff;
+      overflow: hidden;
+    }
+
+    .overlay-container {
+      text-align: center;
+      padding: 20px;
+      background: rgba(10, 10, 26, 0.9);
+      border: 2px solid #00ffff;
+      border-radius: 0;
+      box-shadow: 
+        0 0 20px rgba(0, 255, 255, 0.6),
+        0 0 40px rgba(255, 0, 255, 0.4),
+        inset 0 0 20px rgba(0, 255, 255, 0.1);
+      min-width: 400px;
+      display: none;
+      position: relative;
+    }
+    
+    .overlay-container::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      background: linear-gradient(45deg, #00ffff, #ff00ff, #00ffff);
+      z-index: -1;
+      animation: borderGlow 3s ease-in-out infinite;
+      opacity: 0.5;
+    }
+    
+    @keyframes borderGlow {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.7; }
+    }
+
+    .overlay-container.active {
+      display: block;
+      animation: slideIn 0.5s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .game-title {
+      font-size: 1.5em;
+      margin-bottom: 15px;
+      font-weight: bold;
+      color: #00ffff;
+      text-shadow: 
+        0 0 10px #00ffff,
+        0 0 20px #00ffff,
+        0 0 30px #00ffff;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+
+    .hands-display {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      margin: 20px 0;
+      gap: 30px;
+    }
+
+    .hand-display {
+      text-align: center;
+    }
+
+    .hand-label {
+      font-size: 1em;
+      margin-bottom: 10px;
+      color: #00ffff;
+      text-shadow: 0 0 10px #00ffff;
+      opacity: 0.9;
+      letter-spacing: 2px;
+    }
+
+    .hand-icon {
+      font-size: 5em;
+      filter: 
+        drop-shadow(0 0 10px #00ffff)
+        drop-shadow(0 0 20px #00ffff)
+        drop-shadow(0 4px 8px rgba(0, 0, 0, 0.8));
+      animation: popIn 0.5s ease-out;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .hand-icon img {
+      width: 120px;
+      height: 120px;
+      object-fit: contain;
+      filter: 
+        drop-shadow(0 0 10px #00ffff)
+        drop-shadow(0 0 20px rgba(0, 255, 255, 0.5));
+    }
+
+    @keyframes popIn {
+      from {
+        transform: scale(0);
+      }
+      to {
+        transform: scale(1);
+      }
+    }
+
+    .vs {
+      font-size: 2em;
+      font-weight: bold;
+      color: #ff00ff;
+      text-shadow: 
+        0 0 10px #ff00ff,
+        0 0 20px #ff00ff,
+        0 0 30px #ff00ff;
+      letter-spacing: 5px;
+      animation: vsPulse 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes vsPulse {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+      }
+    }
+
+    .result-text {
+      font-size: 1.8em;
+      margin-top: 15px;
+      font-weight: bold;
+      min-height: 40px;
+    }
+
+    .result-text.win {
+      color: #00ff00;
+      text-shadow: 
+        0 0 10px #00ff00,
+        0 0 20px #00ff00,
+        0 0 30px #00ff00;
+    }
+
+    .result-text.lose {
+      color: #ff0066;
+      text-shadow: 
+        0 0 10px #ff0066,
+        0 0 20px #ff0066,
+        0 0 30px #ff0066;
+    }
+
+    .result-text.tie {
+      color: #ffff00;
+      text-shadow: 
+        0 0 10px #ffff00,
+        0 0 20px #ffff00,
+        0 0 30px #ffff00;
+    }
+
+    .player-name {
+      font-size: 0.9em;
+      margin-top: 10px;
+      color: #ff00ff;
+      text-shadow: 0 0 10px #ff00ff;
+      opacity: 0.9;
+      letter-spacing: 1px;
+    }
+
+    .fade-out {
+      animation: fadeOut 0.5s ease-out forwards;
+    }
+
+    @keyframes fadeOut {
+      to {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="overlay" class="overlay-container">
+    <div class="game-title">🪨✂️📄 Rock Paper Scissors</div>
+    <div class="hands-display">
+      <div class="hand-display">
+        <div class="hand-label" id="playerLabel">Player</div>
+        <div class="hand-icon" id="playerHand"></div>
+      </div>
+      <div class="vs">VS</div>
+      <div class="hand-display">
+        <div class="hand-label">Luna</div>
+        <div class="hand-icon" id="lunaHand"></div>
+      </div>
+    </div>
+    <div class="result-text" id="result"></div>
+    <div class="player-name" id="playerName"></div>
+  </div>
+
+  <script>
+    const API_BASE = window.location.origin.replace(':8787', ':8787');
+    const WS_URL = `ws://${window.location.hostname}:8787`;
+    
+    // Hand images - ใช้รูปมือจริงจากไฟล์
+    // ใส่รูปมือ PNG ที่คุณส่งมาใน public/images/hands/:
+    // - rock.png (มือกำ) - ใช้เป็น default ด้วย
+    // - paper.png (มือเปิด)
+    // - scissors.png (มือชู 2 นิ้ว)
+    const HAND_IMAGES = {
+      rock: '/public/images/hands/rock.png',
+      paper: '/public/images/hands/paper.png',
+      scissors: '/public/images/hands/scissors.png',
+      default: '/public/images/hands/rock.png' // ใช้มือกำเป็น default
+    };
+    
+    const HAND_EMOJIS = {
+      rock: '🪨',
+      paper: '📄',
+      scissors: '✂️',
+      default: '👋'
+    };
+    
+    // Function to get hand display (image or emoji fallback)
+    function getHandDisplay(choice) {
+      const img = document.createElement('img');
+      img.src = HAND_IMAGES[choice] || HAND_IMAGES.default;
+      img.alt = choice || 'default';
+      img.onerror = function() {
+        // Fallback to emoji if image fails to load
+        this.parentElement.textContent = HAND_EMOJIS[choice] || HAND_EMOJIS.default;
+      };
+      return img;
+    }
+
+    let ws = null;
+    let hideTimeout = null;
+
+    // Connect to WebSocket
+    function connectWebSocket() {
+      try {
+        ws = new WebSocket(WS_URL);
+        
+        ws.onopen = () => {
+          console.log('[RPS Overlay] WebSocket connected');
+        };
+        
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            
+            if (data.type === 'rps_game') {
+              showGameResult(data);
+            }
+          } catch (e) {
+            console.error('[RPS Overlay] Parse error:', e);
+          }
+        };
+        
+        ws.onerror = (error) => {
+          console.error('[RPS Overlay] WebSocket error:', error);
+        };
+        
+        ws.onclose = () => {
+          console.log('[RPS Overlay] WebSocket closed, reconnecting...');
+          setTimeout(connectWebSocket, 3000);
+        };
+      } catch (e) {
+        console.error('[RPS Overlay] Connection error:', e);
+        setTimeout(connectWebSocket, 3000);
+      }
+    }
+
+    // Show game result
+    function showGameResult(data) {
+      const overlay = document.getElementById('overlay');
+      const playerHand = document.getElementById('playerHand');
+      const lunaHand = document.getElementById('lunaHand');
+      const result = document.getElementById('result');
+      const playerName = document.getElementById('playerName');
+      const playerLabel = document.getElementById('playerLabel');
+      
+      // Clear previous timeout
+      if (hideTimeout) {
+        clearTimeout(hideTimeout);
+      }
+      
+      // Update display
+      playerHand.innerHTML = '';
+      playerHand.appendChild(getHandDisplay(data.playerChoice));
+      lunaHand.innerHTML = '';
+      lunaHand.appendChild(getHandDisplay(data.lunaChoice));
+      playerName.textContent = data.player || 'Player';
+      playerLabel.textContent = data.player || 'Player';
+      
+      // Show result
+      if (data.result === 'win') {
+        result.textContent = '🎉 Player Wins!';
+        result.className = 'result-text win';
+      } else if (data.result === 'lose') {
+        result.textContent = '😢 Luna Wins!';
+        result.className = 'result-text lose';
+      } else {
+        result.textContent = '🤝 Tie!';
+        result.className = 'result-text tie';
+      }
+      
+      // Show overlay
+      overlay.classList.add('active');
+      overlay.classList.remove('fade-out');
+      
+      // Hide after 5 seconds
+      hideTimeout = setTimeout(() => {
+        overlay.classList.add('fade-out');
+        setTimeout(() => {
+          overlay.classList.remove('active');
+        }, 500);
+      }, 5000);
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      connectWebSocket();
+      initializeHands();
+    });
+    
+    // Initialize hand displays
+    function initializeHands() {
+      const playerHand = document.getElementById('playerHand');
+      const lunaHand = document.getElementById('lunaHand');
+      
+      // Set default hands (ใช้มือกำ)
+      playerHand.appendChild(getHandDisplay('rock'));
+      lunaHand.appendChild(getHandDisplay('rock'));
+    }
+  </script>
+</body>
+</html>
+

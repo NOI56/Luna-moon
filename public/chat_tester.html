@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Luna Chat Tester</title>
+<style>
+  body {
+    background: #0d0f14;
+    color: white;
+    font-family: "Segoe UI", sans-serif;
+    margin: 0;
+    padding: 30px;
+  }
+  .box {
+    width: 420px;
+    margin: auto;
+    padding: 25px;
+    border-radius: 14px;
+    background: #101420;
+    box-shadow: 0 0 20px rgba(0,255,255,0.1);
+  }
+  input, textarea {
+    width: 100%;
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+    margin-top: 10px;
+    background: #1a1f2d;
+    color: white;
+  }
+  button {
+    width: 100%;
+    margin-top: 15px;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    background: linear-gradient(to right, #00d9ff, #d000ff);
+    color: white;
+  }
+  .log {
+    margin-top: 20px;
+    padding: 15px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 10px;
+    white-space: pre-wrap;
+    font-size: 13px;
+  }
+</style>
+</head>
+
+<body>
+<div class="box">
+  <h2>Luna Chat Tester</h2>
+  <label>Username</label>
+  <input id="user" value="test-user">
+
+  <label>Message (English only for Luna)</label>
+  <textarea id="text" rows="3">Luna I love you</textarea>
+
+  <button onclick="sendMsg()">Send to /luna/message</button>
+
+  <div class="log" id="log">Waiting...</div>
+</div>
+
+<script>
+async function sendMsg() {
+  const user = document.getElementById('user').value;
+  const text = document.getElementById('text').value;
+
+  const logBox = document.getElementById("log");
+  logBox.textContent = "Sending...";
+
+  try {
+    const res = await fetch('http://localhost:8787/luna/message', {
+      method: "POST",
+      headers: { "Content-Type": "application/json"},
+      body: JSON.stringify({ user, text })
+    });
+
+    const data = await res.json();
+    logBox.textContent = JSON.stringify(data, null, 2);
+  } catch (e) {
+    logBox.textContent = "Error: " + e.message;
+  }
+}
+</script>
+
+</body>
+</html>
