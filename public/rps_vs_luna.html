@@ -16,16 +16,17 @@
       background: #0a0a0a;
       background-image: 
         radial-gradient(circle at 20% 50%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(255, 0, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
         linear-gradient(135deg, #0a0a0a 0%, #1a0a2e 50%, #16213e 100%);
       display: flex;
       justify-content: center;
-      align-items: center;
+      align-items: flex-start;
       min-height: 100vh;
       padding: 20px;
       color: #00ffff;
       position: relative;
-      overflow: hidden;
+      overflow-y: auto;
+      overflow-x: hidden;
     }
     
     body::before {
@@ -70,7 +71,7 @@
 
     .wallet-btn {
       background: rgba(0, 255, 255, 0.1);
-      border: 2px solid #00ffff;
+      border: none;
       color: #00ffff;
       padding: 12px 24px;
       font-size: 1rem;
@@ -97,6 +98,163 @@
       border: 1px solid #00ffff;
       border-radius: 8px;
       font-size: 0.9rem;
+    }
+
+    /* Contract Address Section */
+    .contract-section {
+      background: rgba(0, 255, 255, 0.05);
+      border: 1px solid rgba(0, 255, 255, 0.3);
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+      text-align: center;
+    }
+
+    .contract-label {
+      font-size: 1rem;
+      color: #00ffff;
+      margin-bottom: 15px;
+      font-weight: bold;
+      text-shadow: 0 0 5px #00ffff;
+    }
+
+    .contract-input-group {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 15px;
+    }
+
+    .contract-input {
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(0, 255, 255, 0.3);
+      color: #00ffff;
+      padding: 12px 20px;
+      font-size: 0.9rem;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      min-width: 300px;
+      max-width: 100%;
+      flex: 1;
+    }
+
+    .contract-input:focus {
+      outline: none;
+      box-shadow: 0 0 15px #00ffff;
+    }
+
+    .contract-btn {
+      padding: 12px 24px;
+      font-size: 0.9rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-family: 'Courier New', monospace;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .contract-btn-copy {
+      background: linear-gradient(135deg, #ff6b35, #ff8c42);
+      color: white;
+      font-weight: bold;
+    }
+
+    .contract-btn-copy:hover {
+      background: linear-gradient(135deg, #ff8c42, #ff6b35);
+      box-shadow: 0 0 15px rgba(255, 107, 53, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .contract-btn-view {
+      background: linear-gradient(135deg, #1a237e, #283593);
+      color: white;
+      font-weight: bold;
+    }
+
+    .contract-btn-view:hover {
+      background: linear-gradient(135deg, #283593, #3949ab);
+      box-shadow: 0 0 15px rgba(26, 35, 126, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .contract-warning {
+      font-size: 0.85rem;
+      color: #00ffff;
+      opacity: 0.8;
+      margin-top: 15px;
+    }
+
+    /* X DEX Links Section */
+    .dex-links {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 20px 0;
+    }
+
+    .dex-btn {
+      padding: 15px 30px;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-family: 'Courier New', monospace;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .dex-btn-buy {
+      background: linear-gradient(135deg, #ff6b35, #ff8c42);
+      color: white;
+    }
+
+    .dex-btn-buy:hover {
+      background: linear-gradient(135deg, #ff8c42, #ff6b35);
+      box-shadow: 0 0 20px rgba(255, 107, 53, 0.6);
+      transform: translateY(-2px);
+    }
+
+    .dex-btn-community {
+      background: linear-gradient(135deg, #1a237e, #283593);
+      color: white;
+    }
+
+    .dex-btn-community:hover {
+      background: linear-gradient(135deg, #283593, #3949ab);
+      box-shadow: 0 0 20px rgba(26, 35, 126, 0.6);
+      transform: translateY(-2px);
+    }
+
+    @media (max-width: 768px) {
+      .contract-input-group {
+        flex-direction: column;
+      }
+
+      .contract-input {
+        min-width: 100%;
+      }
+
+      .dex-links {
+        flex-direction: column;
+      }
+
+      .dex-btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
     }
 
     .balance-check {
@@ -212,7 +370,7 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(255, 0, 255, 0.2));
+      background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(0, 255, 255, 0.2));
       opacity: 0;
       transition: opacity 0.3s;
     }
@@ -302,7 +460,7 @@
       display: inline-block;
       width: 16px;
       height: 16px;
-      border: 2px solid #00ffff;
+      border: none;
       border-top-color: transparent;
       border-radius: 50%;
       animation: spin 0.6s linear infinite;
@@ -317,7 +475,7 @@
       color: #00ffff;
       text-decoration: none;
       padding: 10px 20px;
-      border: 2px solid #00ffff;
+      border: none;
       border-radius: 8px;
       transition: all 0.3s;
     }
@@ -330,7 +488,7 @@
     /* Ensure mode navigation is always visible */
     #modeNavigation {
       position: fixed !important;
-      top: 20px !important;
+      top: 40px !important;
       left: 20px !important;
       z-index: 99999 !important;
       display: flex !important;
@@ -342,13 +500,40 @@
       display: inline-block !important;
       visibility: visible !important;
       opacity: 1 !important;
+      cursor: pointer !important;
+    }
+    
+    #modeNavigation a:hover {
+      box-shadow: 
+        0 0 20px currentColor,
+        0 0 40px currentColor,
+        0 0 60px currentColor,
+        inset 0 0 20px rgba(255, 255, 255, 0.1) !important;
+      transform: scale(1.05) !important;
+      text-shadow: 
+        0 0 10px currentColor,
+        0 0 20px currentColor,
+        0 0 30px currentColor !important;
+      background: rgba(0, 0, 0, 0.95) !important;
+    }
+    
+    #modeNavigation a:active {
+      box-shadow: 
+        0 0 30px currentColor,
+        0 0 60px currentColor,
+        0 0 90px currentColor,
+        inset 0 0 30px rgba(255, 255, 255, 0.2) !important;
+      transform: scale(0.98) !important;
     }
   </style>
 </head>
 <body>
-  <div id="modeNavigation" style="position: fixed !important; top: 20px !important; left: 20px !important; display: flex !important; gap: 10px; z-index: 99999 !important; flex-wrap: wrap; pointer-events: auto !important; visibility: visible !important; opacity: 1 !important;">
+  <div id="modeNavigation" style="position: fixed !important; top: 40px !important; left: 20px !important; display: flex !important; gap: 10px; z-index: 99999 !important; flex-wrap: wrap; pointer-events: auto !important; visibility: visible !important; opacity: 1 !important;">
     <a href="/rps_game.html" id="pvpLink" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">← PvP Mode</a>
-    <a href="/rps_betting.html" id="bettingLink" style="color: #ff00ff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #ff00ff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">💰 Betting Mode</a>
+    <a href="/rps_betting.html" id="bettingLink" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">💰 Betting Mode</a>
+    <a href="/rps_leaderboard.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">🏆 Leaderboard</a>
+    <a href="/rps_stats.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">📊 Stats</a>
+    <a href="/rps_history.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">📜 History</a>
   </div>
 
   <div class="game-container">
@@ -359,6 +544,34 @@
       <button id="disconnectWalletBtn" class="wallet-btn hidden">🔌 Disconnect / Change Wallet</button>
       <div id="walletInfo" class="wallet-info hidden"></div>
       <div id="balanceCheck" class="balance-check hidden"></div>
+      <div id="solBalanceDisplay" class="wallet-info hidden" style="margin-top: 10px; padding: 15px; background: rgba(0, 255, 255, 0.1); border: 1px solid #00ffff; border-radius: 8px; font-size: 0.9em; color: #00ffff;">
+        <strong>💰 SOL Balance:</strong> <span id="solBalanceAmount">0.0000</span> SOL
+      </div>
+    </div>
+
+    <!-- Contract Address Section -->
+    <div class="contract-section">
+      <div class="contract-label">Contract Address:</div>
+      <div class="contract-input-group">
+        <input type="text" id="contractAddress" class="contract-input" readonly value="Loading...">
+        <button class="contract-btn contract-btn-copy" onclick="copyContractAddress()">
+          <span>📋</span> Copy
+        </button>
+        <button class="contract-btn contract-btn-view" onclick="viewContractAddress()">
+          <span>🔗</span> View
+        </button>
+      </div>
+      <div class="contract-warning">Always verify the contract address before buying.</div>
+    </div>
+
+    <!-- X DEX Links Section -->
+    <div class="dex-links">
+      <a href="#" id="buyDexLink" class="dex-btn dex-btn-buy" target="_blank" onclick="openBuyDex(event)">
+        <span>⚡</span> Buy 1coin
+      </a>
+      <a href="#" id="communityLink" class="dex-btn dex-btn-community" target="_blank" onclick="openCommunity(event)">
+        <span>𝕏</span> Join Community
+      </a>
     </div>
 
     <div class="game-area">
@@ -385,16 +598,17 @@
     </div>
     
     <div style="margin-top: 40px; text-align: center;">
-      <a href="/rps_betting.html" style="color: #ff00ff; text-decoration: none; padding: 15px 30px; border: 2px solid #ff00ff; border-radius: 8px; transition: all 0.3s; display: inline-block; font-size: 1.1em;">💰 Betting Mode</a>
+      <a href="/rps_betting.html" style="color: #00ffff; text-decoration: none; padding: 15px 30px; border: 2px solid #00ffff; border-radius: 8px; transition: all 0.3s; display: inline-block; font-size: 1.1em;">💰 Betting Mode</a>
     </div>
   </div>
+
 
   <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
   <script>
     const API_BASE = window.location.origin;
     const RPS_MIN_BALANCE = 1000000; // 1M Luna tokens
-    // Mint address จะถูกอ่านจาก backend (.env) อัตโนมัติ
-    // ไม่ต้อง hardcode ที่นี่แล้ว
+    // Mint address will be read from backend (.env) automatically
+    // No need to hardcode here
     
     let playerBalance = 0;
     let gameActive = false;
@@ -404,6 +618,62 @@
     // Real-time balance checking enabled
     const TEST_MODE = false; // Using real Luna token
     let balanceUpdateInterval = null;
+    let solBalanceUpdateInterval = null;
+    let solBalance = 0;
+
+    // Sound Effects System
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    
+    // Play sound effect
+    function playSound(frequency, duration, type = 'sine', volume = 0.3) {
+      try {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = frequency;
+        oscillator.type = type;
+        
+        gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + duration);
+      } catch (e) {
+        console.error('[Sound] Error playing sound:', e);
+      }
+    }
+    
+    // Countdown sound (beep)
+    function playCountdownSound() {
+      playSound(800, 0.1, 'sine', 0.2);
+    }
+    
+    // Win sound (cheer - multiple beeps)
+    function playWinSound() {
+      // Play multiple ascending notes
+      playSound(523, 0.15, 'sine', 0.3); // C
+      setTimeout(() => playSound(659, 0.15, 'sine', 0.3), 100); // E
+      setTimeout(() => playSound(784, 0.2, 'sine', 0.4), 200); // G
+      setTimeout(() => playSound(1047, 0.3, 'sine', 0.5), 350); // C (high)
+    }
+    
+    // Lose sound (sad descending)
+    function playLoseSound() {
+      // Play descending notes
+      playSound(523, 0.2, 'sine', 0.3); // C
+      setTimeout(() => playSound(440, 0.2, 'sine', 0.3), 150); // A
+      setTimeout(() => playSound(349, 0.3, 'sine', 0.4), 300); // F (low)
+    }
+    
+    // Tie sound (neutral)
+    function playTieSound() {
+      // Play a neutral tone
+      playSound(440, 0.2, 'sine', 0.25); // A
+      setTimeout(() => playSound(440, 0.2, 'sine', 0.25), 200); // A again
+    }
 
     // Hand images
     const HAND_IMAGES = {
@@ -456,10 +726,10 @@
       }
 
       // Check real balance from blockchain
-      // Mint address จะถูกอ่านจาก backend (.env) อัตโนมัติ
+      // Mint address will be read from backend (.env) automatically
       try {
         // Use backend API to check balance (bypasses RPC rate limiting)
-        // Backend จะอ่าน mint address จาก .env อัตโนมัติ
+        // Backend will read mint address from .env automatically
         const response = await fetch(`${API_BASE}/luna/rps/balance?wallet=${walletPublicKey}`);
         const data = await response.json();
         
@@ -506,6 +776,59 @@
       if (balanceUpdateInterval) {
         clearInterval(balanceUpdateInterval);
         balanceUpdateInterval = null;
+      }
+    }
+
+    // Check SOL Balance
+    async function checkSolBalance() {
+      const solBalanceDisplay = document.getElementById('solBalanceDisplay');
+      const solBalanceAmount = document.getElementById('solBalanceAmount');
+      
+      if (!walletConnected || !walletPublicKey) {
+        if (solBalanceDisplay) solBalanceDisplay.classList.add('hidden');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE}/luna/rps/sol/balance?wallet=${walletPublicKey}`);
+        const data = await response.json();
+        
+        if (data.ok) {
+          solBalance = data.balance || 0;
+          if (solBalanceAmount) {
+            solBalanceAmount.textContent = solBalance.toFixed(4);
+          }
+          if (solBalanceDisplay) {
+            solBalanceDisplay.classList.remove('hidden');
+          }
+        } else {
+          console.error('[VS Luna] SOL balance check error:', data.error);
+        }
+      } catch (err) {
+        console.error('[VS Luna] SOL balance check error:', err);
+      }
+    }
+
+    // Start real-time SOL balance updates
+    function startSolBalanceUpdate() {
+      // Clear existing interval if any
+      if (solBalanceUpdateInterval) {
+        clearInterval(solBalanceUpdateInterval);
+      }
+      
+      // Update SOL balance every 10 seconds
+      solBalanceUpdateInterval = setInterval(async () => {
+        if (walletConnected && walletPublicKey) {
+          await checkSolBalance();
+        }
+      }, 10000);
+    }
+
+    // Stop real-time SOL balance updates
+    function stopSolBalanceUpdate() {
+      if (solBalanceUpdateInterval) {
+        clearInterval(solBalanceUpdateInterval);
+        solBalanceUpdateInterval = null;
       }
     }
 
@@ -592,6 +915,7 @@
           gameActive = false;
 
           stopBalanceUpdate(); // Stop real-time balance updates
+          stopSolBalanceUpdate(); // Stop real-time SOL balance updates
 
           connectBtn.classList.remove('hidden');
           disconnectBtn.classList.add('hidden');
@@ -624,12 +948,14 @@
           walletInfo.textContent = `Wallet: ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}`;
           walletInfo.classList.remove('hidden');
           await checkLunaBalance();
+          await checkSolBalance();
           startBalanceUpdate(); // Start real-time balance updates
-          startBalanceUpdate(); // Start real-time balance updates
+          startSolBalanceUpdate(); // Start real-time SOL balance updates
         });
 
         window.solana.on('disconnect', () => {
           stopBalanceUpdate(); // Stop real-time balance updates
+          stopSolBalanceUpdate(); // Stop real-time SOL balance updates
           walletPublicKey = null;
           walletConnected = false;
           playerBalance = 0;
@@ -647,6 +973,8 @@
           walletInfo.textContent = `Wallet: ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}`;
           walletInfo.classList.remove('hidden');
           checkLunaBalance();
+          checkSolBalance();
+          startSolBalanceUpdate();
         }
       }
     }
@@ -753,6 +1081,8 @@
           countdownText.textContent = countdownNumbers[countdownIndex];
           countdownOverlay.innerHTML = '';
           countdownOverlay.appendChild(countdownText);
+          // Play countdown sound for each number
+          playCountdownSound();
           countdownIndex++;
           setTimeout(showCountdown, 1000);
         } else {
@@ -794,14 +1124,17 @@
           finalResult = '🎉 You Win!';
           result.className = 'result win';
           status.textContent = `Luna chose ${lunaChoice}. You win!`;
+          playWinSound(); // Play win sound (cheer)
         } else if (data.result === 'lose') {
           finalResult = '😢 You Lose!';
           result.className = 'result lose';
           status.textContent = `Luna chose ${lunaChoice}. You lose!`;
+          playLoseSound(); // Play lose sound
         } else {
           finalResult = '🤝 Tie!';
           result.className = 'result tie';
           status.textContent = `Both chose ${lunaChoice}. It's a tie!`;
+          playTieSound(); // Play tie sound
         }
         result.textContent = finalResult;
 
@@ -835,12 +1168,119 @@
       });
     }
 
+    // Navigation click sound (short beep)
+    function playNavClickSound() {
+      playSound(600, 0.1, 'sine', 0.2);
+    }
+
+    // Add click sound to navigation links
+    function initNavigationSounds() {
+      const navLinks = document.querySelectorAll('#modeNavigation a');
+      navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          playNavClickSound();
+          // Delay navigation to let sound play
+          setTimeout(() => {
+            window.location.href = link.href;
+          }, 150);
+        });
+      });
+    }
+
     // Initialize
     document.addEventListener('DOMContentLoaded', async () => {
+      initNavigationSounds();
       setupWalletConnection();
       setupEventListeners();
       initializeHands();
+      loadContractAddress();
     });
+
+    // Load contract address from backend
+    async function loadContractAddress() {
+      try {
+        const response = await fetch(`${API_BASE}/luna/rps/contract-address`);
+        const data = await response.json();
+        
+        if (data.ok && data.contractAddress) {
+          const contractInput = document.getElementById('contractAddress');
+          if (contractInput) {
+            contractInput.value = data.contractAddress;
+          }
+          
+          // Update buy DEX link from env
+          const buyDexLink = document.getElementById('buyDexLink');
+          if (buyDexLink && data.buyLink) {
+            buyDexLink.href = data.buyLink;
+          } else if (buyDexLink) {
+            // Fallback to pump.fun if buyLink not provided
+            buyDexLink.href = `https://pump.fun/${data.contractAddress}`;
+          }
+          
+          // Update X/Twitter community link from env
+          const communityLink = document.getElementById('communityLink');
+          if (communityLink && data.xLink) {
+            communityLink.href = data.xLink;
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load contract address:', error);
+        const contractInput = document.getElementById('contractAddress');
+        if (contractInput) {
+          contractInput.value = 'Error loading address';
+        }
+      }
+    }
+
+    // Copy contract address to clipboard
+    function copyContractAddress() {
+      const contractInput = document.getElementById('contractAddress');
+      if (contractInput) {
+        contractInput.select();
+        contractInput.setSelectionRange(0, 99999);
+        document.execCommand('copy');
+        
+        const btn = event.target.closest('.contract-btn-copy');
+        if (btn) {
+          const originalText = btn.innerHTML;
+          btn.innerHTML = '<span>✓</span> Copied!';
+          setTimeout(() => {
+            btn.innerHTML = originalText;
+          }, 2000);
+        }
+      }
+    }
+
+    // View contract address on Solscan
+    function viewContractAddress() {
+      const contractInput = document.getElementById('contractAddress');
+      if (contractInput && contractInput.value && contractInput.value !== 'Loading...' && contractInput.value !== 'Error loading address') {
+        window.open(`https://solscan.io/token/${contractInput.value}`, '_blank');
+      }
+    }
+
+    // Open buy DEX link
+    function openBuyDex(event) {
+      event.preventDefault();
+      const buyDexLink = document.getElementById('buyDexLink');
+      if (buyDexLink && buyDexLink.href && buyDexLink.href !== '#') {
+        window.open(buyDexLink.href, '_blank');
+      } else {
+        alert('Contract address not loaded yet. Please wait a moment and try again.');
+      }
+    }
+
+    // Open community link (X/Twitter)
+    function openCommunity(event) {
+      event.preventDefault();
+      const communityLink = document.getElementById('communityLink');
+      if (communityLink && communityLink.href && communityLink.href !== '#') {
+        window.open(communityLink.href, '_blank');
+      } else {
+        alert('Community link not loaded yet. Please wait a moment and try again.');
+      }
+    }
   </script>
 </body>
 </html>

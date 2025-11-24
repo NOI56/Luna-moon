@@ -7,7 +7,9 @@ import { WebSocketServer } from "ws";
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
-import { Connection, PublicKey } from "@solana/web3.js";
+import { Connection, PublicKey, Keypair, SystemProgram, Transaction, sendAndConfirmTransaction, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import bs58 from "bs58";
+import fetch from "node-fetch";
 
 import { callModel, callSimpleModel, isComplexQuestion } from "./modules/ai.js";
 import { initDB, logChat } from "./modules/db.js";
@@ -133,6 +135,341 @@ const MATCH_TIMEOUT = 15000; // 15 seconds (15,000ms)
 // Betting Rooms
 const rpsBettingRooms = new Map(); // Map<roomId, { creator, betAmount, player2, choices, timestamp }>
 const RPS_BETTING_ROOM_TIMEOUT = 300000; // 5 minutes (300,000ms) - rooms expire after 5 minutes
+
+// Fee Collection System
+const collectedFees = new Map(); // Map<wallet, { totalFees: number, transactions: Array }>
+const FEE_PERCENTAGE = 0.01; // 1% fee
+
+// Leaderboard System
+// Map<wallet, { wins: number, losses: number, totalWon: number, totalSolWon: number }>
+const rpsLeaderboard = new Map();
+
+// Weekly Competition System
+const WEEKLY_COMPETITION_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+let competitionStartTime = Date.now(); // Start time of current competition
+let competitionEndTime = competitionStartTime + WEEKLY_COMPETITION_DURATION; // End time
+
+// Initialize competition start time (can be persisted to file/db later)
+function initializeCompetition() {
+  // Check if we need to start a new competition
+  const now = Date.now();
+  if (now >= competitionEndTime) {
+    // Start new competition
+    competitionStartTime = now;
+    competitionEndTime = now + WEEKLY_COMPETITION_DURATION;
+    // Reset leaderboard for new competition
+    rpsLeaderboard.clear();
+    rewardPool = 0;
+    console.log(`[rps-competition] New weekly competition started. Ends at: ${new Date(competitionEndTime).toISOString()}`);
+  }
+}
+
+// Check competition status periodically (every hour)
+setInterval(() => {
+  const now = Date.now();
+  if (now >= competitionEndTime) {
+    // Competition ended, distribute rewards and start new one
+    console.log(`[rps-competition] Weekly competition ended. Distributing rewards...`);
+    // Auto-distribute rewards (if private key is set)
+    // This will be handled by the distribute endpoint
+    initializeCompetition();
+  }
+}, 60 * 60 * 1000); // Check every hour
+
+// Initialize on startup
+initializeCompetition();
+
+// Reward Pool System
+let rewardPool = 0; // Total SOL in reward pool
+const REWARD_DISTRIBUTION_WALLET = process.env.REWARD_DISTRIBUTION_WALLET || "ofLr5MWJVjZNzR9xSomLLKUaEvVsdQG79b21W12t8Sp";
+const REWARD_PERCENTAGES = {
+  1: 0.20, // 20%
+  2: 0.10, // 10%
+  3: 0.05, // 5%
+  4: 0.03, // 3%
+  5: 0.02, // 2%
+  remaining: 0.60 // 60% to distribution wallet
+};
+
+// Price cache for Luna token (key: mint, value: { price, timestamp })
+const priceCache = new Map();
+const PRICE_CACHE_TTL = 60000; // 1 minute cache
+
+// Luna token mint address (from env)
+const LUNA_TOKEN_MINT = process.env.LUNA_TOKEN_MINT || null;
+const SOL_MINT = "So11111111111111111111111111111111111111112"; // Native SOL mint
+
+/**
+ * Fetch Luna token price in SOL from Jupiter API
+ * @returns {Promise<number|null>} - Price in SOL per Luna token, or null if failed
+ */
+async function fetchLunaPriceInSol() {
+  if (!LUNA_TOKEN_MINT) {
+    console.warn("[rps-betting-fee] LUNA_TOKEN_MINT not set in .env, cannot fetch price");
+    return null;
+  }
+
+  // Validate mint address format
+  if (LUNA_TOKEN_MINT.length < 32 || LUNA_TOKEN_MINT === "your_token_mint_address_from_pumpfun_here") {
+    console.warn(`[rps-betting-fee] Invalid LUNA_TOKEN_MINT: ${LUNA_TOKEN_MINT}, using fallback rate`);
+    return null;
+  }
+
+    console.log(`[rps-betting-fee] Fetching price for Luna token: ${LUNA_TOKEN_MINT}`);
+
+  try {
+    // Check cache first
+    const cacheKey = LUNA_TOKEN_MINT;
+    if (priceCache.has(cacheKey)) {
+      const cached = priceCache.get(cacheKey);
+      if (Date.now() - cached.timestamp < PRICE_CACHE_TTL) {
+        console.log(`[rps-betting-fee] Using cached price: ${cached.price.toFixed(9)} SOL per Luna (mint: ${LUNA_TOKEN_MINT.substring(0, 8)}...)`);
+        return cached.price;
+      }
+    }
+
+    // Method 1: Try DexScreener API first (like the UI shows - direct token to SOL conversion)
+    // DexScreener API: https://api.dexscreener.com/latest/dex/tokens/TOKEN_MINT
+    const dexscreenerUrl = `https://api.dexscreener.com/latest/dex/tokens/${LUNA_TOKEN_MINT}`;
+    console.log(`[rps-betting-fee] Fetching from DexScreener API: ${dexscreenerUrl}`);
+    
+    try {
+      const dexResponse = await fetch(dexscreenerUrl);
+      if (dexResponse.ok) {
+        const dexData = await dexResponse.json();
+        
+        // DexScreener returns pairs, find the one with SOL
+        if (dexData.pairs && dexData.pairs.length > 0) {
+          // Find pair with SOL (quoteToken.symbol === 'SOL' or quoteToken.address === SOL_MINT)
+          const solPair = dexData.pairs.find(pair => 
+            pair.quoteToken?.symbol === 'SOL' || 
+            pair.quoteToken?.address === SOL_MINT ||
+            pair.quoteToken?.address?.toLowerCase() === SOL_MINT.toLowerCase()
+          );
+          
+          if (solPair && solPair.priceNative) {
+            // priceNative is the price in native token (SOL)
+            const pricePerLuna = parseFloat(solPair.priceNative);
+            
+            if (pricePerLuna > 0) {
+              // Cache the price
+              priceCache.set(cacheKey, {
+                price: pricePerLuna,
+                timestamp: Date.now()
+              });
+              
+              console.log(`[rps-betting-fee] Fetched Luna price from DexScreener: ${pricePerLuna.toFixed(9)} SOL per Luna`);
+              return pricePerLuna;
+            }
+          }
+          
+          // If no SOL pair found, try to use first pair and convert
+          const firstPair = dexData.pairs[0];
+          if (firstPair.priceNative && firstPair.quoteToken?.symbol === 'SOL') {
+            const pricePerLuna = parseFloat(firstPair.priceNative);
+            if (pricePerLuna > 0) {
+              priceCache.set(cacheKey, {
+                price: pricePerLuna,
+                timestamp: Date.now()
+              });
+              console.log(`[rps-betting-fee] Fetched Luna price from DexScreener (first pair): ${pricePerLuna.toFixed(9)} SOL per Luna`);
+              return pricePerLuna;
+            }
+          }
+        }
+      }
+    } catch (dexError) {
+      console.warn(`[rps-betting-fee] DexScreener API error: ${dexError.message}, trying Jupiter...`);
+    }
+
+    // Method 2: Fetch price from Jupiter API (fallback)
+    // Jupiter price API: https://price.jup.ag/v4/price?ids=TOKEN_MINT
+    const jupiterPriceUrl = `https://price.jup.ag/v4/price?ids=${LUNA_TOKEN_MINT}`;
+    console.log(`[rps-betting-fee] Fetching from Jupiter Price API: ${jupiterPriceUrl}`);
+    
+    const response = await fetch(jupiterPriceUrl);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.warn(`[rps-betting-fee] Jupiter Price API error: ${response.status} - ${errorText}`);
+      throw new Error(`Jupiter API returned ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    if (!data.data || !data.data[LUNA_TOKEN_MINT]) {
+      console.warn(`[rps-betting-fee] Price data not found for mint ${LUNA_TOKEN_MINT} in Jupiter response:`, JSON.stringify(data).substring(0, 200));
+      throw new Error("Price data not found in Jupiter response");
+    }
+
+    const priceData = data.data[LUNA_TOKEN_MINT];
+    // Jupiter returns price in USD, we need to convert to SOL
+    // We need to get SOL price first, then calculate Luna/SOL ratio
+    
+    // Use Jupiter quote API to get direct Luna -> SOL price
+    // Request quote for 1 Luna token (we'll use 1 with proper decimals)
+    // First, try to get token info to know decimals, or use common decimals (6 for pump.fun tokens)
+    const lunaDecimals = 6; // Pump.fun tokens typically use 6 decimals
+    const oneLunaInSmallestUnit = Math.pow(10, lunaDecimals); // 1 Luna = 1,000,000 smallest units
+    
+    const quoteUrl = `https://quote-api.jup.ag/v6/quote?inputMint=${LUNA_TOKEN_MINT}&outputMint=${SOL_MINT}&amount=${oneLunaInSmallestUnit}&slippageBps=50`;
+    const quoteResponse = await fetch(quoteUrl);
+    
+    if (quoteResponse.ok) {
+      const quoteData = await quoteResponse.json();
+      if (quoteData.outAmount && quoteData.inAmount) {
+        // outAmount is in lamports (1 SOL = 1,000,000,000 lamports)
+        // inAmount is in smallest Luna units (1 Luna = 10^6 smallest units for pump.fun tokens)
+        const outputAmountLamports = parseInt(quoteData.outAmount);
+        const inputAmountSmallest = parseInt(quoteData.inAmount);
+        
+        // Price per Luna = (output in SOL) / (input in Luna)
+        // outputAmountLamports / 1e9 = SOL amount
+        // inputAmountSmallest / 1e6 = Luna amount (assuming 6 decimals)
+        const solAmount = outputAmountLamports / 1e9; // Convert lamports to SOL
+        const lunaAmount = inputAmountSmallest / 1e6; // Convert smallest units to Luna
+        const pricePerLuna = solAmount / lunaAmount;
+        
+        // Cache the price
+        priceCache.set(cacheKey, {
+          price: pricePerLuna,
+          timestamp: Date.now()
+        });
+        
+        console.log(`[rps-betting-fee] Fetched Luna price from Jupiter: ${pricePerLuna.toFixed(9)} SOL per Luna (1 Luna = ${solAmount.toFixed(9)} SOL)`);
+        return pricePerLuna;
+      }
+    } else {
+      const errorText = await quoteResponse.text();
+      console.warn(`[rps-betting-fee] Jupiter quote API error: ${quoteResponse.status} - ${errorText}`);
+    }
+
+    // Fallback: Use USD price and SOL/USD price
+    const solPriceUrl = `https://price.jup.ag/v4/price?ids=${SOL_MINT}`;
+    const solResponse = await fetch(solPriceUrl);
+    
+    if (solResponse.ok) {
+      const solData = await solResponse.json();
+      const lunaPriceUSD = priceData.price;
+      const solPriceUSD = solData.data?.[SOL_MINT]?.price;
+      
+      if (lunaPriceUSD && solPriceUSD) {
+        const pricePerLuna = lunaPriceUSD / solPriceUSD;
+        
+        // Cache the price
+        priceCache.set(cacheKey, {
+          price: pricePerLuna,
+          timestamp: Date.now()
+        });
+        
+        console.log(`[rps-betting-fee] Fetched Luna price (via USD): ${pricePerLuna.toFixed(9)} SOL per Luna`);
+        return pricePerLuna;
+      }
+    }
+
+    throw new Error("Could not determine Luna price in SOL");
+  } catch (error) {
+    console.error("[rps-betting-fee] Error fetching Luna price:", error.message);
+    
+    // Return cached price if available (even if expired)
+    if (priceCache.has(LUNA_TOKEN_MINT)) {
+      const cached = priceCache.get(LUNA_TOKEN_MINT);
+      console.warn(`[rps-betting-fee] Using expired cache: ${cached.price} SOL per Luna`);
+      return cached.price;
+    }
+    
+    // Fallback to env rate if available
+    const fallbackRate = parseFloat(process.env.LUNA_TO_SOL_RATE);
+    if (fallbackRate) {
+      console.warn(`[rps-betting-fee] Using fallback rate from env: ${fallbackRate} SOL per Luna`);
+      return fallbackRate;
+    }
+    
+    return null;
+  }
+}
+
+/**
+ * Convert Luna tokens to SOL value (using real-time price)
+ * @param {number} lunaAmount - Amount in Luna tokens
+ * @returns {Promise<number>} - Value in SOL
+ */
+async function lunaToSol(lunaAmount) {
+  const price = await fetchLunaPriceInSol();
+  if (price === null) {
+    // Fallback to default rate if price fetch failed
+    const fallbackRate = parseFloat(process.env.LUNA_TO_SOL_RATE) || 0.00009;
+    console.warn(`[rps-betting-fee] Using fallback rate: ${fallbackRate}`);
+    return lunaAmount * fallbackRate;
+  }
+  return lunaAmount * price;
+}
+
+/**
+ * Get current Luna price in SOL (synchronous, uses cache)
+ * @returns {number|null} - Price in SOL per Luna token, or null if not available
+ */
+function getLunaPriceSync() {
+  if (!LUNA_TOKEN_MINT) return null;
+  
+  if (priceCache.has(LUNA_TOKEN_MINT)) {
+    const cached = priceCache.get(LUNA_TOKEN_MINT);
+    return cached.price;
+  }
+  
+  // Return fallback from env
+  return parseFloat(process.env.LUNA_TO_SOL_RATE) || null;
+}
+
+/**
+ * Calculate 1% fee in SOL from Luna bet amount
+ * @param {number} lunaAmount - Bet amount in Luna tokens
+ * @returns {Promise<number>} - Fee in SOL
+ */
+async function calculateFee(lunaAmount) {
+  const solValue = await lunaToSol(lunaAmount);
+  return solValue * FEE_PERCENTAGE;
+}
+
+/**
+ * Collect fee from a wallet
+ * @param {string} wallet - Wallet address
+ * @param {number} feeInSol - Fee amount in SOL
+ * @param {string} roomId - Room ID for reference
+ * @param {number} betAmount - Original bet amount in Luna
+ */
+function collectFee(wallet, feeInSol, roomId, betAmount) {
+  if (!collectedFees.has(wallet)) {
+    collectedFees.set(wallet, {
+      totalFees: 0,
+      transactions: []
+    });
+  }
+  
+  const feeData = collectedFees.get(wallet);
+  feeData.totalFees += feeInSol;
+  feeData.transactions.push({
+    roomId: roomId,
+    betAmount: betAmount,
+    feeInSol: feeInSol,
+    timestamp: Date.now()
+  });
+  
+  console.log(`[rps-betting-fee] Collected ${feeInSol.toFixed(6)} SOL fee from ${wallet.substring(0, 8)}... (bet: ${betAmount} Luna)`);
+}
+
+// Pre-fetch price on startup and periodically update
+async function updateLunaPrice() {
+  try {
+    await fetchLunaPriceInSol();
+  } catch (error) {
+    console.error("[rps-betting-fee] Failed to update Luna price:", error.message);
+  }
+}
+
+// Update price every 1 minute
+setInterval(updateLunaPrice, 60000);
+// Initial fetch after 2 seconds (give server time to start)
+setTimeout(updateLunaPrice, 2000);
 
 app.post("/luna/rps/queue", async (req, res) => {
   try {
@@ -376,6 +713,10 @@ app.post("/luna/rps/betting/create", async (req, res) => {
       timestamp: Date.now(),
     });
     
+    // Collect 1% fee in SOL from creator
+    const feeInSol = await calculateFee(betAmount);
+    collectFee(wallet, feeInSol, roomId, betAmount);
+    
     // Auto-cleanup after timeout
     setTimeout(() => {
       if (rpsBettingRooms.has(roomId)) {
@@ -596,6 +937,10 @@ app.post("/luna/rps/betting/join", async (req, res) => {
     room.player2 = wallet;
     room.choices = {};
     
+    // Collect 1% fee in SOL from player2 (challenger)
+    const feeInSol = await calculateFee(room.betAmount);
+    collectFee(wallet, feeInSol, roomId, room.betAmount);
+    
     // Broadcast room joined
     broadcast({
       type: "rps_betting_room_joined",
@@ -620,6 +965,103 @@ app.post("/luna/rps/betting/join", async (req, res) => {
       ok: false,
       error: e.message,
       message: "Failed to join room",
+    });
+  }
+});
+
+/**
+ * Get current Luna price in SOL
+ * GET /luna/rps/betting/price
+ */
+app.get("/luna/rps/betting/price", async (req, res) => {
+  try {
+    const price = await fetchLunaPriceInSol();
+    const cached = priceCache.get(LUNA_TOKEN_MINT);
+    
+    if (price === null) {
+      return res.status(503).json({
+        ok: false,
+        error: "Price not available",
+        message: "Could not fetch Luna price. Please check LUNA_TOKEN_MINT in .env",
+      });
+    }
+    
+    return res.json({
+      ok: true,
+      price: price,
+      pricePerLuna: price,
+      cached: cached ? Date.now() - cached.timestamp < PRICE_CACHE_TTL : false,
+      cacheAge: cached ? Date.now() - cached.timestamp : null,
+      mint: LUNA_TOKEN_MINT,
+    });
+  } catch (e) {
+    console.error("[rps-betting] Get price error:", e);
+    res.status(500).json({
+      ok: false,
+      error: e.message,
+      message: "Failed to get price",
+    });
+  }
+});
+
+/**
+ * Get collected fees (admin endpoint)
+ * GET /luna/rps/betting/fees?wallet=wallet_address (optional - if not provided, returns all fees)
+ */
+app.get("/luna/rps/betting/fees", async (req, res) => {
+  try {
+    const { wallet } = req.query || {};
+    const feeWallet = process.env.BETTING_FEE_WALLET || null;
+    
+    if (wallet && typeof wallet === "string") {
+      // Get fees for specific wallet
+      const feeData = collectedFees.get(wallet);
+      if (!feeData) {
+        return res.json({
+          ok: true,
+          wallet: wallet,
+          totalFees: 0,
+          transactions: [],
+          feeWallet: feeWallet,
+          note: feeWallet ? `Fees should be sent to: ${feeWallet}` : "No fee wallet configured"
+        });
+      }
+      
+      return res.json({
+        ok: true,
+        wallet: wallet,
+        totalFees: feeData.totalFees,
+        transactions: feeData.transactions,
+        feeWallet: feeWallet,
+        note: feeWallet ? `Fees should be sent to: ${feeWallet}` : "No fee wallet configured"
+      });
+    } else {
+      // Get all fees
+      const allFees = {};
+      let totalAllFees = 0;
+      
+      for (const [walletAddr, feeData] of collectedFees.entries()) {
+        allFees[walletAddr] = {
+          totalFees: feeData.totalFees,
+          transactionCount: feeData.transactions.length
+        };
+        totalAllFees += feeData.totalFees;
+      }
+      
+      return res.json({
+        ok: true,
+        totalCollectedFees: totalAllFees,
+        feeBreakdown: allFees,
+        feeWallet: feeWallet,
+        note: feeWallet ? `All fees should be sent to: ${feeWallet}` : "No fee wallet configured. Fees are tracked in memory only."
+      });
+    }
+  } catch (e) {
+    console.error("[rps-betting] Get fees error:", e);
+    res.status(500).json({
+      ok: false,
+      error: e.message,
+      message: "Failed to get fees",
     });
   }
 });
@@ -708,6 +1150,40 @@ app.post("/luna/rps/betting/submit", async (req, res) => {
         winner = room.player2; // Player 2 wins
       }
       
+      // Update leaderboard and calculate rewards
+      const betAmountInSol = await lunaToSol(room.betAmount);
+      const totalPot = betAmountInSol * 2; // Both players bet the same amount
+      
+      // Update leaderboard stats
+      if (!rpsLeaderboard.has(room.creator)) {
+        rpsLeaderboard.set(room.creator, { wins: 0, losses: 0, totalWon: 0, totalSolWon: 0 });
+      }
+      if (!rpsLeaderboard.has(room.player2)) {
+        rpsLeaderboard.set(room.player2, { wins: 0, losses: 0, totalWon: 0, totalSolWon: 0 });
+      }
+      
+      const creatorStats = rpsLeaderboard.get(room.creator);
+      const player2Stats = rpsLeaderboard.get(room.player2);
+      
+      if (winner === "draw") {
+        // Draw - return bets (no winner, no loser)
+        // No leaderboard update needed for draws
+      } else if (winner === room.creator) {
+        creatorStats.wins++;
+        creatorStats.totalWon += room.betAmount * 2; // Win both bets
+        creatorStats.totalSolWon += totalPot;
+        player2Stats.losses++;
+      } else {
+        player2Stats.wins++;
+        player2Stats.totalWon += room.betAmount * 2;
+        player2Stats.totalSolWon += totalPot;
+        creatorStats.losses++;
+      }
+      
+      // Add to reward pool (for periodic distribution)
+      // For now, we'll accumulate rewards and distribute periodically
+      // The winner gets the pot immediately, but we track for leaderboard rewards
+      
       // Broadcast result
       const result = {
         type: "rps_betting_match_result",
@@ -718,6 +1194,8 @@ app.post("/luna/rps/betting/submit", async (req, res) => {
         player2Choice: p2Choice,
         winner: winner,
         betAmount: room.betAmount,
+        betAmountInSol: betAmountInSol,
+        totalPotInSol: totalPot,
       };
       
       broadcast(result);
@@ -762,6 +1240,28 @@ app.get("/rps_vs_luna.html", (req, res) => {
 
 app.get("/rps_betting.html", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "rps_betting.html"));
+});
+
+app.get("/rps_history.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "rps_history.html"));
+});
+
+app.get("/rps_leaderboard.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "rps_leaderboard.html"));
+});
+
+app.get("/rps_stats.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "rps_stats.html"));
+});
+
+// Main landing page
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+// About page
+app.get("/about.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "about.html"));
 });
 
 app.use("/public", express.static(path.join(__dirname, "public")));
@@ -2909,6 +3409,441 @@ app.get("/luna/rps/balance", async (req, res) => {
   }
 });
 
+/**
+ * Get contract address (token mint address), buy link, and X/Twitter link
+ * GET /luna/rps/contract-address
+ */
+app.get("/luna/rps/contract-address", async (req, res) => {
+  try {
+    const mint = process.env.LUNA_TOKEN_MINT || "CbB4ivri6wLfqx4NwrWY3ArD7mXv1e91HeYeq3KBpump";
+    const buyLink = process.env.LUNA_BUY_LINK || `https://pump.fun/${mint}`;
+    const xLink = process.env.LUNA_X_LINK || "https://x.com/your_community";
+    
+    return res.json({
+      ok: true,
+      contractAddress: mint,
+      buyLink: buyLink,
+      xLink: xLink,
+      message: "Contract address retrieved successfully"
+    });
+  } catch (e) {
+    console.error("[rps] Contract address error:", e);
+    res.status(500).json({
+      ok: false,
+      error: e.message,
+      message: "Failed to get contract address",
+    });
+  }
+});
+
+/**
+ * Get leaderboard
+ * GET /luna/rps/leaderboard
+ */
+app.get("/luna/rps/leaderboard", async (req, res) => {
+  try {
+    // Convert leaderboard map to array and sort by total SOL won
+    const leaderboardArray = Array.from(rpsLeaderboard.entries()).map(([wallet, stats]) => ({
+      wallet: wallet,
+      wins: stats.wins || 0,
+      losses: stats.losses || 0,
+      totalWon: stats.totalWon || 0,
+      totalSolWon: stats.totalSolWon || 0,
+    }));
+    
+    // Sort by total SOL won (descending)
+    leaderboardArray.sort((a, b) => (b.totalSolWon || 0) - (a.totalSolWon || 0));
+    
+    // Add rank to each entry
+    leaderboardArray.forEach((entry, index) => {
+      entry.rank = index + 1;
+    });
+    
+    return res.json({
+      ok: true,
+      leaderboard: leaderboardArray,
+      message: "Leaderboard loaded successfully"
+    });
+  } catch (e) {
+    console.error("[rps] Leaderboard error:", e);
+    res.status(500).json({
+      ok: false,
+      error: e.message,
+      message: "Failed to load leaderboard",
+    });
+  }
+});
+
+/**
+ * Send SOL to a wallet
+ * @param {string} toWallet - Recipient wallet address
+ * @param {number} amountInSol - Amount in SOL
+ * @returns {Promise<string|null>} - Transaction signature or null if failed
+ */
+async function sendSol(toWallet, amountInSol) {
+  try {
+    const privateKey = process.env.REWARD_SENDER_PRIVATE_KEY;
+    if (!privateKey) {
+      console.warn("[reward-distribution] REWARD_SENDER_PRIVATE_KEY not set, cannot send SOL");
+      return null;
+    }
+    
+    const rpcUrl = process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com";
+    const connection = new Connection(rpcUrl, "confirmed");
+    
+    // Decode private key
+    let keypair;
+    try {
+      const secretKey = bs58.decode(privateKey);
+      keypair = Keypair.fromSecretKey(secretKey);
+    } catch (e) {
+      console.error("[reward-distribution] Invalid private key format:", e.message);
+      return null;
+    }
+    
+    // Check sender balance
+    const senderBalance = await connection.getBalance(keypair.publicKey);
+    const amountInLamports = amountInSol * LAMPORTS_PER_SOL;
+    const transactionFee = 5000; // Estimated fee
+    
+    if (senderBalance < amountInLamports + transactionFee) {
+      console.error(`[reward-distribution] Insufficient balance. Need ${(amountInLamports + transactionFee) / LAMPORTS_PER_SOL} SOL, have ${senderBalance / LAMPORTS_PER_SOL} SOL`);
+      return null;
+    }
+    
+    // Create transaction
+    const toPublicKey = new PublicKey(toWallet);
+    const transaction = new Transaction().add(
+      SystemProgram.transfer({
+        fromPubkey: keypair.publicKey,
+        toPubkey: toPublicKey,
+        lamports: amountInLamports,
+      })
+    );
+    
+    // Send transaction
+    const signature = await sendAndConfirmTransaction(
+      connection,
+      transaction,
+      [keypair],
+      { commitment: "confirmed" }
+    );
+    
+    console.log(`[reward-distribution] Sent ${amountInSol} SOL to ${toWallet.substring(0, 8)}... (tx: ${signature})`);
+    return signature;
+  } catch (e) {
+    console.error("[reward-distribution] Error sending SOL:", e.message);
+    return null;
+  }
+}
+
+/**
+ * Distribute rewards to top 5 players
+ * POST /luna/rps/rewards/distribute
+ * Body: { totalRewardPool: number } (optional - if not provided, uses accumulated pool)
+ */
+app.post("/luna/rps/rewards/distribute", async (req, res) => {
+  try {
+    const { totalRewardPool } = req.body || {};
+    const poolAmount = totalRewardPool || rewardPool;
+    
+    if (poolAmount <= 0) {
+      return res.status(400).json({
+        ok: false,
+        error: "Invalid pool amount",
+        message: "Reward pool must be greater than 0",
+      });
+    }
+    
+    // Get top 5 players
+    const leaderboardArray = Array.from(rpsLeaderboard.entries()).map(([wallet, stats]) => ({
+      wallet: wallet,
+      totalSolWon: stats.totalSolWon || 0,
+    }));
+    
+    leaderboardArray.sort((a, b) => (b.totalSolWon || 0) - (a.totalSolWon || 0));
+    const top5 = leaderboardArray.slice(0, 5);
+    
+    if (top5.length === 0) {
+      return res.json({
+        ok: true,
+        message: "No players to reward",
+        distributed: [],
+      });
+    }
+    
+    const distributions = [];
+    let totalDistributed = 0;
+    
+    // Distribute to top 5
+    for (let i = 0; i < top5.length; i++) {
+      const rank = i + 1;
+      const percentage = REWARD_PERCENTAGES[rank];
+      const amount = poolAmount * percentage;
+      
+      if (amount > 0) {
+        const signature = await sendSol(top5[i].wallet, amount);
+        distributions.push({
+          rank: rank,
+          wallet: top5[i].wallet,
+          amount: amount,
+          percentage: percentage * 100,
+          signature: signature,
+          success: signature !== null,
+        });
+        
+        if (signature) {
+          totalDistributed += amount;
+        }
+      }
+    }
+    
+    // Send remaining 60% to distribution wallet
+    const remainingAmount = poolAmount * REWARD_PERCENTAGES.remaining;
+    if (remainingAmount > 0) {
+      const signature = await sendSol(REWARD_DISTRIBUTION_WALLET, remainingAmount);
+      distributions.push({
+        rank: "distribution",
+        wallet: REWARD_DISTRIBUTION_WALLET,
+        amount: remainingAmount,
+        percentage: REWARD_PERCENTAGES.remaining * 100,
+        signature: signature,
+        success: signature !== null,
+      });
+      
+      if (signature) {
+        totalDistributed += remainingAmount;
+      }
+    }
+    
+    // Reset reward pool if using accumulated pool
+    if (!totalRewardPool) {
+      rewardPool = 0;
+    }
+    
+    return res.json({
+      ok: true,
+      message: "Rewards distributed successfully",
+      totalPool: poolAmount,
+      totalDistributed: totalDistributed,
+      distributions: distributions,
+    });
+  } catch (e) {
+    console.error("[rps] Reward distribution error:", e);
+    res.status(500).json({
+      ok: false,
+      error: e.message,
+      message: "Failed to distribute rewards",
+    });
+  }
+});
+
+/**
+ * Get reward pool status
+ * GET /luna/rps/rewards/pool
+ */
+app.get("/luna/rps/rewards/pool", async (req, res) => {
+  try {
+    const leaderboardArray = Array.from(rpsLeaderboard.entries()).map(([wallet, stats]) => ({
+      wallet: wallet,
+      totalSolWon: stats.totalSolWon || 0,
+    }));
+    
+    leaderboardArray.sort((a, b) => (b.totalSolWon || 0) - (a.totalSolWon || 0));
+    const top5 = leaderboardArray.slice(0, 5);
+    
+    const distributionPlan = top5.map((player, index) => {
+      const rank = index + 1;
+      return {
+        rank: rank,
+        wallet: player.wallet,
+        percentage: REWARD_PERCENTAGES[rank] * 100,
+        estimatedAmount: rewardPool * REWARD_PERCENTAGES[rank],
+      };
+    });
+    
+    distributionPlan.push({
+      rank: "distribution",
+      wallet: REWARD_DISTRIBUTION_WALLET,
+      percentage: REWARD_PERCENTAGES.remaining * 100,
+      estimatedAmount: rewardPool * REWARD_PERCENTAGES.remaining,
+    });
+    
+    return res.json({
+      ok: true,
+      rewardPool: rewardPool,
+      distributionPlan: distributionPlan,
+      top5: top5,
+    });
+  } catch (e) {
+    console.error("[rps] Get reward pool error:", e);
+    res.status(500).json({
+      ok: false,
+      error: e.message,
+      message: "Failed to get reward pool",
+    });
+  }
+});
+
+/**
+ * Get weekly competition time remaining
+ * GET /luna/rps/competition/time
+ */
+app.get("/luna/rps/competition/time", async (req, res) => {
+  try {
+    const now = Date.now();
+    const timeRemaining = Math.max(0, competitionEndTime - now);
+    const days = Math.floor(timeRemaining / (24 * 60 * 60 * 1000));
+    const hours = Math.floor((timeRemaining % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+    const minutes = Math.floor((timeRemaining % (60 * 60 * 1000)) / (60 * 1000));
+    const seconds = Math.floor((timeRemaining % (60 * 1000)) / 1000);
+    
+    return res.json({
+      ok: true,
+      timeRemaining: timeRemaining,
+      timeRemainingFormatted: {
+        days: days,
+        hours: hours,
+        minutes: minutes,
+        seconds: seconds,
+        total: timeRemaining
+      },
+      startTime: competitionStartTime,
+      endTime: competitionEndTime,
+      isActive: timeRemaining > 0,
+      endDate: new Date(competitionEndTime).toISOString(),
+    });
+  } catch (e) {
+    console.error("[rps] Competition time error:", e);
+    res.status(500).json({
+      ok: false,
+      error: e.message,
+      message: "Failed to get competition time",
+    });
+  }
+});
+
+/**
+ * Get SOL balance for a wallet
+ * GET /luna/rps/sol/balance?wallet=wallet_address
+ */
+app.get("/luna/rps/sol/balance", async (req, res) => {
+  try {
+    const { wallet } = req.query || {};
+    
+    if (!wallet || typeof wallet !== "string") {
+      return res.status(400).json({
+        ok: false,
+        error: "Invalid request",
+        message: "Wallet address is required",
+      });
+    }
+    
+    const rpcUrl = process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com";
+    let connection;
+    
+    try {
+      connection = new Connection(rpcUrl, "confirmed");
+      const walletPubKey = new PublicKey(wallet);
+      const balance = await connection.getBalance(walletPubKey);
+      const balanceInSol = balance / LAMPORTS_PER_SOL;
+      
+      return res.json({
+        ok: true,
+        wallet: wallet,
+        balance: balanceInSol,
+        balanceLamports: balance,
+      });
+    } catch (rpcError) {
+      console.error("[rps] SOL balance check RPC error:", rpcError.message);
+      throw new Error("Failed to fetch SOL balance: " + rpcError.message);
+    }
+  } catch (e) {
+    console.error("[rps] SOL balance check error:", e);
+    res.status(500).json({
+      ok: false,
+      error: e.message,
+      message: "Failed to check SOL balance",
+    });
+  }
+});
+
+/**
+ * Get match history for a wallet
+ * GET /luna/rps/history?wallet=wallet_address
+ */
+app.get("/luna/rps/history", async (req, res) => {
+  try {
+    const wallet = req.query.wallet;
+    
+    if (!wallet) {
+      return res.status(400).json({
+        ok: false,
+        error: "Invalid request",
+        message: "Wallet address is required",
+      });
+    }
+    
+    // TODO: Implement history from database
+    // For now, return empty history
+    return res.json({
+      ok: true,
+      history: [],
+      wallet: wallet,
+      message: "Match history will be available soon"
+    });
+  } catch (e) {
+    console.error("[rps] History error:", e);
+    res.status(500).json({
+      ok: false,
+      error: e.message,
+      message: "Failed to load match history",
+    });
+  }
+});
+
+/**
+ * Get player statistics
+ * GET /luna/rps/stats?wallet=wallet_address
+ */
+app.get("/luna/rps/stats", async (req, res) => {
+  try {
+    const wallet = req.query.wallet;
+    
+    if (!wallet) {
+      return res.status(400).json({
+        ok: false,
+        error: "Invalid request",
+        message: "Wallet address is required",
+      });
+    }
+    
+    // TODO: Implement stats from database
+    // For now, return empty stats
+    return res.json({
+      ok: true,
+      stats: {
+        totalMatches: 0,
+        wins: 0,
+        losses: 0,
+        draws: 0,
+        winRate: 0,
+        totalLunaWon: 0,
+        totalLunaLost: 0,
+      },
+      wallet: wallet,
+      message: "Statistics will be available soon"
+    });
+  } catch (e) {
+    console.error("[rps] Stats error:", e);
+    res.status(500).json({
+      ok: false,
+      error: e.message,
+      message: "Failed to load statistics",
+    });
+  }
+});
+
 // Route moved to before static files (line ~125)
 
 /**
@@ -3578,6 +4513,13 @@ app.get("/luna/admin/reset-stats", requireAdminSecret, (req, res) => {
     logError(e, { endpoint: "/luna/admin/reset-stats" });
     return res.status(500).json({ ok: false, error: "Failed to reset statistics" });
   }
+});
+
+// ----------------------
+// 404 Handler (must be after all routes)
+// ----------------------
+app.use((req, res) => {
+  res.status(404).sendFile(path.join(__dirname, "public", "404.html"));
 });
 
 // ----------------------
