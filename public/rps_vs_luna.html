@@ -526,6 +526,9 @@
       transform: scale(0.98) !important;
     }
   </style>
+  <link rel="stylesheet" href="/css/notifications.css">
+  <link rel="stylesheet" href="/css/referral.css">
+  <link rel="stylesheet" href="/css/chat.css">
 </head>
 <body>
   <div id="modeNavigation" style="position: fixed !important; top: 40px !important; left: 20px !important; display: flex !important; gap: 10px; z-index: 99999 !important; flex-wrap: wrap; pointer-events: auto !important; visibility: visible !important; opacity: 1 !important;">
@@ -1282,6 +1285,60 @@
         alert('Community link not loaded yet. Please wait a moment and try again.');
       }
     }
+  </script>
+  <script src="/js/notifications.js"></script>
+  <script src="/js/referral.js"></script>
+  <script src="/js/chat.js"></script>
+  <script>
+    // Initialize UI components immediately (will work with or without wallet)
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        // Initialize Notification System (show button even without wallet)
+        if (typeof notificationManager !== 'undefined') {
+          notificationManager.createUI();
+        }
+        
+        // Initialize Referral System (show UI even without wallet)
+        if (typeof referralManager !== 'undefined') {
+          referralManager.createUI();
+        }
+        
+        // Initialize Chat System (show chat even without wallet)
+        if (typeof chatManager !== 'undefined') {
+          chatManager.init(null);
+          chatManager.createUI('vs_luna_page', 'lobby');
+        }
+      }, 500);
+    });
+    
+    // Initialize UI components when wallet is available
+    function initializeUIComponents() {
+      const wallet = walletPublicKey || window.walletPublicKey || localStorage.getItem('walletAddress');
+      if (wallet) {
+        if (typeof notificationManager !== 'undefined') notificationManager.init(wallet);
+        if (typeof referralManager !== 'undefined') referralManager.init(wallet);
+        if (typeof chatManager !== 'undefined') {
+          chatManager.init(wallet);
+          const chatInput = document.getElementById('chat-input');
+          if (chatInput) {
+            chatInput.disabled = false;
+            chatInput.placeholder = 'Type a message...';
+          }
+        }
+      }
+    }
+    
+    // Hook into wallet connection
+    const originalConnectWallet = window.connectWallet;
+    if (originalConnectWallet) {
+      window.connectWallet = async function() {
+        const result = await originalConnectWallet();
+        setTimeout(initializeUIComponents, 500);
+        return result;
+      };
+    }
+    
+    setTimeout(() => initializeUIComponents(), 1500);
   </script>
 </body>
 </html>

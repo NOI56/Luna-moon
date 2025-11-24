@@ -946,6 +946,7 @@
     let isWaitingForOpponent = false;
     let matchStartTime = 0;
     let matchTimer = null;
+    let balanceUpdateInterval = null; // For real-time balance updates
 
     // Hand images - use real hand images from files
     // Place hand PNG files in public/images/hands/:
@@ -1828,7 +1829,6 @@
 
       // Real-time balance checking enabled
       const TEST_MODE = false; // Using real Luna token
-      let balanceUpdateInterval = null;
       
       // Check real balance from blockchain
       // Mint address will be read from backend (.env) automatically
@@ -2211,6 +2211,70 @@
     document.addEventListener('DOMContentLoaded', () => {
       loadContractAddress();
     });
+  </script>
+  <link rel="stylesheet" href="/css/notifications.css">
+  <link rel="stylesheet" href="/css/referral.css">
+  <link rel="stylesheet" href="/css/chat.css">
+  <script src="/js/notifications.js"></script>
+  <script src="/js/referral.js"></script>
+  <script src="/js/chat.js"></script>
+  <script>
+    // Initialize UI components immediately (will work with or without wallet)
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        // Initialize Notification System (show button even without wallet)
+        if (typeof notificationManager !== 'undefined') {
+          notificationManager.createUI();
+        }
+        
+        // Initialize Referral System (show UI even without wallet)
+        if (typeof referralManager !== 'undefined') {
+          referralManager.createUI();
+        }
+        
+        // Initialize Chat System (show chat even without wallet)
+        if (typeof chatManager !== 'undefined') {
+          chatManager.init(null);
+          chatManager.createUI('match_queue', 'match');
+        }
+      }, 500);
+    });
+    
+    // Initialize UI components when wallet is available
+    function initializeUIComponents() {
+      // Get wallet from global scope
+      const wallet = walletPublicKey;
+      
+      if (wallet) {
+        // Initialize Notification System with wallet
+        if (typeof notificationManager !== 'undefined') {
+          notificationManager.init(wallet);
+        }
+        
+        // Initialize Referral System with wallet
+        if (typeof referralManager !== 'undefined') {
+          referralManager.init(wallet);
+        }
+        
+        // Initialize Chat System with wallet
+        if (typeof chatManager !== 'undefined') {
+          chatManager.init(wallet);
+          // Enable chat input
+          const chatInput = document.getElementById('chat-input');
+          if (chatInput) {
+            chatInput.disabled = false;
+            chatInput.placeholder = 'Type a message...';
+          }
+        }
+      }
+    }
+    
+    // Also check if wallet already connected
+    setTimeout(() => {
+      if (walletPublicKey) {
+        initializeUIComponents();
+      }
+    }, 1500);
   </script>
 </body>
 </html>

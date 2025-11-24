@@ -1,0 +1,227 @@
+/* Notification System Styles */
+
+.notification-btn {
+  background: rgba(0, 255, 255, 0.1);
+  border: 2px solid #00ffff;
+  color: #00ffff;
+  padding: 10px 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  position: relative;
+  backdrop-filter: blur(5px);
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.notification-btn:hover {
+  background: rgba(0, 255, 255, 0.2);
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+  transform: scale(1.05);
+}
+
+.notification-badge {
+  background: #ff0000;
+  color: white;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  margin-left: 5px;
+  min-width: 18px;
+  text-align: center;
+  display: none;
+}
+
+.notification-panel {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  width: 400px;
+  max-height: 600px;
+  background: rgba(10, 10, 26, 0.95);
+  border: 2px solid #00ffff;
+  border-radius: 12px;
+  box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+  z-index: 10001;
+  display: none;
+  flex-direction: column;
+  backdrop-filter: blur(10px);
+}
+
+.notification-panel.open {
+  display: flex;
+}
+
+.notification-header {
+  padding: 15px;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.3);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.notification-header h3 {
+  margin: 0;
+  color: #00ffff;
+  font-size: 1.2rem;
+}
+
+.notification-close {
+  background: none;
+  border: none;
+  color: #00ffff;
+  font-size: 2rem;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  line-height: 1;
+}
+
+.notification-close:hover {
+  color: #ff0000;
+}
+
+.notification-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+.notification-empty {
+  text-align: center;
+  color: rgba(0, 255, 255, 0.5);
+  padding: 40px 20px;
+}
+
+.notification-item {
+  padding: 12px;
+  margin-bottom: 10px;
+  background: rgba(0, 255, 255, 0.05);
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  display: flex;
+  gap: 12px;
+}
+
+.notification-item:hover {
+  background: rgba(0, 255, 255, 0.1);
+  border-color: #00ffff;
+}
+
+.notification-item.unread {
+  border-left: 4px solid #00ffff;
+  background: rgba(0, 255, 255, 0.1);
+}
+
+.notification-item.read {
+  opacity: 0.7;
+}
+
+.notification-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.notification-content {
+  flex: 1;
+}
+
+.notification-title {
+  font-weight: bold;
+  color: #00ffff;
+  margin-bottom: 4px;
+}
+
+.notification-message {
+  color: rgba(0, 255, 255, 0.8);
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+}
+
+.notification-time {
+  color: rgba(0, 255, 255, 0.5);
+  font-size: 0.75rem;
+}
+
+.notification-dot {
+  width: 8px;
+  height: 8px;
+  background: #00ffff;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 8px;
+  box-shadow: 0 0 10px #00ffff;
+}
+
+.notification-footer {
+  padding: 10px;
+  border-top: 1px solid rgba(0, 255, 255, 0.3);
+  text-align: center;
+}
+
+.notification-footer button {
+  background: rgba(0, 255, 255, 0.1);
+  border: 1px solid #00ffff;
+  color: #00ffff;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.notification-footer button:hover {
+  background: rgba(0, 255, 255, 0.2);
+}
+
+/* Toast Notifications */
+.notification-toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: rgba(10, 10, 26, 0.95);
+  border: 2px solid #00ffff;
+  border-radius: 12px;
+  padding: 15px 20px;
+  min-width: 300px;
+  max-width: 400px;
+  box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+  z-index: 10002;
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  transform: translateX(400px);
+  opacity: 0;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.notification-toast.show {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.notification-toast-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.notification-toast-content {
+  flex: 1;
+}
+
+.notification-toast-title {
+  font-weight: bold;
+  color: #00ffff;
+  margin-bottom: 4px;
+}
+
+.notification-toast-message {
+  color: rgba(0, 255, 255, 0.8);
+  font-size: 0.9rem;
+}
+

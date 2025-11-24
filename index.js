@@ -7,6 +7,7 @@ import { WebSocketServer } from "ws";
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
+import crypto from "crypto";
 import { Connection, PublicKey, Keypair, SystemProgram, Transaction, sendAndConfirmTransaction, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import bs58 from "bs58";
 import fetch from "node-fetch";
@@ -156,7 +157,7 @@ const csrfTokens = new Map(); // In-memory token store (use Redis in production)
 const CSRF_TOKEN_TTL = 3600000; // 1 hour
 
 function generateCSRFToken() {
-  return require('crypto').randomBytes(32).toString('hex');
+  return crypto.randomBytes(32).toString('hex');
 }
 
 // Generate CSRF token endpoint
@@ -235,6 +236,57 @@ const FEE_PERCENTAGE = 0.01; // 1% fee
 // Leaderboard System
 // Map<wallet, { wins: number, losses: number, totalWon: number, totalSolWon: number }>
 const rpsLeaderboard = new Map();
+
+// Anti-Abuse System - ป้องกันการสร้างหลายกระเป๋าเล่นกับตัวเอง
+// IP-based tracking
+const ipWalletMap = new Map(); // Map<ip, Set<wallet>> - เก็บ wallet ที่ใช้ IP เดียวกัน
+const walletIpMap = new Map(); // Map<wallet, ip> - เก็บ IP ของแต่ละ wallet
+const ipActivityMap = new Map(); // Map<ip, { lastGameTime, gameCount, cooldownUntil }>
+
+// Wallet pair tracking - ตรวจจับ wallet ที่เล่นกันบ่อยเกินไป
+const walletPairMatches = new Map(); // Map<"wallet1_wallet2", { count, lastMatch, firstMatch }>
+const SUSPICIOUS_PAIR_THRESHOLD = 5; // ถ้าเล่นกันเกิน 5 ครั้งใน 24 ชั่วโมง = น่าสงสัย
+const SUSPICIOUS_PAIR_TIME_WINDOW = 24 * 60 * 60 * 1000; // 24 ชั่วโมง
+
+// Wallet opponent tracking - ติดตามว่า wallet แต่ละตัวเล่นกับคนอื่นบ้างหรือไม่
+const walletOpponents = new Map(); // Map<wallet, Set<opponentWallet>> - เก็บว่า wallet นี้เล่นกับใครบ้าง
+const walletTotalGames = new Map(); // Map<wallet, totalGames> - จำนวนเกมทั้งหมดของ wallet
+
+// Cooldown settings
+const GAME_COOLDOWN = 60 * 1000; // 1 นาทีระหว่างเกม (60,000ms)
+// IP_GAME_LIMIT_PER_HOUR - ปิดการใช้งานแล้ว (ไม่จำกัดจำนวนเกมต่อชั่วโมง)
+// ใช้ระบบตรวจสอบ IP self-play แทน
+
+// IP Self-Play Detection - ตรวจจับ IP ที่สร้าง wallet หลายตัวมาเล่นกันเอง
+const IP_SELF_PLAY_THRESHOLD = 10; // ถ้า IP เดียวกันมี wallet หลายตัวเล่นกันเองเกิน 10 รอบ = ตัดสิทธิ์รับรางวัล
+const ipSelfPlayMatches = new Map(); // Map<ip, { walletPairs: Map<"wallet1_wallet2", count>, totalSelfPlayCount }>
+
+// Suspicious activity log
+const suspiciousActivityLog = []; // Array of { timestamp, type, wallet1, wallet2, ip, reason }
+const MAX_SUSPICIOUS_LOG = 1000; // เก็บ log สูงสุด 1000 รายการ
+
+// Blocked wallets and IPs
+const blockedWallets = new Set(); // Set of blocked wallet addresses
+const blockedIps = new Set(); // Set of blocked IP addresses
+
+// Reward banned wallets - ตัดสิทธิ์รับรางวัล (แต่ยังเล่นได้)
+const rewardBannedWallets = new Set(); // Set of wallet addresses that are banned from receiving rewards
+const rewardBannedIps = new Set(); // Set of IP addresses that are banned from receiving rewards
+
+// Notification System - ระบบแจ้งเตือน
+const userNotifications = new Map(); // Map<wallet, Array<notification>> - เก็บ notifications สำหรับแต่ละ wallet
+
+// Referral System - ระบบแนะนำเพื่อน
+const referralData = new Map(); // Map<referrerWallet, { referrals: Set<wallet>, totalRewards: number, stats: {...} }>
+const referralMap = new Map(); // Map<wallet, referrerWallet> - เก็บว่า wallet นี้มาจาก referrer ใคร
+const REFERRAL_REWARD_SIGNUP = 100; // รางวัลเมื่อเพื่อนลงทะเบียน (Luna)
+const REFERRAL_REWARD_FIRST_GAME = 200; // รางวัลเมื่อเพื่อนเล่นเกมแรก (Luna)
+const REFERRAL_REWARD_TOP10 = 1000; // รางวัลเมื่อเพื่อนติด Top 10 (Luna)
+
+// Chat System - ระบบแชต
+const chatRooms = new Map(); // Map<roomId, { messages: Array, participants: Set<wallet>, createdAt }>
+const CHAT_MESSAGE_LIMIT = 100; // จำกัดจำนวนข้อความต่อห้อง
+const CHAT_MESSAGE_EXPIRY = 24 * 60 * 60 * 1000; // ข้อความหมดอายุ 24 ชั่วโมง
 
 // Weekly Competition System
 // Competition ends every Monday at 00:00:00 UTC (Universal Time)
@@ -328,6 +380,368 @@ setInterval(async () => {
 
 // Initialize on startup
 initializeCompetition();
+
+/**
+ * Anti-Abuse Helper Functions
+ */
+
+/**
+ * Get client IP address from request
+ */
+function getClientIp(req) {
+  return req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 
+         req.headers['x-real-ip'] || 
+         req.connection?.remoteAddress || 
+         req.socket?.remoteAddress ||
+         'unknown';
+}
+
+/**
+ * Log suspicious activity
+ */
+function logSuspiciousActivity(type, wallet1, wallet2, ip, reason) {
+  const logEntry = {
+    timestamp: Date.now(),
+    type: type,
+    wallet1: wallet1,
+    wallet2: wallet2 || null,
+    ip: ip,
+    reason: reason
+  };
+  
+  suspiciousActivityLog.push(logEntry);
+  
+  // Keep only last MAX_SUSPICIOUS_LOG entries
+  if (suspiciousActivityLog.length > MAX_SUSPICIOUS_LOG) {
+    suspiciousActivityLog.shift();
+  }
+  
+  console.warn(`[anti-abuse] ⚠️ Suspicious activity detected: ${type} - ${reason}`, {
+    wallet1: wallet1?.substring(0, 8) + '...',
+    wallet2: wallet2?.substring(0, 8) + '...',
+    ip: ip
+  });
+}
+
+/**
+ * Get total number of unique players in the system
+ */
+function getTotalUniquePlayers() {
+  return rpsLeaderboard.size;
+}
+
+/**
+ * Get number of unique opponents for a wallet
+ */
+function getWalletOpponentCount(wallet) {
+  return walletOpponents.get(wallet)?.size || 0;
+}
+
+/**
+ * Get total games played by a wallet
+ */
+function getWalletTotalGames(wallet) {
+  return walletTotalGames.get(wallet) || 0;
+}
+
+/**
+ * Calculate dynamic threshold based on player count
+ * ถ้ามีผู้เล่นน้อย = threshold สูงขึ้น (ยืดหยุ่นมากขึ้น)
+ */
+function getDynamicSuspiciousThreshold() {
+  const totalPlayers = getTotalUniquePlayers();
+  
+  // ถ้ามีผู้เล่นน้อยกว่า 5 คน = threshold สูงมาก (20 ครั้ง)
+  if (totalPlayers < 5) {
+    return 20;
+  }
+  // ถ้ามีผู้เล่น 5-10 คน = threshold ปานกลาง (10 ครั้ง)
+  else if (totalPlayers < 10) {
+    return 10;
+  }
+  // ถ้ามีผู้เล่นมาก = threshold ต่ำ (5 ครั้ง) - เดิม
+  else {
+    return SUSPICIOUS_PAIR_THRESHOLD;
+  }
+}
+
+/**
+ * Check if wallet pair is suspicious (เล่นกันบ่อยเกินไป)
+ * ปรับปรุงให้ตรวจสอบว่า wallet แต่ละตัวเล่นกับคนอื่นด้วยหรือไม่
+ */
+function isSuspiciousWalletPair(wallet1, wallet2) {
+  const pairKey1 = `${wallet1}_${wallet2}`;
+  const pairKey2 = `${wallet2}_${wallet1}`;
+  
+  const pairData1 = walletPairMatches.get(pairKey1) || walletPairMatches.get(pairKey2);
+  
+  if (!pairData1) {
+    return false;
+  }
+  
+  const now = Date.now();
+  const timeSinceFirstMatch = now - pairData1.firstMatch;
+  
+  // ใช้ dynamic threshold ตามจำนวนผู้เล่น
+  const dynamicThreshold = getDynamicSuspiciousThreshold();
+  
+  // ถ้าเล่นกันเกิน threshold ครั้งใน time window
+  if (pairData1.count >= dynamicThreshold && timeSinceFirstMatch <= SUSPICIOUS_PAIR_TIME_WINDOW) {
+    // ตรวจสอบว่า wallet แต่ละตัวเล่นกับคนอื่นบ้างหรือไม่
+    const wallet1Opponents = getWalletOpponentCount(wallet1);
+    const wallet2Opponents = getWalletOpponentCount(wallet2);
+    const wallet1TotalGames = getWalletTotalGames(wallet1);
+    const wallet2TotalGames = getWalletTotalGames(wallet2);
+    
+    // ถ้า wallet ทั้งสองตัวเล่นกับคนอื่นน้อยมาก (น้อยกว่า 2 คน) และเล่นกันเองบ่อย = น่าสงสัย
+    // แต่ถ้าเล่นกับคนอื่นด้วย = อาจจะไม่น่าสงสัย (อาจจะมีผู้เล่นน้อยจริงๆ)
+    if (wallet1Opponents <= 1 && wallet2Opponents <= 1) {
+      // ทั้งสองตัวเล่นกับคนอื่นน้อยมาก = น่าสงสัยมาก
+      return true;
+    }
+    
+    // ตรวจสอบว่า pair นี้เป็นคู่เดียวที่เล่นกันหรือไม่
+    // ถ้า wallet1 เล่นกับคนอื่นมาก แต่เล่นกับ wallet2 บ่อย = อาจจะไม่น่าสงสัย
+    // แต่ถ้า wallet1 เล่นกับคนอื่นน้อย และเล่นกับ wallet2 บ่อย = น่าสงสัย
+    
+    // คำนวณสัดส่วน: เกมที่เล่นกับ wallet2 ต่อเกมทั้งหมด
+    const pairGames = pairData1.count;
+    const wallet1PairRatio = wallet1TotalGames > 0 ? pairGames / wallet1TotalGames : 1;
+    const wallet2PairRatio = wallet2TotalGames > 0 ? pairGames / wallet2TotalGames : 1;
+    
+    // ถ้าเกมที่เล่นกับคู่นี้มากกว่า 70% ของเกมทั้งหมด = น่าสงสัย
+    if (wallet1PairRatio > 0.7 || wallet2PairRatio > 0.7) {
+      // แต่ถ้าเล่นกับคนอื่นมากกว่า 3 คน = อาจจะไม่น่าสงสัย
+      if (wallet1Opponents >= 3 && wallet2Opponents >= 3) {
+        return false; // มีผู้เล่นหลากหลาย = ไม่น่าสงสัย
+      }
+      return true; // น่าสงสัย
+    }
+    
+    // ถ้าไม่เข้าเงื่อนไขข้างบน = ไม่น่าสงสัย
+    return false;
+  }
+  
+  return false;
+}
+
+/**
+ * Record wallet pair match
+ */
+function recordWalletPairMatch(wallet1, wallet2) {
+  const pairKey = `${wallet1}_${wallet2}`;
+  const now = Date.now();
+  
+  const existing = walletPairMatches.get(pairKey);
+  if (existing) {
+    existing.count++;
+    existing.lastMatch = now;
+  } else {
+    walletPairMatches.set(pairKey, {
+      count: 1,
+      lastMatch: now,
+      firstMatch: now
+    });
+  }
+  
+  // Track opponents for each wallet
+  if (!walletOpponents.has(wallet1)) {
+    walletOpponents.set(wallet1, new Set());
+  }
+  if (!walletOpponents.has(wallet2)) {
+    walletOpponents.set(wallet2, new Set());
+  }
+  
+  walletOpponents.get(wallet1).add(wallet2);
+  walletOpponents.get(wallet2).add(wallet1);
+  
+  // Track total games
+  walletTotalGames.set(wallet1, (walletTotalGames.get(wallet1) || 0) + 1);
+  walletTotalGames.set(wallet2, (walletTotalGames.get(wallet2) || 0) + 1);
+  
+  // IP Self-Play Detection - ตรวจสอบว่า IP เดียวกันมี wallet หลายตัวเล่นกันเองหรือไม่
+  const wallet1Ip = walletIpMap.get(wallet1);
+  const wallet2Ip = walletIpMap.get(wallet2);
+  
+  // ถ้า wallet ทั้งสองมาจาก IP เดียวกัน = น่าสงสัย (self-play)
+  if (wallet1Ip && wallet2Ip && wallet1Ip === wallet2Ip && wallet1Ip !== 'unknown') {
+    if (!ipSelfPlayMatches.has(wallet1Ip)) {
+      ipSelfPlayMatches.set(wallet1Ip, {
+        walletPairs: new Map(),
+        totalSelfPlayCount: 0
+      });
+    }
+    
+    const ipData = ipSelfPlayMatches.get(wallet1Ip);
+    const pairKeyForIp = `${wallet1}_${wallet2}`;
+    
+    // นับจำนวนครั้งที่ wallet pair นี้เล่นกันเอง
+    if (!ipData.walletPairs.has(pairKeyForIp)) {
+      ipData.walletPairs.set(pairKeyForIp, 0);
+    }
+    ipData.walletPairs.set(pairKeyForIp, ipData.walletPairs.get(pairKeyForIp) + 1);
+    ipData.totalSelfPlayCount++;
+    
+    // ถ้าเกิน threshold = ตัดสิทธิ์รับรางวัล
+    if (ipData.totalSelfPlayCount > IP_SELF_PLAY_THRESHOLD) {
+      // ตัดสิทธิ์รับรางวัลสำหรับ wallet ทั้งหมดที่มาจาก IP นี้
+      const walletsFromIp = ipWalletMap.get(wallet1Ip) || new Set();
+      walletsFromIp.forEach(wallet => {
+        rewardBannedWallets.add(wallet);
+      });
+      rewardBannedIps.add(wallet1Ip);
+      
+      logSuspiciousActivity('ip_self_play_reward_ban', wallet1, wallet2, wallet1Ip, 
+        `IP ${wallet1Ip} has ${ipData.totalSelfPlayCount} self-play matches (threshold: ${IP_SELF_PLAY_THRESHOLD}). All wallets from this IP are banned from rewards.`);
+      
+      console.warn(`[anti-abuse] ⚠️ IP ${wallet1Ip} detected self-play ${ipData.totalSelfPlayCount} times. All wallets from this IP are now banned from receiving rewards.`);
+    }
+  }
+  
+  // Cleanup old pairs (older than 7 days)
+  const cleanupTime = now - (7 * 24 * 60 * 60 * 1000);
+  for (const [key, data] of walletPairMatches.entries()) {
+    if (data.lastMatch < cleanupTime) {
+      walletPairMatches.delete(key);
+    }
+  }
+}
+
+/**
+ * Check IP rate limit (ปิดการใช้งานแล้ว - ไม่จำกัดจำนวนเกมต่อชั่วโมง)
+ * ยังคงตรวจสอบ cooldown เท่านั้น
+ */
+function checkIpRateLimit(ip) {
+  const now = Date.now();
+  const ipData = ipActivityMap.get(ip) || { gameCount: 0, lastGameTime: 0, cooldownUntil: 0 };
+  
+  // Check cooldown only (ไม่จำกัดจำนวนเกมต่อชั่วโมง)
+  if (ipData.cooldownUntil > now) {
+    const remainingCooldown = Math.ceil((ipData.cooldownUntil - now) / 1000);
+    return {
+      allowed: false,
+      reason: `Cooldown active. Please wait ${remainingCooldown} seconds.`,
+      remainingCooldown: remainingCooldown
+    };
+  }
+  
+  // ไม่จำกัดจำนวนเกมต่อชั่วโมงแล้ว - ใช้ระบบตรวจสอบ IP self-play แทน
+  return { allowed: true };
+}
+
+/**
+ * Update IP activity after game
+ */
+function updateIpActivity(ip) {
+  const now = Date.now();
+  const ipData = ipActivityMap.get(ip) || { gameCount: 0, lastGameTime: 0, cooldownUntil: 0 };
+  
+  ipData.gameCount++;
+  ipData.lastGameTime = now;
+  ipData.cooldownUntil = now + GAME_COOLDOWN;
+  
+  ipActivityMap.set(ip, ipData);
+}
+
+/**
+ * Track wallet-IP relationship
+ */
+function trackWalletIp(wallet, ip) {
+  // Track IP -> wallets
+  if (!ipWalletMap.has(ip)) {
+    ipWalletMap.set(ip, new Set());
+  }
+  ipWalletMap.get(ip).add(wallet);
+  
+  // Track wallet -> IP
+  walletIpMap.set(wallet, ip);
+  
+  // Check if IP has too many wallets (suspicious)
+  const walletsOnIp = ipWalletMap.get(ip);
+  if (walletsOnIp.size > 3) {
+    logSuspiciousActivity('multiple_wallets_same_ip', wallet, null, ip, 
+      `IP ${ip} is associated with ${walletsOnIp.size} different wallets`);
+  }
+}
+
+/**
+ * Validate game request (comprehensive anti-abuse check)
+ */
+function validateGameRequest(wallet1, wallet2, req) {
+  const ip = getClientIp(req);
+  
+  // 0. Check if wallet or IP is blocked
+  if (blockedWallets.has(wallet1) || blockedWallets.has(wallet2)) {
+    logSuspiciousActivity('blocked_wallet_attempt', wallet1, wallet2, ip, "Attempted to use blocked wallet");
+    return {
+      valid: false,
+      error: "This wallet has been blocked due to suspicious activity",
+      code: "BLOCKED_WALLET"
+    };
+  }
+  
+  if (blockedIps.has(ip)) {
+    logSuspiciousActivity('blocked_ip_attempt', wallet1, wallet2, ip, "Attempted to use blocked IP");
+    return {
+      valid: false,
+      error: "This IP address has been blocked due to suspicious activity",
+      code: "BLOCKED_IP"
+    };
+  }
+  
+  // 1. Check if trying to play with self (should be blocked by existing code, but double-check)
+  if (wallet1 === wallet2) {
+    return {
+      valid: false,
+      error: "Cannot play with yourself",
+      code: "SELF_PLAY"
+    };
+  }
+  
+  // 2. Check IP cooldown (ไม่จำกัดจำนวนเกมต่อชั่วโมงแล้ว)
+  const rateLimitCheck = checkIpRateLimit(ip);
+  if (!rateLimitCheck.allowed) {
+    // แค่ตรวจสอบ cooldown เท่านั้น (ไม่ใช่ rate limit)
+    return {
+      valid: false,
+      error: rateLimitCheck.reason,
+      code: "COOLDOWN"
+    };
+  }
+  
+  // 3. Check suspicious wallet pair (ปรับปรุงให้ยืดหยุ่นตามจำนวนผู้เล่น)
+  if (isSuspiciousWalletPair(wallet1, wallet2)) {
+    const pairCount = walletPairMatches.get(`${wallet1}_${wallet2}`)?.count || walletPairMatches.get(`${wallet2}_${wallet1}`)?.count || 0;
+    const wallet1Opponents = getWalletOpponentCount(wallet1);
+    const wallet2Opponents = getWalletOpponentCount(wallet2);
+    const totalPlayers = getTotalUniquePlayers();
+    
+    logSuspiciousActivity('suspicious_pair', wallet1, wallet2, ip, 
+      `Wallet pair has played together ${pairCount} times recently. Wallet1 opponents: ${wallet1Opponents}, Wallet2 opponents: ${wallet2Opponents}, Total players: ${totalPlayers}`);
+    return {
+      valid: false,
+      error: "Suspicious activity detected. This wallet pair has played together too frequently compared to their other opponents.",
+      code: "SUSPICIOUS_PAIR"
+    };
+  }
+  
+  // 4. Track wallet-IP relationship
+  trackWalletIp(wallet1, ip);
+  if (wallet2) {
+    trackWalletIp(wallet2, ip);
+    
+    // Check if both wallets from same IP
+    const wallet1Ip = walletIpMap.get(wallet1);
+    const wallet2Ip = walletIpMap.get(wallet2);
+    if (wallet1Ip === wallet2Ip && wallet1Ip !== 'unknown') {
+      logSuspiciousActivity('same_ip_match', wallet1, wallet2, ip, 
+        "Two wallets from same IP trying to play together");
+      // Allow but log - might be legitimate (same network)
+    }
+  }
+  
+  return { valid: true };
+}
 
 // Reward Pool System
 let rewardPool = 0; // Total SOL in reward pool
@@ -704,6 +1118,15 @@ app.post("/luna/rps/queue", async (req, res) => {
         player1: wallet,
         player2: matchedPlayer,
       });
+      
+      // Send notifications to both players
+      sendNotification(wallet, 'match_found', 'Match Found!', 
+        `You've been matched with ${matchedPlayer.substring(0, 8)}...`, 
+        { matchId: matchId, opponent: matchedPlayer });
+      
+      sendNotification(matchedPlayer, 'match_found', 'Match Found!', 
+        `You've been matched with ${wallet.substring(0, 8)}...`, 
+        { matchId: matchId, opponent: wallet });
 
       return res.json({
         ok: true,
@@ -884,6 +1307,19 @@ app.post("/luna/rps/betting/create", async (req, res) => {
       }
     }
     
+    // Anti-abuse: Check IP cooldown only (ไม่จำกัดจำนวนเกมต่อชั่วโมงแล้ว)
+    const ip = getClientIp(req);
+    const rateLimitCheck = checkIpRateLimit(ip);
+    if (!rateLimitCheck.allowed) {
+      // แค่ตรวจสอบ cooldown เท่านั้น
+      return res.status(429).json({
+        ok: false,
+        error: "Cooldown active",
+        message: rateLimitCheck.reason,
+        code: "COOLDOWN"
+      });
+    }
+    
     const roomId = `betting_${wallet}_${Date.now()}`;
     rpsBettingRooms.set(roomId, {
       creator: wallet,
@@ -919,6 +1355,11 @@ app.post("/luna/rps/betting/create", async (req, res) => {
       creator: wallet,
       betAmount: betAmount,
     });
+    
+    // Send notification to all users about new room
+    sendNotification(null, 'room_new', 'New Betting Room!', 
+      `New room created with bet amount: ${betAmount} Luna tokens`, 
+      { roomId: roomId, creator: wallet, betAmount: betAmount });
     
     console.log(`[rps-betting] Room created: ${roomId} by ${wallet} with bet ${betAmount}`);
     
@@ -1118,6 +1559,17 @@ app.post("/luna/rps/betting/join", async (req, res) => {
         ok: false,
         error: "Room full",
         message: "This room already has a challenger",
+      });
+    }
+    
+    // Anti-abuse: Validate game request
+    const validation = validateGameRequest(room.creator, wallet, req);
+    if (!validation.valid) {
+      return res.status(403).json({
+        ok: false,
+        error: validation.error,
+        code: validation.code,
+        message: validation.error
       });
     }
     
@@ -1348,6 +1800,15 @@ app.post("/luna/rps/betting/submit", async (req, res) => {
       const betAmountInSol = await lunaToSol(room.betAmount);
       const totalPot = betAmountInSol * 2; // Both players bet the same amount
       
+      // Anti-abuse: Record wallet pair match
+      recordWalletPairMatch(room.creator, room.player2);
+      
+      // Anti-abuse: Update IP activity (both players)
+      const creatorIp = walletIpMap.get(room.creator) || getClientIp(req);
+      const player2Ip = walletIpMap.get(room.player2) || getClientIp(req);
+      updateIpActivity(creatorIp);
+      updateIpActivity(player2Ip);
+      
       // Update leaderboard stats
       if (!rpsLeaderboard.has(room.creator)) {
         rpsLeaderboard.set(room.creator, { wins: 0, losses: 0, totalWon: 0, totalSolWon: 0 });
@@ -1458,6 +1919,22 @@ app.get("/about.html", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "about.html"));
 });
 
+// Serve JS and CSS files directly from public folder (MUST be before /public static)
+app.use("/js", express.static(path.join(__dirname, "public", "js"), {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript');
+    }
+  }
+}));
+app.use("/css", express.static(path.join(__dirname, "public", "css"), {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css');
+    }
+  }
+}));
+
 app.use("/public", express.static(path.join(__dirname, "public")));
 
 const clients = new Set();
@@ -1549,6 +2026,235 @@ function broadcast(obj) {
   if (obj.type === "rps_match_found") {
     console.log(`[ws] Broadcasted ${obj.type} to ${sentCount} client(s) (total clients: ${clients.size})`);
   }
+}
+
+/**
+ * Notification System Helper Functions
+ */
+
+/**
+ * Send notification to specific wallet (or broadcast to all if wallet is null)
+ */
+function sendNotification(wallet, type, title, message, data = {}) {
+  const notification = {
+    id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    type: type, // 'room_new', 'match_found', 'reward_time', 'referral_reward', etc.
+    title: title,
+    message: message,
+    data: data,
+    timestamp: Date.now(),
+    read: false
+  };
+  
+  if (wallet) {
+    // Send to specific wallet
+    if (!userNotifications.has(wallet)) {
+      userNotifications.set(wallet, []);
+    }
+    
+    const notifications = userNotifications.get(wallet);
+    notifications.push(notification);
+    
+    // Keep only last 50 notifications per wallet
+    if (notifications.length > 50) {
+      notifications.shift();
+    }
+    
+    // Broadcast notification via WebSocket to specific wallet
+    broadcast({
+      type: 'notification',
+      wallet: wallet,
+      notification: notification
+    });
+    
+    console.log(`[notification] Sent ${type} notification to ${wallet.substring(0, 8)}...`);
+  } else {
+    // Broadcast to all users
+    broadcast({
+      type: 'notification',
+      notification: notification
+    });
+    
+    console.log(`[notification] Broadcasted ${type} notification to all users`);
+  }
+}
+
+/**
+ * Get notifications for a wallet
+ */
+function getNotifications(wallet, unreadOnly = false) {
+  const notifications = userNotifications.get(wallet) || [];
+  if (unreadOnly) {
+    return notifications.filter(n => !n.read);
+  }
+  return notifications;
+}
+
+/**
+ * Mark notification as read
+ */
+function markNotificationRead(wallet, notificationId) {
+  const notifications = userNotifications.get(wallet);
+  if (!notifications) return false;
+  
+  const notification = notifications.find(n => n.id === notificationId);
+  if (notification) {
+    notification.read = true;
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Referral System Helper Functions
+ */
+
+/**
+ * Register referral - ลงทะเบียนว่า wallet นี้มาจาก referrer
+ */
+function registerReferral(wallet, referrerWallet) {
+  if (!referrerWallet || referrerWallet === wallet) {
+    return false; // Cannot refer yourself
+  }
+  
+  if (referralMap.has(wallet)) {
+    return false; // Already referred
+  }
+  
+  referralMap.set(wallet, referrerWallet);
+  
+  if (!referralData.has(referrerWallet)) {
+    referralData.set(referrerWallet, {
+      referrals: new Set(),
+      totalRewards: 0,
+      stats: {
+        signups: 0,
+        firstGames: 0,
+        top10: 0
+      }
+    });
+  }
+  
+  const refData = referralData.get(referrerWallet);
+  refData.referrals.add(wallet);
+  refData.stats.signups++;
+  
+  // Send referral reward to referrer
+  sendNotification(referrerWallet, 'referral_reward', 'New Referral!', 
+    `${wallet.substring(0, 8)}... signed up using your link!`, 
+    { reward: REFERRAL_REWARD_SIGNUP, wallet: wallet });
+  
+  console.log(`[referral] ${wallet.substring(0, 8)}... referred by ${referrerWallet.substring(0, 8)}...`);
+  return true;
+}
+
+/**
+ * Get referral link for a wallet
+ */
+function getReferralLink(wallet) {
+  return `${process.env.FRONTEND_URL || 'http://localhost:8787'}?ref=${wallet}`;
+}
+
+/**
+ * Get referral stats for a wallet
+ */
+function getReferralStats(wallet) {
+  const refData = referralData.get(wallet);
+  if (!refData) {
+    return {
+      totalReferrals: 0,
+      totalRewards: 0,
+      referrals: [],
+      stats: {
+        signups: 0,
+        firstGames: 0,
+        top10: 0
+      },
+      referralLink: getReferralLink(wallet)
+    };
+  }
+  
+  return {
+    totalReferrals: refData.referrals.size,
+    totalRewards: refData.totalRewards,
+    referrals: Array.from(refData.referrals),
+    stats: refData.stats,
+    referralLink: getReferralLink(wallet)
+  };
+}
+
+/**
+ * Chat System Helper Functions
+ */
+
+/**
+ * Create or get chat room
+ */
+function getOrCreateChatRoom(roomId, roomType = 'lobby') {
+  if (!chatRooms.has(roomId)) {
+    chatRooms.set(roomId, {
+      messages: [],
+      participants: new Set(),
+      createdAt: Date.now(),
+      type: roomType // 'lobby', 'betting', 'match'
+    });
+  }
+  return chatRooms.get(roomId);
+}
+
+/**
+ * Send chat message
+ */
+function sendChatMessage(roomId, wallet, message, username = null) {
+  const room = getOrCreateChatRoom(roomId);
+  
+  // Add sender to participants
+  room.participants.add(wallet);
+  
+  // Clean old messages (older than expiry)
+  const now = Date.now();
+  room.messages = room.messages.filter(msg => (now - msg.timestamp) < CHAT_MESSAGE_EXPIRY);
+  
+  // Limit message count
+  if (room.messages.length >= CHAT_MESSAGE_LIMIT) {
+    room.messages.shift();
+  }
+  
+  const chatMessage = {
+    id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    wallet: wallet,
+    username: username || wallet.substring(0, 8) + '...',
+    message: message,
+    timestamp: Date.now()
+  };
+  
+  room.messages.push(chatMessage);
+  
+  // Broadcast message via WebSocket
+  broadcast({
+    type: 'chat_message',
+    roomId: roomId,
+    message: chatMessage
+  });
+  
+  console.log(`[chat] ${wallet.substring(0, 8)}... sent message in room ${roomId}`);
+  return chatMessage;
+}
+
+/**
+ * Get chat messages for a room
+ */
+function getChatMessages(roomId, limit = 50) {
+  const room = chatRooms.get(roomId);
+  if (!room) {
+    return [];
+  }
+  
+  // Clean old messages
+  const now = Date.now();
+  room.messages = room.messages.filter(msg => (now - msg.timestamp) < CHAT_MESSAGE_EXPIRY);
+  
+  return room.messages.slice(-limit);
 }
 
 // ----------------------
@@ -3782,19 +4488,39 @@ async function distributeRewards(totalRewardPool = null) {
     // Distribute to top 5
     for (let i = 0; i < top5.length; i++) {
       const rank = i + 1;
+      const wallet = top5[i].wallet;
       const percentage = REWARD_PERCENTAGES[rank];
       const amount = poolAmount * percentage;
       
-      if (amount > 0) {
-        console.log(`[rps-rewards] Sending ${amount.toFixed(6)} SOL (${percentage * 100}%) to rank ${rank}: ${top5[i].wallet.substring(0, 8)}...`);
-        const signature = await sendSol(top5[i].wallet, amount);
+      // ตรวจสอบว่า wallet ถูกตัดสิทธิ์รับรางวัลหรือไม่
+      if (rewardBannedWallets.has(wallet)) {
+        const walletIp = walletIpMap.get(wallet) || 'unknown';
+        console.warn(`[rps-rewards] ⚠️ Wallet ${wallet.substring(0, 8)}... (rank ${rank}) is banned from receiving rewards due to IP self-play detection (IP: ${walletIp})`);
         distributions.push({
           rank: rank,
-          wallet: top5[i].wallet,
+          wallet: wallet,
+          amount: amount,
+          percentage: percentage * 100,
+          signature: null,
+          success: false,
+          banned: true,
+          reason: "IP self-play detected - wallet banned from rewards"
+        });
+        // ไม่ส่งรางวัลให้ wallet นี้ - เงินจะไปที่ distribution wallet แทน
+        continue;
+      }
+      
+      if (amount > 0) {
+        console.log(`[rps-rewards] Sending ${amount.toFixed(6)} SOL (${percentage * 100}%) to rank ${rank}: ${wallet.substring(0, 8)}...`);
+        const signature = await sendSol(wallet, amount);
+        distributions.push({
+          rank: rank,
+          wallet: wallet,
           amount: amount,
           percentage: percentage * 100,
           signature: signature,
           success: signature !== null,
+          banned: false,
         });
         
         if (signature) {
@@ -3806,8 +4532,11 @@ async function distributeRewards(totalRewardPool = null) {
       }
     }
     
-    // Send remaining 60% to distribution wallet
-    const remainingAmount = poolAmount * REWARD_PERCENTAGES.remaining;
+    // Calculate remaining amount (60% + any banned wallet rewards)
+    const bannedAmount = distributions
+      .filter(d => d.banned === true)
+      .reduce((sum, d) => sum + d.amount, 0);
+    const remainingAmount = poolAmount * REWARD_PERCENTAGES.remaining + bannedAmount;
     if (remainingAmount > 0) {
       console.log(`[rps-rewards] Sending ${remainingAmount.toFixed(6)} SOL (${REWARD_PERCENTAGES.remaining * 100}%) to distribution wallet: ${REWARD_DISTRIBUTION_WALLET.substring(0, 8)}...`);
       const signature = await sendSol(REWARD_DISTRIBUTION_WALLET, remainingAmount);
@@ -3818,6 +4547,8 @@ async function distributeRewards(totalRewardPool = null) {
         percentage: REWARD_PERCENTAGES.remaining * 100,
         signature: signature,
         success: signature !== null,
+        bannedAmount: bannedAmount,
+        note: bannedAmount > 0 ? `Includes ${bannedAmount.toFixed(6)} SOL from banned wallets` : null
       });
       
       if (signature) {
@@ -4756,6 +5487,609 @@ app.get("/luna/admin/reset-stats", requireAdminSecret, (req, res) => {
   } catch (e) {
     logError(e, { endpoint: "/luna/admin/reset-stats" });
     return res.status(500).json({ ok: false, error: "Failed to reset statistics" });
+  }
+});
+
+/**
+ * Get suspicious activity log (Admin only)
+ * GET /luna/admin/anti-abuse/log?limit=100
+ */
+app.get("/luna/admin/anti-abuse/log", requireAdminSecret, (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit || "100", 10);
+    const type = req.query.type; // Optional filter by type
+    const wallet = req.query.wallet; // Optional filter by wallet
+    
+    let filteredLog = suspiciousActivityLog;
+    
+    if (type) {
+      filteredLog = filteredLog.filter(entry => entry.type === type);
+    }
+    
+    if (wallet) {
+      filteredLog = filteredLog.filter(entry => 
+        entry.wallet1 === wallet || entry.wallet2 === wallet
+      );
+    }
+    
+    const recentLog = filteredLog.slice(-limit).reverse(); // Most recent first
+    
+    return res.json({
+      ok: true,
+      log: recentLog,
+      total: suspiciousActivityLog.length,
+      filtered: filteredLog.length,
+      blockedWallets: Array.from(blockedWallets),
+      blockedIps: Array.from(blockedIps),
+    });
+  } catch (e) {
+    logError(e, { endpoint: "/luna/admin/anti-abuse/log" });
+    return res.status(500).json({ ok: false, error: "Failed to get suspicious activity log" });
+  }
+});
+
+/**
+ * Get wallet pair statistics (Admin only)
+ * GET /luna/admin/anti-abuse/pairs?limit=50
+ */
+app.get("/luna/admin/anti-abuse/pairs", requireAdminSecret, (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit || "50", 10);
+    const minMatches = parseInt(req.query.minMatches || SUSPICIOUS_PAIR_THRESHOLD.toString(), 10);
+    const totalPlayers = getTotalUniquePlayers();
+    const dynamicThreshold = getDynamicSuspiciousThreshold();
+    
+    const pairs = Array.from(walletPairMatches.entries())
+      .map(([pairKey, data]) => {
+        const [wallet1, wallet2] = pairKey.split('_');
+        const wallet1Opponents = getWalletOpponentCount(wallet1);
+        const wallet2Opponents = getWalletOpponentCount(wallet2);
+        const wallet1TotalGames = getWalletTotalGames(wallet1);
+        const wallet2TotalGames = getWalletTotalGames(wallet2);
+        const wallet1PairRatio = wallet1TotalGames > 0 ? data.count / wallet1TotalGames : 1;
+        const wallet2PairRatio = wallet2TotalGames > 0 ? data.count / wallet2TotalGames : 1;
+        
+        return {
+          wallet1,
+          wallet2,
+          count: data.count,
+          lastMatch: data.lastMatch,
+          firstMatch: data.firstMatch,
+          timeWindow: data.lastMatch - data.firstMatch,
+          wallet1Opponents: wallet1Opponents,
+          wallet2Opponents: wallet2Opponents,
+          wallet1TotalGames: wallet1TotalGames,
+          wallet2TotalGames: wallet2TotalGames,
+          wallet1PairRatio: Math.round(wallet1PairRatio * 100) / 100,
+          wallet2PairRatio: Math.round(wallet2PairRatio * 100) / 100,
+          isSuspicious: isSuspiciousWalletPair(wallet1, wallet2)
+        };
+      })
+      .filter(pair => pair.count >= minMatches)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, limit);
+    
+    return res.json({
+      ok: true,
+      pairs: pairs,
+      total: walletPairMatches.size,
+      totalUniquePlayers: totalPlayers,
+      suspiciousThreshold: SUSPICIOUS_PAIR_THRESHOLD,
+      dynamicThreshold: dynamicThreshold,
+      timeWindow: SUSPICIOUS_PAIR_TIME_WINDOW,
+      note: `Dynamic threshold is ${dynamicThreshold} based on ${totalPlayers} unique players in system`
+    });
+  } catch (e) {
+    logError(e, { endpoint: "/luna/admin/anti-abuse/pairs" });
+    return res.status(500).json({ ok: false, error: "Failed to get wallet pair statistics" });
+  }
+});
+
+/**
+ * Get wallet opponent statistics (Admin only)
+ * GET /luna/admin/anti-abuse/wallets?limit=50
+ */
+app.get("/luna/admin/anti-abuse/wallets", requireAdminSecret, (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit || "50", 10);
+    const wallet = req.query.wallet; // Optional filter by specific wallet
+    
+    let wallets = Array.from(walletOpponents.entries())
+      .map(([walletAddr, opponents]) => {
+        const totalGames = getWalletTotalGames(walletAddr);
+        const opponentList = Array.from(opponents);
+        
+        return {
+          wallet: walletAddr,
+          opponentCount: opponents.size,
+          totalGames: totalGames,
+          opponents: opponentList,
+          avgGamesPerOpponent: opponents.size > 0 ? Math.round((totalGames / opponents.size) * 100) / 100 : 0
+        };
+      })
+      .sort((a, b) => b.totalGames - a.totalGames);
+    
+    if (wallet) {
+      wallets = wallets.filter(w => w.wallet === wallet);
+    }
+    
+    wallets = wallets.slice(0, limit);
+    
+    return res.json({
+      ok: true,
+      wallets: wallets,
+      total: walletOpponents.size,
+      totalUniquePlayers: getTotalUniquePlayers(),
+    });
+  } catch (e) {
+    logError(e, { endpoint: "/luna/admin/anti-abuse/wallets" });
+    return res.status(500).json({ ok: false, error: "Failed to get wallet opponent statistics" });
+  }
+});
+
+/**
+ * Block/Unblock wallet (Admin only)
+ * POST /luna/admin/anti-abuse/block-wallet
+ * Body: { wallet: "address", action: "block" | "unblock" }
+ */
+app.post("/luna/admin/anti-abuse/block-wallet", requireAdminSecret, (req, res) => {
+  try {
+    const { wallet, action } = req.body || {};
+    
+    if (!wallet || typeof wallet !== "string") {
+      return res.status(400).json({
+        ok: false,
+        error: "Wallet address is required",
+      });
+    }
+    
+    if (action === "block") {
+      blockedWallets.add(wallet);
+      logSuspiciousActivity('admin_block_wallet', wallet, null, getClientIp(req), "Admin blocked wallet");
+      return res.json({
+        ok: true,
+        message: `Wallet ${wallet.substring(0, 8)}... has been blocked`,
+        blocked: true,
+      });
+    } else if (action === "unblock") {
+      blockedWallets.delete(wallet);
+      return res.json({
+        ok: true,
+        message: `Wallet ${wallet.substring(0, 8)}... has been unblocked`,
+        blocked: false,
+      });
+    } else {
+      return res.status(400).json({
+        ok: false,
+        error: "Action must be 'block' or 'unblock'",
+      });
+    }
+  } catch (e) {
+    logError(e, { endpoint: "/luna/admin/anti-abuse/block-wallet" });
+    return res.status(500).json({ ok: false, error: "Failed to block/unblock wallet" });
+  }
+});
+
+/**
+ * Block/Unblock IP (Admin only)
+ * POST /luna/admin/anti-abuse/block-ip
+ * Body: { ip: "ip_address", action: "block" | "unblock" }
+ */
+app.post("/luna/admin/anti-abuse/block-ip", requireAdminSecret, (req, res) => {
+  try {
+    const { ip, action } = req.body || {};
+    
+    if (!ip || typeof ip !== "string") {
+      return res.status(400).json({
+        ok: false,
+        error: "IP address is required",
+      });
+    }
+    
+    if (action === "block") {
+      blockedIps.add(ip);
+      logSuspiciousActivity('admin_block_ip', null, null, ip, "Admin blocked IP");
+      return res.json({
+        ok: true,
+        message: `IP ${ip} has been blocked`,
+        blocked: true,
+      });
+    } else if (action === "unblock") {
+      blockedIps.delete(ip);
+      return res.json({
+        ok: true,
+        message: `IP ${ip} has been unblocked`,
+        blocked: false,
+      });
+    } else {
+      return res.status(400).json({
+        ok: false,
+        error: "Action must be 'block' or 'unblock'",
+      });
+    }
+  } catch (e) {
+    logError(e, { endpoint: "/luna/admin/anti-abuse/block-ip" });
+    return res.status(500).json({ ok: false, error: "Failed to block/unblock IP" });
+  }
+});
+
+/**
+ * Get reward banned wallets (Admin only)
+ * GET /luna/admin/anti-abuse/reward-banned
+ */
+app.get("/luna/admin/anti-abuse/reward-banned", requireAdminSecret, (req, res) => {
+  try {
+    const bannedWallets = Array.from(rewardBannedWallets);
+    const bannedIps = Array.from(rewardBannedIps);
+    
+    // Get IP self-play statistics
+    const ipSelfPlayStats = Array.from(ipSelfPlayMatches.entries()).map(([ip, data]) => {
+      const walletsFromIp = Array.from(ipWalletMap.get(ip) || []);
+      return {
+        ip: ip,
+        totalSelfPlayCount: data.totalSelfPlayCount,
+        walletPairs: Array.from(data.walletPairs.entries()).map(([pairKey, count]) => {
+          const [wallet1, wallet2] = pairKey.split('_');
+          return { wallet1, wallet2, count };
+        }),
+        wallets: walletsFromIp,
+        isBanned: rewardBannedIps.has(ip)
+      };
+    }).filter(stat => stat.totalSelfPlayCount > 0)
+      .sort((a, b) => b.totalSelfPlayCount - a.totalSelfPlayCount);
+    
+    return res.json({
+      ok: true,
+      rewardBannedWallets: bannedWallets,
+      rewardBannedIps: bannedIps,
+      totalBannedWallets: bannedWallets.length,
+      totalBannedIps: bannedIps.length,
+      ipSelfPlayStats: ipSelfPlayStats,
+      threshold: IP_SELF_PLAY_THRESHOLD,
+    });
+  } catch (e) {
+    logError(e, { endpoint: "/luna/admin/anti-abuse/reward-banned" });
+    return res.status(500).json({ ok: false, error: "Failed to get reward banned list" });
+  }
+});
+
+/**
+ * Unban wallet from rewards (Admin only)
+ * POST /luna/admin/anti-abuse/unban-reward
+ * Body: { wallet: "wallet_address" } or { ip: "ip_address" }
+ */
+app.post("/luna/admin/anti-abuse/unban-reward", requireAdminSecret, (req, res) => {
+  try {
+    const { wallet, ip } = req.body || {};
+    
+    if (wallet && typeof wallet === "string") {
+      rewardBannedWallets.delete(wallet);
+      return res.json({
+        ok: true,
+        message: `Wallet ${wallet.substring(0, 8)}... has been unbanned from rewards`,
+        unbanned: true,
+      });
+    } else if (ip && typeof ip === "string") {
+      rewardBannedIps.delete(ip);
+      // Unban all wallets from this IP
+      const walletsFromIp = ipWalletMap.get(ip) || new Set();
+      walletsFromIp.forEach(w => rewardBannedWallets.delete(w));
+      return res.json({
+        ok: true,
+        message: `IP ${ip} and all associated wallets have been unbanned from rewards`,
+        unbanned: true,
+        walletsUnbanned: Array.from(walletsFromIp),
+      });
+    } else {
+      return res.status(400).json({
+        ok: false,
+        error: "Either wallet or ip is required",
+      });
+    }
+  } catch (e) {
+    logError(e, { endpoint: "/luna/admin/anti-abuse/unban-reward" });
+    return res.status(500).json({ ok: false, error: "Failed to unban from rewards" });
+  }
+});
+
+// ----------------------
+// Notification System API Endpoints
+// ----------------------
+
+/**
+ * Get notifications for a wallet
+ * GET /luna/notifications?wallet=wallet_address&unreadOnly=true
+ */
+app.get("/luna/notifications", async (req, res) => {
+  try {
+    const { wallet, unreadOnly } = req.query || {};
+    
+    if (!wallet || typeof wallet !== "string") {
+      return res.status(400).json({
+        ok: false,
+        error: "Wallet address is required",
+      });
+    }
+    
+    const notifications = getNotifications(wallet, unreadOnly === 'true');
+    const unreadCount = notifications.filter(n => !n.read).length;
+    
+    return res.json({
+      ok: true,
+      notifications: notifications.reverse(), // Most recent first
+      unreadCount: unreadCount,
+      total: notifications.length
+    });
+  } catch (e) {
+    console.error("[notifications] Get notifications error:", e);
+    res.status(500).json({
+      ok: false,
+      error: e.message,
+      message: "Failed to get notifications",
+    });
+  }
+});
+
+/**
+ * Mark notification as read
+ * POST /luna/notifications/read
+ * Body: { wallet: "wallet_address", notificationId: "notification_id" }
+ */
+app.post("/luna/notifications/read", async (req, res) => {
+  try {
+    const { wallet, notificationId } = req.body || {};
+    
+    if (!wallet || typeof wallet !== "string") {
+      return res.status(400).json({
+        ok: false,
+        error: "Wallet address is required",
+      });
+    }
+    
+    if (!notificationId || typeof notificationId !== "string") {
+      return res.status(400).json({
+        ok: false,
+        error: "Notification ID is required",
+      });
+    }
+    
+    const success = markNotificationRead(wallet, notificationId);
+    
+    return res.json({
+      ok: success,
+      message: success ? "Notification marked as read" : "Notification not found"
+    });
+  } catch (e) {
+    console.error("[notifications] Mark read error:", e);
+    res.status(500).json({
+      ok: false,
+      error: e.message,
+      message: "Failed to mark notification as read",
+    });
+  }
+});
+
+// ----------------------
+// Referral System API Endpoints
+// ----------------------
+
+/**
+ * Register referral
+ * POST /luna/referral/register
+ * Body: { wallet: "wallet_address", referrer: "referrer_wallet_address" }
+ */
+app.post("/luna/referral/register", async (req, res) => {
+  try {
+    const { wallet, referrer } = req.body || {};
+    
+    if (!wallet || typeof wallet !== "string") {
+      return res.status(400).json({
+        ok: false,
+        error: "Wallet address is required",
+      });
+    }
+    
+    if (!referrer || typeof referrer !== "string") {
+      return res.status(400).json({
+        ok: false,
+        error: "Referrer wallet address is required",
+      });
+    }
+    
+    // Security: Validate wallet addresses
+    try {
+      validateWalletAddress(wallet, 'wallet');
+      validateWalletAddress(referrer, 'referrer');
+    } catch (e) {
+      return res.status(400).json({
+        ok: false,
+        error: "Invalid request",
+        message: e.message || "Invalid wallet address format",
+      });
+    }
+    
+    const success = registerReferral(wallet, referrer);
+    
+    if (success) {
+      return res.json({
+        ok: true,
+        message: "Referral registered successfully"
+      });
+    } else {
+      return res.status(400).json({
+        ok: false,
+        error: "Invalid referral",
+        message: "Wallet already referred or cannot refer yourself"
+      });
+    }
+  } catch (e) {
+    console.error("[referral] Register error:", e);
+    res.status(500).json({
+      ok: false,
+      error: e.message,
+      message: "Failed to register referral",
+    });
+  }
+});
+
+/**
+ * Get referral stats
+ * GET /luna/referral/stats?wallet=wallet_address
+ */
+app.get("/luna/referral/stats", async (req, res) => {
+  try {
+    const { wallet } = req.query || {};
+    
+    if (!wallet || typeof wallet !== "string") {
+      return res.status(400).json({
+        ok: false,
+        error: "Wallet address is required",
+      });
+    }
+    
+    const stats = getReferralStats(wallet);
+    
+    return res.json({
+      ok: true,
+      stats: stats
+    });
+  } catch (e) {
+    console.error("[referral] Get stats error:", e);
+    res.status(500).json({
+      ok: false,
+      error: e.message,
+      message: "Failed to get referral stats",
+    });
+  }
+});
+
+/**
+ * Get referral link
+ * GET /luna/referral/link?wallet=wallet_address
+ */
+app.get("/luna/referral/link", async (req, res) => {
+  try {
+    const { wallet } = req.query || {};
+    
+    if (!wallet || typeof wallet !== "string") {
+      return res.status(400).json({
+        ok: false,
+        error: "Wallet address is required",
+      });
+    }
+    
+    const link = getReferralLink(wallet);
+    
+    return res.json({
+      ok: true,
+      referralLink: link,
+      wallet: wallet
+    });
+  } catch (e) {
+    console.error("[referral] Get link error:", e);
+    res.status(500).json({
+      ok: false,
+      error: e.message,
+      message: "Failed to get referral link",
+    });
+  }
+});
+
+// ----------------------
+// Chat System API Endpoints
+// ----------------------
+
+/**
+ * Send chat message
+ * POST /luna/chat/send
+ * Body: { roomId: "room_id", wallet: "wallet_address", message: "message", username: "username" }
+ */
+app.post("/luna/chat/send", async (req, res) => {
+  try {
+    const { roomId, wallet, message, username } = req.body || {};
+    
+    if (!roomId || typeof roomId !== "string") {
+      return res.status(400).json({
+        ok: false,
+        error: "Room ID is required",
+      });
+    }
+    
+    if (!wallet || typeof wallet !== "string") {
+      return res.status(400).json({
+        ok: false,
+        error: "Wallet address is required",
+      });
+    }
+    
+    if (!message || typeof message !== "string") {
+      return res.status(400).json({
+        ok: false,
+        error: "Message is required and must be a string",
+      });
+    }
+    
+    const trimmedMessage = message.trim();
+    if (trimmedMessage.length === 0) {
+      return res.status(400).json({
+        ok: false,
+        error: "Message cannot be empty",
+      });
+    }
+    
+    if (trimmedMessage.length > 500) {
+      return res.status(400).json({
+        ok: false,
+        error: "Message is too long (max 500 characters)",
+      });
+    }
+    
+    const chatMessage = sendChatMessage(roomId, wallet, trimmedMessage, username);
+    
+    return res.json({
+      ok: true,
+      message: chatMessage
+    });
+  } catch (e) {
+    console.error("[chat] Send message error:", e);
+    res.status(500).json({
+      ok: false,
+      error: e.message,
+      message: "Failed to send chat message",
+    });
+  }
+});
+
+/**
+ * Get chat messages
+ * GET /luna/chat/messages?roomId=room_id&limit=50
+ */
+app.get("/luna/chat/messages", async (req, res) => {
+  try {
+    const { roomId, limit } = req.query || {};
+    
+    if (!roomId || typeof roomId !== "string") {
+      return res.status(400).json({
+        ok: false,
+        error: "Room ID is required",
+      });
+    }
+    
+    const messageLimit = parseInt(limit || "50", 10);
+    const messages = getChatMessages(roomId, messageLimit);
+    
+    return res.json({
+      ok: true,
+      messages: messages,
+      roomId: roomId
+    });
+  } catch (e) {
+    console.error("[chat] Get messages error:", e);
+    res.status(500).json({
+      ok: false,
+      error: e.message,
+      message: "Failed to get chat messages",
+    });
   }
 });
 

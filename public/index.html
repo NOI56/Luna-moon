@@ -10,6 +10,9 @@
   <meta property="og:image" content="/images/logo/logo.png">
   <meta property="og:type" content="website">
   <title>Luna AI - AI Streamer</title>
+  <link rel="stylesheet" href="/css/notifications.css">
+  <link rel="stylesheet" href="/css/referral.css">
+  <link rel="stylesheet" href="/css/chat.css">
   <style>
     * {
       margin: 0;
@@ -664,6 +667,44 @@
     document.addEventListener('DOMContentLoaded', () => {
       loadContractAddress();
     });
+  </script>
+  <script src="/js/notifications.js"></script>
+  <script src="/js/referral.js"></script>
+  <script>
+    // Initialize Referral System on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      // Check for referral code in URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const referrer = urlParams.get('ref');
+      
+      if (referrer) {
+        // Store referrer for when user connects wallet
+        sessionStorage.setItem('referrer', referrer);
+      }
+      
+      // Initialize referral UI (will be activated when wallet connects)
+      if (typeof referralManager !== 'undefined') {
+        referralManager.createUI();
+      }
+    });
+    
+    // Function to initialize when wallet connects (if wallet connection exists)
+    window.initializeWithWallet = function(walletAddress) {
+      if (typeof notificationManager !== 'undefined') {
+        notificationManager.init(walletAddress);
+      }
+      
+      if (typeof referralManager !== 'undefined') {
+        referralManager.init(walletAddress);
+        
+        // Register referral if exists
+        const referrer = sessionStorage.getItem('referrer');
+        if (referrer && referrer !== walletAddress) {
+          referralManager.registerReferral(referrer);
+          sessionStorage.removeItem('referrer');
+        }
+      }
+    };
   </script>
 </body>
 </html>

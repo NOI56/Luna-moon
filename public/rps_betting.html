@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Luna Rock Paper Scissors - Betting Mode</title>
+  <link rel="stylesheet" href="/css/notifications.css">
+  <link rel="stylesheet" href="/css/referral.css">
+  <link rel="stylesheet" href="/css/chat.css">
   <style>
     * {
       margin: 0;
@@ -757,6 +760,7 @@
     <a href="/rps_leaderboard.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">🏆 Leaderboard</a>
     <a href="/rps_stats.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">📊 Stats</a>
     <a href="/rps_history.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">📜 Match History</a>
+    <!-- Notification button will be added here by JavaScript -->
   </div>
 
   <button id="neonToggle" title="Toggle Neon Effects">💡 Neon: ON</button>
@@ -858,6 +862,9 @@
         </div>
       </div>
     </div>
+
+    <!-- Referral Section Placeholder -->
+    <div id="referral-section-placeholder"></div>
 
     <!-- Game Area (shown when match starts) -->
     <div id="gameArea" class="game-area">
@@ -1058,6 +1065,19 @@
           await loadRooms();
           startBalanceUpdate(); // Start real-time balance updates
           startSolBalanceUpdate(); // Start real-time SOL balance updates
+          
+          // Initialize UI components
+          if (typeof notificationManager !== 'undefined') {
+            notificationManager.init(walletPublicKey);
+          }
+          if (typeof referralManager !== 'undefined') {
+            referralManager.init(walletPublicKey);
+            referralManager.createUI();
+          }
+          if (typeof chatManager !== 'undefined') {
+            chatManager.init(walletPublicKey);
+            chatManager.createUI('betting_lobby', 'lobby');
+          }
         } catch (err) {
           console.error('[Betting] Wallet connection error:', err);
           alert('Failed to connect wallet: ' + err.message);
@@ -1499,6 +1519,12 @@
           opponentWallet = data.creator;
           const feeInSol = calculateFee(betAmount);
           alert(`Joined room! Game starting...\n\nFee collected: ${formatSol(feeInSol)} SOL (1% of ${formatSol(lunaToSol(betAmount))} SOL)`);
+          
+          // Initialize chat for this room
+          if (typeof chatManager !== 'undefined' && walletPublicKey) {
+            chatManager.createUI(`betting_room_${roomId}`, 'betting');
+          }
+          
           startGame();
         } else {
           alert('Failed to join room: ' + (data.message || 'Unknown error'));
@@ -1578,6 +1604,11 @@
           document.getElementById('betAmount').value = '';
           document.getElementById('feeDisplay').style.display = 'none';
           await loadRooms();
+          
+          // Initialize chat for this room
+          if (typeof chatManager !== 'undefined' && walletPublicKey) {
+            chatManager.createUI(`betting_room_${data.roomId}`, 'betting');
+          }
         } else {
           alert('Failed to create room: ' + (data.message || 'Unknown error'));
         }
@@ -2304,6 +2335,82 @@
       }
     }
 
+  </script>
+  <script src="/js/notifications.js"></script>
+  <script src="/js/referral.js"></script>
+  <script src="/js/chat.js"></script>
+  <script>
+    // Initialize UI components when wallet connects
+    function initializeUIComponents() {
+      if (walletPublicKey) {
+        // Initialize Notification System
+        if (typeof notificationManager !== 'undefined') {
+          notificationManager.init(walletPublicKey);
+        }
+        
+        // Initialize Referral System
+        if (typeof referralManager !== 'undefined') {
+          referralManager.init(walletPublicKey);
+          referralManager.createUI();
+        }
+        
+        // Initialize Chat System for betting room
+        if (typeof chatManager !== 'undefined') {
+          chatManager.init(walletPublicKey);
+          // Create chat for betting lobby
+          chatManager.createUI('betting_lobby', 'lobby');
+        }
+      }
+    }
+    
+    // Call when wallet connects
+    const originalConnectWallet = window.connectWallet;
+    window.connectWallet = async function() {
+      const result = await originalConnectWallet();
+      if (walletPublicKey) {
+        initializeUIComponents();
+      }
+      return result;
+    };
+    
+    // Initialize UI components immediately (will work with or without wallet)
+    document.addEventListener('DOMContentLoaded', () => {
+      // Initialize Notification System (show button even without wallet)
+      if (typeof notificationManager !== 'undefined') {
+        notificationManager.createUI();
+        if (walletPublicKey) {
+          notificationManager.init(walletPublicKey);
+        }
+      }
+      
+      // Initialize Referral System (show UI even without wallet)
+      if (typeof referralManager !== 'undefined') {
+        referralManager.createUI();
+        if (walletPublicKey) {
+          referralManager.init(walletPublicKey);
+        }
+      }
+      
+      // Initialize Chat System (show chat even without wallet)
+      if (typeof chatManager !== 'undefined') {
+        chatManager.init(walletPublicKey || null);
+        chatManager.createUI('betting_lobby', 'lobby');
+      }
+    });
+    
+    // Also initialize if wallet already connected
+    if (walletPublicKey) {
+      setTimeout(() => {
+        initializeUIComponents();
+      }, 1000);
+    }
+    
+    // Initialize chat for specific betting room when room is created/joined
+    window.initializeRoomChat = function(roomId) {
+      if (typeof chatManager !== 'undefined') {
+        chatManager.createUI(`betting_room_${roomId}`, 'betting');
+      }
+    };
   </script>
 </body>
 </html>
