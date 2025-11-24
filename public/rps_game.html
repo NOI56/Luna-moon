@@ -16,7 +16,7 @@
       background: #0a0a0a;
       background-image: 
         radial-gradient(circle at 20% 50%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(255, 0, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
         linear-gradient(135deg, #0a0a0a 0%, #1a0a2e 50%, #16213e 100%);
       display: flex;
       justify-content: center;
@@ -53,12 +53,12 @@
       padding: 40px;
       padding-top: 100px;
       background: rgba(10, 10, 26, 0.8);
-      border: 2px solid #00ffff;
+      border: none;
       border-radius: 0;
       box-shadow: 
-        0 0 20px rgba(0, 255, 255, 0.5),
-        0 0 40px rgba(255, 0, 255, 0.3),
-        inset 0 0 20px rgba(0, 255, 255, 0.1);
+        0 0 20px rgba(0, 255, 255, 0.25),
+        0 0 40px rgba(0, 255, 255, 0.15),
+        inset 0 0 20px rgba(0, 255, 255, 0.05);
       max-width: 800px;
       width: 100%;
       position: relative;
@@ -73,15 +73,15 @@
       left: -2px;
       right: -2px;
       bottom: -2px;
-      background: linear-gradient(45deg, #00ffff, #ff00ff, #00ffff);
+      background: linear-gradient(45deg, #00ffff, #00ffff, #00ffff);
       z-index: -1;
       animation: borderGlow 3s ease-in-out infinite;
       opacity: 0.5;
     }
     
     @keyframes borderGlow {
-      0%, 100% { opacity: 0.3; }
-      50% { opacity: 0.7; }
+      0%, 100% { opacity: 0.15; }
+      50% { opacity: 0.35; }
     }
 
     h1 {
@@ -89,9 +89,9 @@
       margin-bottom: 10px;
       color: #00ffff;
       text-shadow: 
+        0 0 5px #00ffff,
         0 0 10px #00ffff,
-        0 0 20px #00ffff,
-        0 0 30px #00ffff,
+        0 0 15px #00ffff,
         2px 2px 4px rgba(0, 0, 0, 0.8);
       font-weight: bold;
       letter-spacing: 3px;
@@ -102,24 +102,24 @@
     @keyframes textGlow {
       from {
         text-shadow: 
+          0 0 5px #00ffff,
           0 0 10px #00ffff,
-          0 0 20px #00ffff,
-          0 0 30px #00ffff;
+          0 0 15px #00ffff;
       }
       to {
         text-shadow: 
+          0 0 10px #00ffff,
+          0 0 15px #00ffff,
           0 0 20px #00ffff,
-          0 0 30px #00ffff,
-          0 0 40px #00ffff,
-          0 0 50px #ff00ff;
+          0 0 25px #00ffff;
       }
     }
 
     .subtitle {
       font-size: 1.2em;
       margin-bottom: 30px;
-      color: #ff00ff;
-      text-shadow: 0 0 10px #ff00ff;
+      color: #00ffff;
+      text-shadow: 0 0 5px #00ffff;
       opacity: 0.9;
     }
 
@@ -153,8 +153,8 @@
       cursor: pointer;
       user-select: none;
       filter: 
+        drop-shadow(0 0 5px #00ffff)
         drop-shadow(0 0 10px #00ffff)
-        drop-shadow(0 0 20px #00ffff)
         drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
       display: flex;
       justify-content: center;
@@ -167,22 +167,22 @@
       object-fit: contain;
       filter: 
         drop-shadow(0 0 10px #00ffff)
-        drop-shadow(0 0 20px rgba(0, 255, 255, 0.5));
+        drop-shadow(0 0 20px rgba(0, 255, 255, 0.25));
     }
     
-    /* หันมือมามองหน้ากัน และหมุนให้เป็นแนวนอน */
-    /* มือผู้เล่น (ซ้าย) หันไปทางขวา (หันไปหา Luna) และหมุนให้เป็นแนวนอน */
+    /* Rotate hands to face each other and make them horizontal */
+    /* Player hand (left) faces right (towards Luna) and rotated to horizontal */
     #playerHand img {
-      transform: scaleX(1) rotate(90deg) !important; /* หมุนให้เป็นแนวนอนและหันไปทางขวา */
+      transform: scaleX(1) rotate(90deg) !important; /* Rotate to horizontal and face right */
     }
     
-    /* มือ Luna (ขวา) หันไปทางซ้าย (หันไปหาผู้เล่น) และหมุนให้เป็นแนวนอน */
+    /* Luna hand (right) faces left (towards player) and rotated to horizontal */
     #lunaHand img {
-      transform: scaleX(1) rotate(-90deg) !important; /* หมุนให้เป็นแนวนอนและหันไปทางซ้าย */
+      transform: scaleX(1) rotate(-90deg) !important; /* Rotate to horizontal and face left */
     }
 
     .hand-icon:hover {
-      /* ไม่ใช้ transform ที่นี่ เพราะจะทับกับ transform ของ img */
+      /* Don't use transform here as it will override the img transform */
     }
 
     .hand-icon.animate {
@@ -237,7 +237,7 @@
         0 0 20px #00ffff,
         0 0 40px #00ffff,
         0 0 60px #00ffff,
-        0 0 80px #ff00ff;
+        0 0 80px #00ffff;
       animation: countdownPop 0.5s ease-out;
       font-family: 'Courier New', monospace;
       letter-spacing: 10px;
@@ -277,7 +277,7 @@
       justify-content: center;
       align-items: center;
       z-index: 999;
-      box-shadow: inset 0 0 100px rgba(0, 255, 255, 0.2);
+      box-shadow: inset 0 0 100px rgba(0, 255, 255, 0.1);
     }
 
     .vs {
@@ -354,7 +354,7 @@
       font-size: 1em;
       padding: 15px;
       background: rgba(0, 255, 255, 0.1);
-      border: 2px solid #00ffff;
+      border: none;
       border-radius: 0;
       width: 120px;
       height: 120px;
@@ -377,7 +377,7 @@
       left: -2px;
       right: -2px;
       bottom: -2px;
-      background: linear-gradient(45deg, #00ffff, #ff00ff, #00ffff);
+      background: linear-gradient(45deg, #00ffff, #00ffff, #00ffff);
       z-index: -1;
       opacity: 0;
       transition: opacity 0.3s ease;
@@ -385,10 +385,10 @@
     
     .choice-btn:hover {
       background: rgba(0, 255, 255, 0.2);
-      border-color: #ff00ff;
+      border-color: #00ffff;
       box-shadow: 
         0 0 20px rgba(0, 255, 255, 0.6),
-        0 0 30px rgba(255, 0, 255, 0.4),
+        0 0 30px rgba(0, 255, 255, 0.4),
         inset 0 0 20px rgba(0, 255, 255, 0.2);
       transform: scale(1.1);
     }
@@ -406,8 +406,8 @@
       height: 80px;
       object-fit: contain;
       filter: 
-        drop-shadow(0 0 5px #00ffff)
-        drop-shadow(0 0 10px rgba(0, 255, 255, 0.5));
+        drop-shadow(0 0 2px #00ffff)
+        drop-shadow(0 0 5px rgba(0, 255, 255, 0.25));
     }
 
     .choice-btn.disabled {
@@ -454,7 +454,7 @@
     .wallet-btn {
       padding: 15px 30px;
       background: rgba(0, 255, 255, 0.1);
-      border: 2px solid #00ffff;
+      border: none;
       border-radius: 0;
       color: #00ffff;
       font-size: 1.1em;
@@ -507,7 +507,7 @@
       margin-bottom: 20px;
       padding: 15px;
       background: rgba(0, 255, 255, 0.1);
-      border: 2px solid #00ffff;
+      border: none;
       border-radius: 0;
       font-size: 1.1em;
       box-shadow: 
@@ -537,7 +537,7 @@
       margin: 20px 0;
       padding: 20px;
       background: rgba(0, 255, 255, 0.1);
-      border: 2px solid #00ffff;
+      border: none;
       border-radius: 0;
       text-align: center;
     }
@@ -549,7 +549,7 @@
     .match-timer {
       font-size: 1.5em;
       color: #00ffff;
-      text-shadow: 0 0 10px #00ffff;
+      text-shadow: 0 0 5px #00ffff;
       margin-bottom: 10px;
     }
 
@@ -566,7 +566,7 @@
     .find-match-btn, .cancel-match-btn {
       padding: 15px 30px;
       background: rgba(0, 255, 255, 0.1);
-      border: 2px solid #00ffff;
+      border: none;
       border-radius: 0;
       color: #00ffff;
       font-size: 1.1em;
@@ -617,19 +617,272 @@
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+    
+    #modeNavigation a {
+      cursor: pointer !important;
+    }
+    
+    #modeNavigation a:hover {
+      box-shadow: 
+        0 0 20px currentColor,
+        0 0 40px currentColor,
+        0 0 60px currentColor,
+        inset 0 0 20px rgba(255, 255, 255, 0.1) !important;
+      transform: scale(1.05) !important;
+      text-shadow: 
+        0 0 10px currentColor,
+        0 0 20px currentColor,
+        0 0 30px currentColor !important;
+      background: rgba(0, 0, 0, 0.95) !important;
+    }
+    
+    #modeNavigation a:active {
+      box-shadow: 
+        0 0 30px currentColor,
+        0 0 60px currentColor,
+        0 0 90px currentColor,
+        inset 0 0 30px rgba(255, 255, 255, 0.2) !important;
+      transform: scale(0.98) !important;
+    }
+
+    /* Neon Toggle Button */
+    #neonToggle {
+      position: fixed;
+      top: 40px;
+      right: 20px;
+      z-index: 99999;
+      background: rgba(0, 0, 0, 0.9);
+      border: 2px solid #00ffff;
+      color: #00ffff;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      transition: all 0.3s;
+      backdrop-filter: blur(5px);
+    }
+
+    #neonToggle:hover {
+      background: rgba(0, 255, 255, 0.2);
+      box-shadow: 0 0 10px #00ffff;
+    }
+
+    /* Neon Off Styles */
+    body.neon-off * {
+      text-shadow: none !important;
+      box-shadow: none !important;
+      filter: none !important;
+      animation: none !important;
+    }
+
+    body.neon-off .game-container::before {
+      display: none !important;
+    }
+
+    body.neon-off body::before {
+      opacity: 0.01 !important;
+    }
+
+    /* Contract Address Section */
+    .contract-section {
+      background: rgba(0, 255, 255, 0.05);
+      border: 1px solid rgba(0, 255, 255, 0.3);
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+      text-align: center;
+    }
+
+    .contract-label {
+      font-size: 1rem;
+      color: #00ffff;
+      margin-bottom: 15px;
+      font-weight: bold;
+      text-shadow: 0 0 5px #00ffff;
+    }
+
+    .contract-input-group {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 15px;
+    }
+
+    .contract-input {
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(0, 255, 255, 0.3);
+      color: #00ffff;
+      padding: 12px 20px;
+      font-size: 0.9rem;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      min-width: 300px;
+      max-width: 100%;
+      flex: 1;
+    }
+
+    .contract-input:focus {
+      outline: none;
+      box-shadow: 0 0 15px #00ffff;
+    }
+
+    .contract-btn {
+      padding: 12px 24px;
+      font-size: 0.9rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-family: 'Courier New', monospace;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .contract-btn-copy {
+      background: linear-gradient(135deg, #ff6b35, #ff8c42);
+      color: white;
+      font-weight: bold;
+    }
+
+    .contract-btn-copy:hover {
+      background: linear-gradient(135deg, #ff8c42, #ff6b35);
+      box-shadow: 0 0 15px rgba(255, 107, 53, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .contract-btn-view {
+      background: linear-gradient(135deg, #1a237e, #283593);
+      color: white;
+      font-weight: bold;
+    }
+
+    .contract-btn-view:hover {
+      background: linear-gradient(135deg, #283593, #3949ab);
+      box-shadow: 0 0 15px rgba(26, 35, 126, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .contract-warning {
+      font-size: 0.85rem;
+      color: #00ffff;
+      opacity: 0.8;
+      margin-top: 15px;
+    }
+
+    /* X DEX Links Section */
+    .dex-links {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 20px 0;
+    }
+
+    .dex-btn {
+      padding: 15px 30px;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-family: 'Courier New', monospace;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .dex-btn-buy {
+      background: linear-gradient(135deg, #ff6b35, #ff8c42);
+      color: white;
+    }
+
+    .dex-btn-buy:hover {
+      background: linear-gradient(135deg, #ff8c42, #ff6b35);
+      box-shadow: 0 0 20px rgba(255, 107, 53, 0.6);
+      transform: translateY(-2px);
+    }
+
+    .dex-btn-community {
+      background: linear-gradient(135deg, #1a237e, #283593);
+      color: white;
+    }
+
+    .dex-btn-community:hover {
+      background: linear-gradient(135deg, #283593, #3949ab);
+      box-shadow: 0 0 20px rgba(26, 35, 126, 0.6);
+      transform: translateY(-2px);
+    }
+
+    @media (max-width: 768px) {
+      .contract-input-group {
+        flex-direction: column;
+      }
+
+      .contract-input {
+        min-width: 100%;
+      }
+
+      .dex-links {
+        flex-direction: column;
+      }
+
+      .dex-btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
   </style>
   </head>
   <body>
   <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
-    <div id="modeNavigation" style="position: fixed !important; top: 20px !important; left: 20px !important; display: flex !important; gap: 10px; z-index: 99999 !important; flex-wrap: wrap; pointer-events: auto !important; visibility: visible !important; opacity: 1 !important;">
-      <a href="/rps_vs_luna.html" id="vsLunaLink" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">← VS Luna Mode</a>
-      <a href="/rps_betting.html" id="bettingLink" style="color: #ff00ff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #ff00ff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">💰 Betting Mode</a>
+    <div id="modeNavigation" style="position: fixed !important; top: 40px !important; left: 20px !important; display: flex !important; gap: 10px; z-index: 99999 !important; flex-wrap: wrap; pointer-events: auto !important; visibility: visible !important; opacity: 1 !important;">
+      <a href="/rps_vs_luna.html" id="vsLunaLink" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">🎮 VS Luna</a>
+      <a href="/rps_game.html" id="pvpLink" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">Play PvP! Find</a>
+      <a href="/rps_betting.html" id="bettingLink" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">💰 Betting Mode</a>
+      <a href="/rps_leaderboard.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">🏆 Leaderboard</a>
+      <a href="/rps_stats.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">📊 Stats</a>
+      <a href="/rps_history.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">📜 Match History</a>
     </div>
+
+    <button id="neonToggle" title="Toggle Neon Effects">💡 Neon: ON</button>
 
     <div class="game-container">
     <h1>Rock Paper Scissors</h1>
     <div class="subtitle">Play PvP! Find an opponent and play! (Requires 100K+ Luna tokens)</div>
-    <div class="subtitle" style="margin-top: 10px; font-size: 0.9em; color: #ff00ff;">🎮 Scroll down to find a match and play!</div>
+    <div class="subtitle" style="margin-top: 10px; font-size: 0.9em; color: #00ffff;">🎮 Scroll down to find a match and play!</div>
+
+    <!-- Contract Address Section -->
+    <div class="contract-section">
+      <div class="contract-label">Contract Address:</div>
+      <div class="contract-input-group">
+        <input type="text" id="contractAddress" class="contract-input" readonly value="Loading...">
+        <button class="contract-btn contract-btn-copy" onclick="copyContractAddress()">
+          <span>📋</span> Copy
+        </button>
+        <button class="contract-btn contract-btn-view" onclick="viewContractAddress()">
+          <span>🔗</span> View
+        </button>
+      </div>
+      <div class="contract-warning">Always verify the contract address before buying.</div>
+    </div>
+
+    <!-- X DEX Links Section -->
+    <div class="dex-links">
+      <a href="#" id="buyDexLink" class="dex-btn dex-btn-buy" target="_blank" onclick="openBuyDex(event)">
+        <span>⚡</span> Buy Luna
+      </a>
+      <a href="#" id="communityLink" class="dex-btn dex-btn-community" target="_blank" onclick="openCommunity(event)">
+        <span>𝕏</span> Join Community
+      </a>
+    </div>
 
     <div id="walletConnect" class="wallet-connect">
       <button id="connectWalletBtn" class="wallet-btn">🔗 Connect Phantom Wallet</button>
@@ -674,15 +927,15 @@
     </div>
     
     <div style="margin-top: 40px; text-align: center;">
-      <a href="/rps_betting.html" style="color: #ff00ff; text-decoration: none; padding: 15px 30px; border: 2px solid #ff00ff; border-radius: 8px; transition: all 0.3s; display: inline-block; font-size: 1.1em;">💰 Betting Mode</a>
+      <a href="/rps_betting.html" style="color: #00ffff; text-decoration: none; padding: 15px 30px; border: 2px solid #00ffff; border-radius: 8px; transition: all 0.3s; display: inline-block; font-size: 1.1em;">💰 Betting Mode</a>
     </div>
   </div>
 
   <script>
     const API_BASE = window.location.origin;
     const RPS_MIN_BALANCE = 100000; // 100K Luna tokens (for PvP mode)
-    // Mint address จะถูกอ่านจาก backend (.env) อัตโนมัติ
-    // ไม่ต้อง hardcode ที่นี่แล้ว
+    // Mint address will be read from backend (.env) automatically
+    // No need to hardcode here
     
     let playerBalance = 0;
     let gameActive = false;
@@ -694,16 +947,16 @@
     let matchStartTime = 0;
     let matchTimer = null;
 
-    // Hand images - ใช้รูปมือจริงจากไฟล์
-    // ใส่รูปมือ PNG ที่คุณส่งมาใน public/images/hands/:
-    // - rock.png (มือกำ) - ใช้เป็น default ด้วย
-    // - paper.png (มือเปิด)
-    // - scissors.png (มือชู 2 นิ้ว)
+    // Hand images - use real hand images from files
+    // Place hand PNG files in public/images/hands/:
+    // - rock.png (fist) - also used as default
+    // - paper.png (open hand)
+    // - scissors.png (two fingers)
     const HAND_IMAGES = {
       rock: '/public/images/hands/rock.png',
       paper: '/public/images/hands/paper.png',
       scissors: '/public/images/hands/scissors.png',
-      default: '/public/images/hands/rock.png' // ใช้มือกำเป็น default
+      default: '/public/images/hands/rock.png' // use fist as default
     };
     
     const HAND_EMOJIS = {
@@ -726,7 +979,84 @@
     }
 
     // Initialize
+    // Neon Toggle System
+    function initNeonToggle() {
+      const neonToggle = document.getElementById('neonToggle');
+      const body = document.body;
+      
+      // Load saved preference
+      const neonEnabled = localStorage.getItem('neonEnabled') !== 'false';
+      
+      if (!neonEnabled) {
+        body.classList.add('neon-off');
+        neonToggle.textContent = '💡 Neon: OFF';
+      } else {
+        body.classList.remove('neon-off');
+        neonToggle.textContent = '💡 Neon: ON';
+      }
+      
+      neonToggle.addEventListener('click', () => {
+        const isOff = body.classList.contains('neon-off');
+        
+        if (isOff) {
+          body.classList.remove('neon-off');
+          neonToggle.textContent = '💡 Neon: ON';
+          localStorage.setItem('neonEnabled', 'true');
+        } else {
+          body.classList.add('neon-off');
+          neonToggle.textContent = '💡 Neon: OFF';
+          localStorage.setItem('neonEnabled', 'false');
+        }
+      });
+    }
+
+    // Sound Effects System for Navigation
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function playSound(frequency, duration, type = 'sine', volume = 0.3) {
+      try {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = frequency;
+        oscillator.type = type;
+        
+        gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + duration);
+      } catch (e) {
+        console.error('[Sound] Error playing sound:', e);
+      }
+    }
+    
+    // Navigation click sound (short beep)
+    function playNavClickSound() {
+      playSound(600, 0.1, 'sine', 0.2);
+    }
+
+    // Add click sound to navigation links
+    function initNavigationSounds() {
+      const navLinks = document.querySelectorAll('#modeNavigation a');
+      navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          playNavClickSound();
+          // Delay navigation to let sound play
+          setTimeout(() => {
+            window.location.href = link.href;
+          }, 150);
+        });
+      });
+    }
+
     document.addEventListener('DOMContentLoaded', async () => {
+      initNeonToggle();
+      initNavigationSounds();
       connectWebSocket();
       setupWalletConnection();
       setupEventListeners();
@@ -1325,11 +1655,11 @@
       const paperBtn = document.getElementById('paperBtn');
       const scissorsBtn = document.getElementById('scissorsBtn');
       
-      // Set default hands (ใช้มือกำ)
+      // Set default hands (use fist)
       playerHand.appendChild(getHandDisplay('rock'));
       lunaHand.appendChild(getHandDisplay('rock'));
       
-      // Set button images (ใช้รูปมือ)
+      // Set button images (use hand images)
       if (rockBtn) {
         rockBtn.innerHTML = '';
         rockBtn.appendChild(getHandDisplay('rock'));
@@ -1501,10 +1831,10 @@
       let balanceUpdateInterval = null;
       
       // Check real balance from blockchain
-      // Mint address จะถูกอ่านจาก backend (.env) อัตโนมัติ
+      // Mint address will be read from backend (.env) automatically
       try {
         // Use backend API to check balance (bypasses RPC rate limiting)
-        // Backend จะอ่าน mint address จาก .env อัตโนมัติ
+        // Backend will read mint address from .env automatically
         const response = await fetch(`${API_BASE}/luna/rps/balance?wallet=${walletPublicKey}`);
         const data = await response.json();
         
@@ -1706,7 +2036,7 @@
         handElement.innerHTML = '';
         handElement.appendChild(getHandDisplay(choice));
         currentCycleIndex = (currentCycleIndex + 1) % handChoices.length;
-      }, 150); // Change hand every 150ms (เร็วกว่าเดิม 2 เท่า)
+      }, 150); // Change hand every 150ms (2x faster than before)
     }
     
     function stopHandCycle() {
@@ -1791,6 +2121,96 @@
         enableGame();
       }
     }
+
+    // Load contract address from backend
+    async function loadContractAddress() {
+      try {
+        const response = await fetch(`${API_BASE}/luna/rps/contract-address`);
+        const data = await response.json();
+        
+        if (data.ok && data.contractAddress) {
+          const contractInput = document.getElementById('contractAddress');
+          if (contractInput) {
+            contractInput.value = data.contractAddress;
+          }
+          
+          // Update buy DEX link from env
+          const buyDexLink = document.getElementById('buyDexLink');
+          if (buyDexLink && data.buyLink) {
+            buyDexLink.href = data.buyLink;
+          } else if (buyDexLink) {
+            // Fallback to pump.fun if buyLink not provided
+            buyDexLink.href = `https://pump.fun/${data.contractAddress}`;
+          }
+          
+          // Update X/Twitter community link from env
+          const communityLink = document.getElementById('communityLink');
+          if (communityLink && data.xLink) {
+            communityLink.href = data.xLink;
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load contract address:', error);
+        const contractInput = document.getElementById('contractAddress');
+        if (contractInput) {
+          contractInput.value = 'Error loading address';
+        }
+      }
+    }
+
+    // Copy contract address to clipboard
+    function copyContractAddress() {
+      const contractInput = document.getElementById('contractAddress');
+      if (contractInput) {
+        contractInput.select();
+        contractInput.setSelectionRange(0, 99999);
+        document.execCommand('copy');
+        
+        const btn = event.target.closest('.contract-btn-copy');
+        if (btn) {
+          const originalText = btn.innerHTML;
+          btn.innerHTML = '<span>✓</span> Copied!';
+          setTimeout(() => {
+            btn.innerHTML = originalText;
+          }, 2000);
+        }
+      }
+    }
+
+    // View contract address on Solscan
+    function viewContractAddress() {
+      const contractInput = document.getElementById('contractAddress');
+      if (contractInput && contractInput.value && contractInput.value !== 'Loading...' && contractInput.value !== 'Error loading address') {
+        window.open(`https://solscan.io/token/${contractInput.value}`, '_blank');
+      }
+    }
+
+    // Open buy DEX link
+    function openBuyDex(event) {
+      event.preventDefault();
+      const buyDexLink = document.getElementById('buyDexLink');
+      if (buyDexLink && buyDexLink.href && buyDexLink.href !== '#') {
+        window.open(buyDexLink.href, '_blank');
+      } else {
+        alert('Contract address not loaded yet. Please wait a moment and try again.');
+      }
+    }
+
+    // Open community link (X/Twitter)
+    function openCommunity(event) {
+      event.preventDefault();
+      const communityLink = document.getElementById('communityLink');
+      if (communityLink && communityLink.href && communityLink.href !== '#') {
+        window.open(communityLink.href, '_blank');
+      } else {
+        alert('Community link not loaded yet. Please wait a moment and try again.');
+      }
+    }
+
+    // Load contract address on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      loadContractAddress();
+    });
   </script>
 </body>
 </html>

@@ -50,6 +50,27 @@ const __dirname = path.dirname(__filename);
 // Configuration Validation
 // ----------------------
 
+// Security: Wallet address validation
+function isValidWalletAddress(address) {
+  if (!address || typeof address !== 'string') return false;
+  // Solana addresses are base58 encoded, typically 32-44 characters
+  if (address.length < 32 || address.length > 44) return false;
+  // Check if it's base58 (alphanumeric except 0, O, I, l)
+  const base58Regex = /^[1-9A-HJ-NP-Za-km-z]+$/;
+  return base58Regex.test(address);
+}
+
+// Security: Validate wallet address before using PublicKey
+function validateWalletAddress(address, fieldName = 'wallet') {
+  if (!address || typeof address !== 'string') {
+    throw new Error(`${fieldName} address is required and must be a string`);
+  }
+  if (!isValidWalletAddress(address)) {
+    throw new Error(`Invalid ${fieldName} address format: ${address.substring(0, 16)}...`);
+  }
+  return address;
+}
+
 function validateConfig() {
   const errors = [];
   const warnings = [];
@@ -115,8 +136,12 @@ app.use((req, res, next) => {
   }
   
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, x-purchase-secret");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, x-purchase-secret, x-csrf-token");
   res.header("Access-Control-Allow-Credentials", "true");
+  // Security: Add security headers
+  res.header("X-Content-Type-Options", "nosniff");
+  res.header("X-Frame-Options", "DENY");
+  res.header("X-XSS-Protection", "1; mode=block");
   
   if (req.method === "OPTIONS") {
     return res.sendStatus(200);
@@ -125,6 +150,73 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json({ limit: "2mb" }));
+
+// Security: CSRF Protection Middleware (for POST/PUT/DELETE requests)
+const csrfTokens = new Map(); // In-memory token store (use Redis in production)
+const CSRF_TOKEN_TTL = 3600000; // 1 hour
+
+function generateCSRFToken() {
+  return require('crypto').randomBytes(32).toString('hex');
+}
+
+// Generate CSRF token endpoint
+app.get("/api/csrf-token", (req, res) => {
+  const token = generateCSRFToken();
+  const expiresAt = Date.now() + CSRF_TOKEN_TTL;
+  csrfTokens.set(token, expiresAt);
+  
+  // Clean up expired tokens
+  for (const [t, exp] of csrfTokens.entries()) {
+    if (Date.now() > exp) {
+      csrfTokens.delete(t);
+    }
+  }
+  
+  res.json({ token, expiresAt });
+});
+
+// CSRF validation middleware (optional - can be enabled via env)
+function validateCSRF(req, res, next) {
+  // Skip CSRF for GET, OPTIONS, and webhook endpoints
+  if (req.method === 'GET' || req.method === 'OPTIONS' || req.path.startsWith('/purchase')) {
+    return next();
+  }
+  
+  // Skip if CSRF is disabled
+  if (process.env.ENABLE_CSRF !== 'true') {
+    return next();
+  }
+  
+  const token = req.headers['x-csrf-token'];
+  if (!token) {
+    return res.status(403).json({
+      ok: false,
+      error: "CSRF token missing",
+      message: "CSRF token is required for this request",
+    });
+  }
+  
+  const expiresAt = csrfTokens.get(token);
+  if (!expiresAt || Date.now() > expiresAt) {
+    csrfTokens.delete(token);
+    return res.status(403).json({
+      ok: false,
+      error: "Invalid or expired CSRF token",
+      message: "CSRF token is invalid or has expired",
+    });
+  }
+  
+  // Token is valid, continue
+  next();
+}
+
+// Apply CSRF validation to POST/PUT/DELETE routes (except webhooks)
+app.use((req, res, next) => {
+  if (['POST', 'PUT', 'DELETE'].includes(req.method) && !req.path.startsWith('/purchase')) {
+    return validateCSRF(req, res, next);
+  }
+  next();
+});
 
 // RPS Routes (must be before static files to avoid 404)
 // PvP Matching Queue
@@ -145,33 +237,91 @@ const FEE_PERCENTAGE = 0.01; // 1% fee
 const rpsLeaderboard = new Map();
 
 // Weekly Competition System
-const WEEKLY_COMPETITION_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+// Competition ends every Monday at 00:00:00 UTC (Universal Time)
 let competitionStartTime = Date.now(); // Start time of current competition
-let competitionEndTime = competitionStartTime + WEEKLY_COMPETITION_DURATION; // End time
+let competitionEndTime = getNextMonday(); // End time (next Monday 00:00:00 UTC)
+
+/**
+ * Get next Monday at 00:00:00 UTC
+ * @returns {number} Timestamp of next Monday 00:00:00 UTC
+ */
+function getNextMonday() {
+  const now = new Date();
+  const currentDay = now.getUTCDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  const currentHour = now.getUTCHours();
+  const currentMinute = now.getUTCMinutes();
+  const currentSecond = now.getUTCSeconds();
+  
+  // Calculate days until next Monday
+  // Always use next Monday (not today's Monday if it's already past 00:00:00)
+  let daysUntilMonday;
+  if (currentDay === 0) {
+    // Sunday, next Monday is tomorrow
+    daysUntilMonday = 1;
+  } else if (currentDay === 1) {
+    // Monday - always use next Monday (7 days from now)
+    // This ensures competition always ends on Monday 00:00:00 UTC
+    daysUntilMonday = 7;
+  } else {
+    // Tuesday-Saturday, calculate days to next Monday
+    daysUntilMonday = 8 - currentDay; // 8 - 2 = 6 (Tue), 8 - 3 = 5 (Wed), etc.
+  }
+  
+  // Create date for next Monday 00:00:00 UTC
+  const nextMonday = new Date(Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate() + daysUntilMonday,
+    0, 0, 0, 0 // 00:00:00.000
+  ));
+  
+  return nextMonday.getTime();
+}
 
 // Initialize competition start time (can be persisted to file/db later)
 function initializeCompetition() {
   // Check if we need to start a new competition
   const now = Date.now();
   if (now >= competitionEndTime) {
-    // Start new competition
+    // Competition ended, start new one
     competitionStartTime = now;
-    competitionEndTime = now + WEEKLY_COMPETITION_DURATION;
+    competitionEndTime = getNextMonday(); // Set to next Monday 00:00:00 UTC
     // Reset leaderboard for new competition
     rpsLeaderboard.clear();
     rewardPool = 0;
-    console.log(`[rps-competition] New weekly competition started. Ends at: ${new Date(competitionEndTime).toISOString()}`);
+    console.log(`[rps-competition] New weekly competition started. Ends at: ${new Date(competitionEndTime).toISOString()} (Next Monday 00:00:00 UTC)`);
+  } else {
+    // Competition still active, just update end time if needed (in case server restarted)
+    const calculatedEndTime = getNextMonday();
+    if (competitionEndTime !== calculatedEndTime) {
+      competitionEndTime = calculatedEndTime;
+      console.log(`[rps-competition] Competition end time updated to: ${new Date(competitionEndTime).toISOString()} (Next Monday 00:00:00 UTC)`);
+    }
   }
 }
 
 // Check competition status periodically (every hour)
-setInterval(() => {
+setInterval(async () => {
   const now = Date.now();
   if (now >= competitionEndTime) {
     // Competition ended, distribute rewards and start new one
-    console.log(`[rps-competition] Weekly competition ended. Distributing rewards...`);
+    console.log(`[rps-competition] Weekly competition ended. Distributing rewards automatically...`);
+    
     // Auto-distribute rewards (if private key is set)
-    // This will be handled by the distribute endpoint
+    const privateKey = process.env.REWARD_SENDER_PRIVATE_KEY;
+    if (privateKey && privateKey !== "your_private_key_here") {
+      console.log(`[rps-competition] REWARD_SENDER_PRIVATE_KEY is set, attempting auto-distribution...`);
+      const result = await distributeRewards();
+      if (result.ok) {
+        console.log(`[rps-competition] ✓ Auto-distribution successful. Distributed ${result.totalDistributed.toFixed(6)} SOL`);
+      } else {
+        console.error(`[rps-competition] ✗ Auto-distribution failed: ${result.message || result.error}`);
+      }
+    } else {
+      console.warn(`[rps-competition] REWARD_SENDER_PRIVATE_KEY not set, skipping auto-distribution. Please call POST /luna/rps/rewards/distribute manually.`);
+    }
+    
+    // Start new competition
     initializeCompetition();
   }
 }, 60 * 60 * 1000); // Check every hour
@@ -431,13 +581,13 @@ async function calculateFee(lunaAmount) {
 }
 
 /**
- * Collect fee from a wallet
+ * Collect fee from a wallet and send to BETTING_FEE_WALLET automatically
  * @param {string} wallet - Wallet address
  * @param {number} feeInSol - Fee amount in SOL
  * @param {string} roomId - Room ID for reference
  * @param {number} betAmount - Original bet amount in Luna
  */
-function collectFee(wallet, feeInSol, roomId, betAmount) {
+async function collectFee(wallet, feeInSol, roomId, betAmount) {
   if (!collectedFees.has(wallet)) {
     collectedFees.set(wallet, {
       totalFees: 0,
@@ -455,6 +605,23 @@ function collectFee(wallet, feeInSol, roomId, betAmount) {
   });
   
   console.log(`[rps-betting-fee] Collected ${feeInSol.toFixed(6)} SOL fee from ${wallet.substring(0, 8)}... (bet: ${betAmount} Luna)`);
+  
+  // Send fee to BETTING_FEE_WALLET automatically
+  const feeWallet = process.env.BETTING_FEE_WALLET;
+  if (feeWallet && feeWallet !== "your_fee_wallet_address_here") {
+    try {
+      const signature = await sendSol(feeWallet, feeInSol);
+      if (signature) {
+        console.log(`[rps-betting-fee] ✓ Sent ${feeInSol.toFixed(6)} SOL fee to ${feeWallet.substring(0, 8)}... (tx: ${signature})`);
+      } else {
+        console.warn(`[rps-betting-fee] ✗ Failed to send ${feeInSol.toFixed(6)} SOL fee to ${feeWallet.substring(0, 8)}... (check REWARD_SENDER_PRIVATE_KEY and wallet balance)`);
+      }
+    } catch (error) {
+      console.error(`[rps-betting-fee] Error sending fee to ${feeWallet.substring(0, 8)}...:`, error.message);
+    }
+  } else {
+    console.warn(`[rps-betting-fee] BETTING_FEE_WALLET not configured, fee recorded in memory only`);
+  }
 }
 
 // Pre-fetch price on startup and periodically update
@@ -677,11 +844,14 @@ app.post("/luna/rps/betting/create", async (req, res) => {
   try {
     const { wallet, betAmount } = req.body || {};
     
-    if (!wallet || typeof wallet !== "string") {
+    // Security: Validate wallet address format
+    try {
+      validateWalletAddress(wallet, 'wallet');
+    } catch (e) {
       return res.status(400).json({
         ok: false,
         error: "Invalid request",
-        message: "Wallet address is required",
+        message: e.message || "Invalid wallet address format",
       });
     }
     
@@ -690,6 +860,16 @@ app.post("/luna/rps/betting/create", async (req, res) => {
         ok: false,
         error: "Invalid request",
         message: "Bet amount must be at least 1 Luna",
+      });
+    }
+    
+    // Security: Limit maximum bet amount to prevent abuse
+    const MAX_BET_AMOUNT = 1000000000; // 1 billion Luna
+    if (betAmount > MAX_BET_AMOUNT) {
+      return res.status(400).json({
+        ok: false,
+        error: "Invalid request",
+        message: "Bet amount exceeds maximum limit",
       });
     }
     
@@ -715,7 +895,7 @@ app.post("/luna/rps/betting/create", async (req, res) => {
     
     // Collect 1% fee in SOL from creator
     const feeInSol = await calculateFee(betAmount);
-    collectFee(wallet, feeInSol, roomId, betAmount);
+    await collectFee(wallet, feeInSol, roomId, betAmount);
     
     // Auto-cleanup after timeout
     setTimeout(() => {
@@ -749,10 +929,11 @@ app.post("/luna/rps/betting/create", async (req, res) => {
     });
   } catch (e) {
     console.error("[rps-betting] Create room error:", e);
+    // Security: Don't expose internal error details to client
     res.status(500).json({
       ok: false,
-      error: e.message,
-      message: "Failed to create room",
+      error: "Internal server error",
+      message: "Failed to create room. Please try again later.",
     });
   }
 });
@@ -766,21 +947,24 @@ app.post("/luna/rps/betting/cancel", async (req, res) => {
     console.log(`[rps-betting] Cancel room request received:`, req.body);
     const { wallet, roomId } = req.body || {};
     
-    if (!wallet || typeof wallet !== "string") {
+    // Security: Validate wallet address format
+    try {
+      validateWalletAddress(wallet, 'wallet');
+    } catch (e) {
       console.log(`[rps-betting] Cancel room - invalid wallet:`, wallet);
       return res.status(400).json({
         ok: false,
         error: "Invalid request",
-        message: "Wallet address is required",
+        message: e.message || "Invalid wallet address format",
       });
     }
     
-    if (!roomId || typeof roomId !== "string") {
+    if (!roomId || typeof roomId !== "string" || roomId.length > 200) {
       console.log(`[rps-betting] Cancel room - invalid roomId:`, roomId);
       return res.status(400).json({
         ok: false,
         error: "Invalid request",
-        message: "Room ID is required",
+        message: "Room ID is required and must be a valid string",
       });
     }
     
@@ -833,10 +1017,11 @@ app.post("/luna/rps/betting/cancel", async (req, res) => {
     });
   } catch (e) {
     console.error("[rps-betting] Cancel room error:", e);
+    // Security: Don't expose internal error details to client
     res.status(500).json({
       ok: false,
-      error: e.message,
-      message: "Failed to cancel room",
+      error: "Internal server error",
+      message: "Failed to cancel room. Please try again later.",
     });
   }
 });
@@ -891,19 +1076,22 @@ app.post("/luna/rps/betting/join", async (req, res) => {
   try {
     const { wallet, roomId } = req.body || {};
     
-    if (!wallet || typeof wallet !== "string") {
+    // Security: Validate wallet address format
+    try {
+      validateWalletAddress(wallet, 'wallet');
+    } catch (e) {
       return res.status(400).json({
         ok: false,
         error: "Invalid request",
-        message: "Wallet address is required",
+        message: e.message || "Invalid wallet address format",
       });
     }
     
-    if (!roomId || typeof roomId !== "string") {
+    if (!roomId || typeof roomId !== "string" || roomId.length > 200) {
       return res.status(400).json({
         ok: false,
         error: "Invalid request",
-        message: "Room ID is required",
+        message: "Room ID is required and must be a valid string",
       });
     }
     
@@ -939,7 +1127,7 @@ app.post("/luna/rps/betting/join", async (req, res) => {
     
     // Collect 1% fee in SOL from player2 (challenger)
     const feeInSol = await calculateFee(room.betAmount);
-    collectFee(wallet, feeInSol, roomId, room.betAmount);
+    await collectFee(wallet, feeInSol, roomId, room.betAmount);
     
     // Broadcast room joined
     broadcast({
@@ -961,10 +1149,11 @@ app.post("/luna/rps/betting/join", async (req, res) => {
     });
   } catch (e) {
     console.error("[rps-betting] Join room error:", e);
+    // Security: Don't expose internal error details to client
     res.status(500).json({
       ok: false,
-      error: e.message,
-      message: "Failed to join room",
+      error: "Internal server error",
+      message: "Failed to join room. Please try again later.",
     });
   }
 });
@@ -1074,23 +1263,28 @@ app.post("/luna/rps/betting/submit", async (req, res) => {
   try {
     const { wallet, roomId, choice } = req.body || {};
     
-    if (!wallet || typeof wallet !== "string") {
+    // Security: Validate wallet address format
+    try {
+      validateWalletAddress(wallet, 'wallet');
+    } catch (e) {
       return res.status(400).json({
         ok: false,
         error: "Invalid request",
-        message: "Wallet address is required",
+        message: e.message || "Invalid wallet address format",
       });
     }
     
-    if (!roomId || typeof roomId !== "string") {
+    if (!roomId || typeof roomId !== "string" || roomId.length > 200) {
       return res.status(400).json({
         ok: false,
         error: "Invalid request",
-        message: "Room ID is required",
+        message: "Room ID is required and must be a valid string",
       });
     }
     
-    if (!choice || !["rock", "paper", "scissors"].includes(choice)) {
+    // Security: Validate choice (case-insensitive, trim whitespace)
+    const normalizedChoice = choice ? choice.toLowerCase().trim() : '';
+    if (!normalizedChoice || !["rock", "paper", "scissors"].includes(normalizedChoice)) {
       return res.status(400).json({
         ok: false,
         error: "Invalid request",
@@ -3442,17 +3636,17 @@ app.get("/luna/rps/contract-address", async (req, res) => {
  */
 app.get("/luna/rps/leaderboard", async (req, res) => {
   try {
-    // Convert leaderboard map to array and sort by total SOL won
+    // Convert leaderboard map to array and sort by total Luna won
     const leaderboardArray = Array.from(rpsLeaderboard.entries()).map(([wallet, stats]) => ({
       wallet: wallet,
       wins: stats.wins || 0,
       losses: stats.losses || 0,
-      totalWon: stats.totalWon || 0,
-      totalSolWon: stats.totalSolWon || 0,
+      totalWon: stats.totalWon || 0, // Total Luna won
+      totalSolWon: stats.totalSolWon || 0, // Total SOL won (for reference)
     }));
     
-    // Sort by total SOL won (descending)
-    leaderboardArray.sort((a, b) => (b.totalSolWon || 0) - (a.totalSolWon || 0));
+    // Sort by total Luna won (descending) - ใครได้ Luna เยอะสุดจะอยู่อันดับแรก
+    leaderboardArray.sort((a, b) => (b.totalWon || 0) - (a.totalWon || 0));
     
     // Add rank to each entry
     leaderboardArray.forEach((entry, index) => {
@@ -3538,39 +3732,49 @@ async function sendSol(toWallet, amountInSol) {
 }
 
 /**
- * Distribute rewards to top 5 players
- * POST /luna/rps/rewards/distribute
- * Body: { totalRewardPool: number } (optional - if not provided, uses accumulated pool)
+ * Distribute rewards to top 5 players (internal function)
+ * @param {number} totalRewardPool - Optional pool amount (if not provided, uses accumulated pool)
+ * @returns {Promise<Object>} Distribution result
  */
-app.post("/luna/rps/rewards/distribute", async (req, res) => {
+async function distributeRewards(totalRewardPool = null) {
   try {
-    const { totalRewardPool } = req.body || {};
     const poolAmount = totalRewardPool || rewardPool;
     
     if (poolAmount <= 0) {
-      return res.status(400).json({
+      console.log("[rps-rewards] No rewards to distribute (pool is empty)");
+      return {
         ok: false,
         error: "Invalid pool amount",
         message: "Reward pool must be greater than 0",
-      });
+        totalPool: poolAmount,
+        totalDistributed: 0,
+        distributions: [],
+      };
     }
     
     // Get top 5 players
     const leaderboardArray = Array.from(rpsLeaderboard.entries()).map(([wallet, stats]) => ({
       wallet: wallet,
+      totalWon: stats.totalWon || 0, // Sort by Luna won
       totalSolWon: stats.totalSolWon || 0,
     }));
     
-    leaderboardArray.sort((a, b) => (b.totalSolWon || 0) - (a.totalSolWon || 0));
+    // Sort by total Luna won (descending)
+    leaderboardArray.sort((a, b) => (b.totalWon || 0) - (a.totalWon || 0));
     const top5 = leaderboardArray.slice(0, 5);
     
     if (top5.length === 0) {
-      return res.json({
+      console.log("[rps-rewards] No players to reward");
+      return {
         ok: true,
         message: "No players to reward",
-        distributed: [],
-      });
+        totalPool: poolAmount,
+        totalDistributed: 0,
+        distributions: [],
+      };
     }
+    
+    console.log(`[rps-rewards] Distributing ${poolAmount} SOL to top ${top5.length} players...`);
     
     const distributions = [];
     let totalDistributed = 0;
@@ -3582,6 +3786,7 @@ app.post("/luna/rps/rewards/distribute", async (req, res) => {
       const amount = poolAmount * percentage;
       
       if (amount > 0) {
+        console.log(`[rps-rewards] Sending ${amount.toFixed(6)} SOL (${percentage * 100}%) to rank ${rank}: ${top5[i].wallet.substring(0, 8)}...`);
         const signature = await sendSol(top5[i].wallet, amount);
         distributions.push({
           rank: rank,
@@ -3594,6 +3799,9 @@ app.post("/luna/rps/rewards/distribute", async (req, res) => {
         
         if (signature) {
           totalDistributed += amount;
+          console.log(`[rps-rewards] ✓ Sent ${amount.toFixed(6)} SOL to rank ${rank} (tx: ${signature})`);
+        } else {
+          console.error(`[rps-rewards] ✗ Failed to send ${amount.toFixed(6)} SOL to rank ${rank}`);
         }
       }
     }
@@ -3601,6 +3809,7 @@ app.post("/luna/rps/rewards/distribute", async (req, res) => {
     // Send remaining 60% to distribution wallet
     const remainingAmount = poolAmount * REWARD_PERCENTAGES.remaining;
     if (remainingAmount > 0) {
+      console.log(`[rps-rewards] Sending ${remainingAmount.toFixed(6)} SOL (${REWARD_PERCENTAGES.remaining * 100}%) to distribution wallet: ${REWARD_DISTRIBUTION_WALLET.substring(0, 8)}...`);
       const signature = await sendSol(REWARD_DISTRIBUTION_WALLET, remainingAmount);
       distributions.push({
         rank: "distribution",
@@ -3613,6 +3822,9 @@ app.post("/luna/rps/rewards/distribute", async (req, res) => {
       
       if (signature) {
         totalDistributed += remainingAmount;
+        console.log(`[rps-rewards] ✓ Sent ${remainingAmount.toFixed(6)} SOL to distribution wallet (tx: ${signature})`);
+      } else {
+        console.error(`[rps-rewards] ✗ Failed to send ${remainingAmount.toFixed(6)} SOL to distribution wallet`);
       }
     }
     
@@ -3621,15 +3833,45 @@ app.post("/luna/rps/rewards/distribute", async (req, res) => {
       rewardPool = 0;
     }
     
-    return res.json({
+    console.log(`[rps-rewards] Distribution complete. Total distributed: ${totalDistributed.toFixed(6)} SOL / ${poolAmount.toFixed(6)} SOL`);
+    
+    return {
       ok: true,
       message: "Rewards distributed successfully",
       totalPool: poolAmount,
       totalDistributed: totalDistributed,
       distributions: distributions,
-    });
+    };
   } catch (e) {
-    console.error("[rps] Reward distribution error:", e);
+    console.error("[rps-rewards] Reward distribution error:", e);
+    return {
+      ok: false,
+      error: e.message,
+      message: "Failed to distribute rewards",
+      totalPool: totalRewardPool || rewardPool,
+      totalDistributed: 0,
+      distributions: [],
+    };
+  }
+}
+
+/**
+ * Distribute rewards to top 5 players
+ * POST /luna/rps/rewards/distribute
+ * Body: { totalRewardPool: number } (optional - if not provided, uses accumulated pool)
+ */
+app.post("/luna/rps/rewards/distribute", async (req, res) => {
+  try {
+    const { totalRewardPool } = req.body || {};
+    const result = await distributeRewards(totalRewardPool);
+    
+    if (result.ok) {
+      return res.json(result);
+    } else {
+      return res.status(400).json(result);
+    }
+  } catch (e) {
+    console.error("[rps] Reward distribution endpoint error:", e);
     res.status(500).json({
       ok: false,
       error: e.message,
@@ -3646,10 +3888,12 @@ app.get("/luna/rps/rewards/pool", async (req, res) => {
   try {
     const leaderboardArray = Array.from(rpsLeaderboard.entries()).map(([wallet, stats]) => ({
       wallet: wallet,
+      totalWon: stats.totalWon || 0, // Sort by Luna won
       totalSolWon: stats.totalSolWon || 0,
     }));
     
-    leaderboardArray.sort((a, b) => (b.totalSolWon || 0) - (a.totalSolWon || 0));
+    // Sort by total Luna won (descending)
+    leaderboardArray.sort((a, b) => (b.totalWon || 0) - (a.totalWon || 0));
     const top5 = leaderboardArray.slice(0, 5);
     
     const distributionPlan = top5.map((player, index) => {

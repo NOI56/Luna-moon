@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404 - ไม่พบหน้า</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Courier New', 'Monaco', monospace;
+      background: #0a0a0a;
+      background-image: 
+        radial-gradient(circle at 20% 50%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(255, 0, 255, 0.1) 0%, transparent 50%),
+        linear-gradient(135deg, #0a0a0a 0%, #1a0a2e 50%, #16213e 100%);
+      color: #00ffff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 2px,
+          rgba(0, 255, 255, 0.03) 2px,
+          rgba(0, 255, 255, 0.03) 4px
+        );
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .error-container {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 40px;
+    }
+
+    .error-code {
+      font-size: 8rem;
+      font-weight: bold;
+      text-shadow: 0 0 30px #00ffff, 0 0 60px #00ffff;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, #00ffff, #ff00ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .error-message {
+      font-size: 2rem;
+      margin-bottom: 30px;
+      color: #a0ffff;
+    }
+
+    .error-description {
+      font-size: 1.2rem;
+      color: #a0ffff;
+      margin-bottom: 40px;
+      line-height: 1.6;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 15px 30px;
+      margin: 10px;
+      border: 2px solid #00ffff;
+      background: rgba(0, 255, 255, 0.1);
+      color: #00ffff;
+      text-decoration: none;
+      border-radius: 8px;
+      transition: all 0.3s;
+      font-family: 'Courier New', monospace;
+      font-size: 1.1rem;
+    }
+
+    .btn:hover {
+      background: rgba(0, 255, 255, 0.2);
+      box-shadow: 0 0 20px #00ffff;
+      transform: translateY(-2px);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #00ffff, #ff00ff);
+      color: #0a0a0a;
+      border: none;
+      font-weight: bold;
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 0 30px rgba(0, 255, 255, 0.8);
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-20px); }
+    }
+
+    .moon {
+      font-size: 5rem;
+      animation: float 3s ease-in-out infinite;
+      margin-bottom: 30px;
+    }
+
+    @media (max-width: 768px) {
+      .error-code {
+        font-size: 5rem;
+      }
+
+      .error-message {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="error-container">
+    <div class="moon">🌙</div>
+    <div class="error-code">404</div>
+    <div class="error-message">ไม่พบหน้าที่คุณกำลังมองหา</div>
+    <div class="error-description">
+      หน้านี้อาจถูกลบหรือย้ายไปที่อื่นแล้ว<br>
+      ลองกลับไปหน้าหลักหรือใช้เมนูนำทาง
+    </div>
+    <div>
+      <a href="/" class="btn btn-primary">กลับหน้าหลัก</a>
+      <a href="/chat_tester.html" class="btn">แชตกับ Luna</a>
+    </div>
+  </div>
+</body>
+</html>
+
+
+

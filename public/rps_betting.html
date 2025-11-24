@@ -751,11 +751,12 @@
 </head>
 <body>
   <div id="modeNavigation" style="position: fixed !important; top: 40px !important; left: 20px !important; display: flex !important; gap: 10px; z-index: 99999 !important; flex-wrap: wrap; pointer-events: auto !important; visibility: visible !important; opacity: 1 !important;">
-    <a href="/rps_game.html" id="pvpLink" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">← PvP Mode</a>
-    <a href="/rps_vs_luna.html" id="vsLunaLink" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">← VS Luna Mode</a>
+    <a href="/rps_vs_luna.html" id="vsLunaLink" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">🎮 VS Luna</a>
+    <a href="/rps_game.html" id="pvpLink" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">Play PvP! Find</a>
+    <a href="/rps_betting.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">💰 Betting Mode</a>
     <a href="/rps_leaderboard.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">🏆 Leaderboard</a>
     <a href="/rps_stats.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">📊 Stats</a>
-    <a href="/rps_history.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">📜 History</a>
+    <a href="/rps_history.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">📜 Match History</a>
   </div>
 
   <button id="neonToggle" title="Toggle Neon Effects">💡 Neon: ON</button>
@@ -782,7 +783,7 @@
     <!-- X DEX Links Section -->
     <div class="dex-links">
       <a href="#" id="buyDexLink" class="dex-btn dex-btn-buy" target="_blank" onclick="openBuyDex(event)">
-        <span>⚡</span> Buy 1coin
+        <span>⚡</span> Buy Luna
       </a>
       <a href="#" id="communityLink" class="dex-btn dex-btn-community" target="_blank" onclick="openCommunity(event)">
         <span>𝕏</span> Join Community
@@ -815,6 +816,21 @@
     </div>
     <div id="solBalanceDisplay" class="wallet-info hidden" style="margin-top: 10px; padding: 15px; background: rgba(0, 255, 255, 0.1); border: 1px solid #00ffff; border-radius: 8px; font-size: 0.9em; color: #00ffff;">
       <strong>💰 SOL Balance:</strong> <span id="solBalanceAmount">0.0000</span> SOL
+    </div>
+
+    <!-- Total Fees Display (Real-time) -->
+    <div id="totalFeesDisplay" style="margin-top: 15px; padding: 15px; background: rgba(0, 255, 255, 0.1); border: 1px solid #00ffff; border-radius: 8px; font-size: 0.9em; color: #00ffff;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <strong>💎 Total Fees Collected (Real-time):</strong>
+        <span id="totalFeesAmount" style="font-size: 1.2em; font-weight: bold; color: #00ffff; text-shadow: 0 0 5px #00ffff;">0.0000</span>
+        <span style="color: #00ffff; opacity: 0.8;">SOL</span>
+      </div>
+      <div style="font-size: 0.85em; opacity: 0.8; margin-top: 5px;">
+        <span id="totalFeesTransactions">0</span> transactions • Last updated: <span id="lastFeesUpdate">--</span>
+      </div>
+      <div style="font-size: 0.85em; opacity: 0.7; margin-top: 5px; color: #00ffff;">
+        💡 Fees are automatically sent to: <span id="feeWalletAddress" style="font-family: monospace;">--</span>
+      </div>
     </div>
 
     <div id="bettingSection" class="betting-section">
@@ -882,6 +898,29 @@
     const TEST_MODE = false; // Using real Luna token
     // Mint address will be read from backend (.env) automatically
     // No need to hardcode here
+    
+    // Security: HTML Sanitization function
+    function escapeHtml(text) {
+      if (text == null) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+    
+    // Security: Sanitize wallet address for display
+    function sanitizeWalletAddress(address) {
+      if (!address || typeof address !== 'string') return '';
+      // Remove any non-alphanumeric characters except base58 chars
+      return address.replace(/[^A-Za-z0-9]/g, '').substring(0, 44);
+    }
+    
+    // Security: Create safe HTML element
+    function createSafeElement(tag, text, className = '') {
+      const el = document.createElement(tag);
+      if (className) el.className = className;
+      el.textContent = text;
+      return el;
+    }
     
     // Fee calculation constants
     const FEE_PERCENTAGE = 0.01; // 1% fee
@@ -1004,8 +1043,12 @@
           if (disconnectBtn) disconnectBtn.classList.remove('hidden');
           if (walletInfo) {
             walletInfo.classList.remove('hidden');
+            const sanitizedWallet = sanitizeWalletAddress(walletPublicKey);
+            const shortWallet = sanitizedWallet.length > 16 
+              ? `${sanitizedWallet.substring(0, 8)}...${sanitizedWallet.substring(sanitizedWallet.length - 8)}`
+              : sanitizedWallet;
             walletInfo.innerHTML = `
-              <strong>Connected:</strong> ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}<br>
+              <strong>Connected:</strong> ${escapeHtml(shortWallet)}<br>
               <strong>Balance:</strong> <span id="balanceDisplay">Checking...</span>
             `;
           }
@@ -1358,16 +1401,19 @@
           ];
           roomsList.innerHTML = testRooms.map(room => {
             const canJoin = walletConnected && playerBalance >= room.betAmount;
+            const safeRoomId = escapeHtml(room.roomId);
+            const safeBetAmount = escapeHtml(room.betAmount.toString());
+            const safeCreator = escapeHtml(room.creator);
             return `
               <div class="room-card" style="opacity: 0.8; border-style: dashed;">
                 <div class="room-header">
-                  <div class="room-bet">💰 ${formatNumber(room.betAmount)} Luna</div>
-                  <div class="room-creator">${room.creator}</div>
+                  <div class="room-bet">💰 ${escapeHtml(formatNumber(room.betAmount))} Luna</div>
+                  <div class="room-creator">${safeCreator}</div>
                 </div>
                 <div class="room-status">
                   🟡 Waiting for opponent...
                 </div>
-                <button class="join-btn" onclick="joinTestRoom('${room.roomId}', ${room.betAmount}, '${room.creator}')" style="background: linear-gradient(135deg, rgba(0, 255, 255, 0.4), rgba(0, 255, 255, 0.4));">
+                <button class="join-btn" onclick="joinTestRoom('${safeRoomId}', ${safeBetAmount}, '${safeCreator}')" style="background: linear-gradient(135deg, rgba(0, 255, 255, 0.4), rgba(0, 255, 255, 0.4));">
                   Join Room
                 </button>
               </div>
@@ -1384,31 +1430,39 @@
         const canJoin = !isMyRoom && walletConnected && playerBalance >= room.betAmount;
         const isTest = room.roomId && room.roomId.startsWith('test_');
         
+        // Sanitize all user inputs
+        const safeRoomId = escapeHtml(room.roomId);
+        const safeBetAmount = escapeHtml(room.betAmount.toString());
+        const safeCreator = typeof room.creator === 'string' && room.creator.length > 16 
+          ? escapeHtml(room.creator.substring(0, 8) + '...' + room.creator.substring(room.creator.length - 8))
+          : escapeHtml(room.creator);
+        const safeFee = escapeHtml(formatSol(calculateFee(room.betAmount)));
+        
         return `
           <div class="room-card" ${isTest ? 'style="opacity: 0.8; border-style: dashed;"' : ''}>
             <div class="room-header">
-              <div class="room-bet">💰 ${formatNumber(room.betAmount)} Luna</div>
-              <div class="room-creator">${typeof room.creator === 'string' && room.creator.length > 16 ? room.creator.substring(0, 8) + '...' + room.creator.substring(room.creator.length - 8) : room.creator}</div>
+              <div class="room-bet">💰 ${escapeHtml(formatNumber(room.betAmount))} Luna</div>
+              <div class="room-creator">${safeCreator}</div>
             </div>
             <div class="room-status">
               ${room.player2 ? '🟢 Match in progress' : '🟡 Waiting for opponent...'}
             </div>
             <div style="font-size: 0.85em; color: #00ffff; opacity: 0.7; margin-top: 5px;">
-              💰 Fee: ${formatSol(calculateFee(room.betAmount))} SOL (1% of bet)
+              💰 Fee: ${safeFee} SOL (1% of bet)
             </div>
             ${!isMyRoom && !room.player2 ? `
-              <button class="join-btn" ${canJoin || isTest ? '' : 'disabled'} onclick="${isTest ? `joinTestRoom('${room.roomId}', ${room.betAmount}, '${typeof room.creator === 'string' && room.creator.length > 16 ? room.creator.substring(0, 8) + '...' + room.creator.substring(room.creator.length - 8) : room.creator}')` : `joinRoom('${room.roomId}', ${room.betAmount})`}">
+              <button class="join-btn" ${canJoin || isTest ? '' : 'disabled'} onclick="${isTest ? `joinTestRoom('${safeRoomId}', ${safeBetAmount}, '${safeCreator}')` : `joinRoom('${safeRoomId}', ${safeBetAmount})`}">
                 ${canJoin ? '🎮 Challenge!' : '❌ Insufficient balance'}
               </button>
             ` : ''}
             ${isMyRoom ? `
               <div style="color: #00ffff; margin-top: 10px; margin-bottom: 10px;">Your room - Waiting for challenger...</div>
-              <button class="cancel-btn" onclick="cancelRoom('${room.roomId}')" style="background: linear-gradient(135deg, rgba(255, 0, 0, 0.3), rgba(255, 100, 100, 0.3)); border: 2px solid #ff0000; color: #ff0000; padding: 10px 20px; border-radius: 8px; cursor: pointer; width: 100%; font-family: 'Courier New', monospace; transition: all 0.3s;">
+              <button class="cancel-btn" onclick="cancelRoom('${safeRoomId}')" style="background: linear-gradient(135deg, rgba(255, 0, 0, 0.3), rgba(255, 100, 100, 0.3)); border: 2px solid #ff0000; color: #ff0000; padding: 10px 20px; border-radius: 8px; cursor: pointer; width: 100%; font-family: 'Courier New', monospace; transition: all 0.3s;">
                 ❌ Cancel Room
               </button>
             ` : ''}
             ${room.player2 === walletPublicKey && !room.choices?.player1 && !room.choices?.player2 ? `
-              <button class="cancel-btn" onclick="leaveRoom('${room.roomId}')" style="background: linear-gradient(135deg, rgba(255, 0, 0, 0.3), rgba(255, 100, 100, 0.3)); border: 2px solid #ff0000; color: #ff0000; padding: 10px 20px; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 10px; font-family: 'Courier New', monospace; transition: all 0.3s;">
+              <button class="cancel-btn" onclick="leaveRoom('${safeRoomId}')" style="background: linear-gradient(135deg, rgba(255, 0, 0, 0.3), rgba(255, 100, 100, 0.3)); border: 2px solid #ff0000; color: #ff0000; padding: 10px 20px; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 10px; font-family: 'Courier New', monospace; transition: all 0.3s;">
                 🚪 Leave Room
               </button>
             ` : ''}
@@ -1466,9 +1520,13 @@
           document.getElementById('connectWalletBtn').classList.add('hidden');
           document.getElementById('disconnectWalletBtn').classList.remove('hidden');
           document.getElementById('walletInfo').classList.remove('hidden');
+          const sanitizedWallet = sanitizeWalletAddress(walletPublicKey);
+          const shortWallet = sanitizedWallet.length > 16 
+            ? `${sanitizedWallet.substring(0, 8)}...${sanitizedWallet.substring(sanitizedWallet.length - 8)}`
+            : sanitizedWallet;
           document.getElementById('walletInfo').innerHTML = `
-            <strong>Connected:</strong> ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}<br>
-            <strong>Balance:</strong> <span id="balanceDisplay">${formatNumber(playerBalance)} Luna</span>
+            <strong>Connected:</strong> ${escapeHtml(shortWallet)}<br>
+            <strong>Balance:</strong> <span id="balanceDisplay">${escapeHtml(formatNumber(playerBalance))} Luna</span>
           `;
         } else {
           alert('Please connect your wallet first!');
@@ -1502,14 +1560,14 @@
       }
       
       try {
-        const response = await fetch(`${API_BASE}/luna/rps/betting/create`, {
+        const response = await fetch(`${API_BASE}/luna/rps/betting/create`, addCSRFToken({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             wallet: walletPublicKey,
             betAmount: betAmount
           })
-        });
+        }));
         
         const data = await response.json();
         
@@ -1578,7 +1636,12 @@
         overlay = document.createElement('div');
         overlay.id = 'countdownOverlay';
         overlay.className = 'countdown-overlay';
-        overlay.innerHTML = '<div class="countdown-number" id="countdownNumber">3</div>';
+        const countdownDiv = document.createElement('div');
+        countdownDiv.className = 'countdown-number';
+        countdownDiv.id = 'countdownNumber';
+        countdownDiv.textContent = '3';
+        overlay.innerHTML = '';
+        overlay.appendChild(countdownDiv);
         document.body.appendChild(overlay);
       }
       
@@ -1698,16 +1761,16 @@
           }, 2000); // Wait for hand cycling to complete
         } else {
           // Real room - call API
-          try {
-            const response = await fetch(`${API_BASE}/luna/rps/betting/submit`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                wallet: walletPublicKey,
-                roomId: currentRoomId,
-                choice: choice
-              })
-            });
+      try {
+        const response = await fetch(`${API_BASE}/luna/rps/betting/submit`, addCSRFToken({
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            wallet: walletPublicKey,
+            roomId: currentRoomId,
+            choice: choice
+          })
+        }));
             
             const data = await response.json();
             
@@ -1739,14 +1802,14 @@
       }
       
       try {
-        const response = await fetch(`${API_BASE}/luna/rps/betting/cancel`, {
+        const response = await fetch(`${API_BASE}/luna/rps/betting/cancel`, addCSRFToken({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             wallet: walletPublicKey,
             roomId: roomId
           })
-        });
+        }));
         
         // Check if response is OK
         if (!response.ok) {
@@ -1801,14 +1864,14 @@
       }
       
       try {
-        const response = await fetch(`${API_BASE}/luna/rps/betting/cancel`, {
+        const response = await fetch(`${API_BASE}/luna/rps/betting/cancel`, addCSRFToken({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             wallet: walletPublicKey,
             roomId: roomId
           })
-        });
+        }));
         
         // Check if response is OK
         if (!response.ok) {
@@ -2017,28 +2080,7 @@
     }
 
     // Sound Effects System for Navigation
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    
-    function playSound(frequency, duration, type = 'sine', volume = 0.3) {
-      try {
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        oscillator.frequency.value = frequency;
-        oscillator.type = type;
-        
-        gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
-        
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + duration);
-      } catch (e) {
-        console.error('[Sound] Error playing sound:', e);
-      }
-    }
+    // Note: audioContext and playSound are already defined above, reuse them
     
     // Navigation click sound (short beep)
     function playNavClickSound() {
@@ -2061,6 +2103,98 @@
     }
 
 
+    // Total Fees Real-time Update
+    let totalFeesUpdateInterval = null;
+    
+    async function updateTotalFees() {
+      try {
+        const response = await fetch(`${API_BASE}/luna/rps/betting/fees`);
+        const data = await response.json();
+        
+        if (data.ok) {
+          const totalFees = data.totalCollectedFees || 0;
+          const transactionCount = Object.values(data.feeBreakdown || {}).reduce((sum, fee) => sum + (fee.transactionCount || 0), 0);
+          const feeWallet = data.feeWallet || '--';
+          
+          // Update UI
+          const totalFeesEl = document.getElementById('totalFeesAmount');
+          const totalTransactionsEl = document.getElementById('totalFeesTransactions');
+          const lastUpdateEl = document.getElementById('lastFeesUpdate');
+          const feeWalletEl = document.getElementById('feeWalletAddress');
+          
+          if (totalFeesEl) {
+            // formatSol returns "X.XXXX SOL", we only need the number part
+            const formatted = formatSol(totalFees);
+            totalFeesEl.textContent = formatted.replace(' SOL', '');
+          }
+          if (totalTransactionsEl) {
+            totalTransactionsEl.textContent = transactionCount;
+          }
+          if (lastUpdateEl) {
+            const now = new Date();
+            lastUpdateEl.textContent = now.toLocaleTimeString();
+          }
+          if (feeWalletEl && feeWallet && feeWallet !== '--') {
+            feeWalletEl.textContent = feeWallet.length > 16 
+              ? `${feeWallet.substring(0, 8)}...${feeWallet.substring(feeWallet.length - 8)}`
+              : feeWallet;
+          }
+        }
+      } catch (error) {
+        console.error('[Fees] Error updating total fees:', error);
+      }
+    }
+    
+    function startTotalFeesUpdates() {
+      // Update immediately
+      updateTotalFees();
+      // Update every 5 seconds
+      if (totalFeesUpdateInterval) {
+        clearInterval(totalFeesUpdateInterval);
+      }
+      totalFeesUpdateInterval = setInterval(updateTotalFees, 5000);
+    }
+    
+    function stopTotalFeesUpdates() {
+      if (totalFeesUpdateInterval) {
+        clearInterval(totalFeesUpdateInterval);
+        totalFeesUpdateInterval = null;
+      }
+    }
+
+    // Security: CSRF Token Management
+    let csrfToken = null;
+    
+    async function fetchCSRFToken() {
+      try {
+        const response = await fetch(`${API_BASE}/api/csrf-token`);
+        const data = await response.json();
+        if (data.token) {
+          csrfToken = data.token;
+          console.log('[Security] CSRF token fetched');
+        }
+      } catch (err) {
+        console.warn('[Security] Failed to fetch CSRF token:', err);
+      }
+    }
+    
+    // Refresh CSRF token every 30 minutes
+    function startCSRFTokenRefresh() {
+      fetchCSRFToken();
+      setInterval(fetchCSRFToken, 30 * 60 * 1000);
+    }
+    
+    // Helper function to add CSRF token to fetch requests
+    function addCSRFToken(options = {}) {
+      if (csrfToken && ['POST', 'PUT', 'DELETE'].includes((options.method || 'GET').toUpperCase())) {
+        if (!options.headers) {
+          options.headers = {};
+        }
+        options.headers['x-csrf-token'] = csrfToken;
+      }
+      return options;
+    }
+
     // Initialize
     document.addEventListener('DOMContentLoaded', async () => {
       initNeonToggle();
@@ -2073,6 +2207,10 @@
       setInterval(fetchLunaPrice, 60000);
       // Start competition timer
       startCompetitionTimer();
+      // Start total fees updates
+      startTotalFeesUpdates();
+      // Start CSRF token management
+      startCSRFTokenRefresh();
     });
     
     // Refresh rooms every 5 seconds
@@ -2166,10 +2304,6 @@
       }
     }
 
-    // Load contract address on page load
-    document.addEventListener('DOMContentLoaded', () => {
-      loadContractAddress();
-    });
   </script>
 </body>
 </html>

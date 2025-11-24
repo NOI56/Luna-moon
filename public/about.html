@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="เกี่ยวกับ Luna AI - เรียนรู้เพิ่มเติมเกี่ยวกับฟีเจอร์และวิธีการใช้งาน">
+  <title>เกี่ยวกับ Luna AI</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Courier New', 'Monaco', monospace;
+      background: #0a0a0a;
+      background-image: 
+        radial-gradient(circle at 20% 50%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(255, 0, 255, 0.1) 0%, transparent 50%),
+        linear-gradient(135deg, #0a0a0a 0%, #1a0a2e 50%, #16213e 100%);
+      color: #00ffff;
+      position: relative;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+    
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 2px,
+          rgba(0, 255, 255, 0.03) 2px,
+          rgba(0, 255, 255, 0.03) 4px
+        );
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Navigation */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(10, 10, 10, 0.9);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(0, 255, 255, 0.3);
+      z-index: 1000;
+      padding: 15px 20px;
+    }
+
+    .nav-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: bold;
+      text-shadow: 0 0 10px #00ffff;
+      color: #00ffff;
+      text-decoration: none;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 20px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: #00ffff;
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 5px;
+      transition: all 0.3s;
+      border: 1px solid transparent;
+    }
+
+    .nav-links a:hover {
+      background: rgba(0, 255, 255, 0.1);
+      border-color: #00ffff;
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+    }
+
+    /* Main Content */
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 120px 20px 40px;
+    }
+
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 30px;
+      text-shadow: 0 0 20px #00ffff;
+      text-align: center;
+    }
+
+    h2 {
+      font-size: 2rem;
+      margin: 40px 0 20px;
+      color: #00ffff;
+      text-shadow: 0 0 10px #00ffff;
+    }
+
+    h3 {
+      font-size: 1.5rem;
+      margin: 30px 0 15px;
+      color: #00ffff;
+    }
+
+    p {
+      line-height: 1.8;
+      color: #a0ffff;
+      margin-bottom: 20px;
+    }
+
+    .section {
+      background: rgba(0, 255, 255, 0.05);
+      border: 1px solid rgba(0, 255, 255, 0.3);
+      border-radius: 12px;
+      padding: 30px;
+      margin-bottom: 30px;
+    }
+
+    .faq-item {
+      margin-bottom: 25px;
+      padding-bottom: 25px;
+      border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+    }
+
+    .faq-item:last-child {
+      border-bottom: none;
+    }
+
+    .faq-question {
+      font-size: 1.2rem;
+      color: #00ffff;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+
+    .faq-answer {
+      color: #a0ffff;
+      line-height: 1.8;
+    }
+
+    ul, ol {
+      margin-left: 30px;
+      margin-bottom: 20px;
+      color: #a0ffff;
+    }
+
+    li {
+      margin-bottom: 10px;
+      line-height: 1.6;
+    }
+
+    code {
+      background: rgba(0, 255, 255, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #00ffff;
+      font-family: 'Courier New', monospace;
+    }
+
+    /* Contract Address Section */
+    .contract-section {
+      background: rgba(0, 255, 255, 0.05);
+      border: 1px solid rgba(0, 255, 255, 0.3);
+      border-radius: 12px;
+      padding: 30px;
+      margin: 40px 0;
+      text-align: center;
+    }
+
+    .contract-label {
+      font-size: 1.1rem;
+      color: #a0ffff;
+      margin-bottom: 15px;
+      font-weight: bold;
+    }
+
+    .contract-input-group {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 15px;
+    }
+
+    .contract-input {
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(0, 255, 255, 0.3);
+      color: #00ffff;
+      padding: 12px 20px;
+      font-size: 0.9rem;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      min-width: 300px;
+      max-width: 100%;
+      flex: 1;
+    }
+
+    .contract-btn {
+      padding: 12px 24px;
+      font-size: 0.9rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-family: 'Courier New', monospace;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .contract-btn-copy {
+      background: linear-gradient(135deg, #ff6b35, #ff8c42);
+      color: white;
+      font-weight: bold;
+    }
+
+    .contract-btn-copy:hover {
+      background: linear-gradient(135deg, #ff8c42, #ff6b35);
+      box-shadow: 0 0 15px rgba(255, 107, 53, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .contract-btn-view {
+      background: linear-gradient(135deg, #1a237e, #283593);
+      color: white;
+      font-weight: bold;
+    }
+
+    .contract-btn-view:hover {
+      background: linear-gradient(135deg, #283593, #3949ab);
+      box-shadow: 0 0 15px rgba(26, 35, 126, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .contract-warning {
+      font-size: 0.85rem;
+      color: #a0ffff;
+      opacity: 0.8;
+      margin-top: 15px;
+    }
+
+    /* X DEX Links Section */
+    .dex-links {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 40px 0;
+    }
+
+    .dex-btn {
+      padding: 15px 30px;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-family: 'Courier New', monospace;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .dex-btn-buy {
+      background: linear-gradient(135deg, #ff6b35, #ff8c42);
+      color: white;
+    }
+
+    .dex-btn-buy:hover {
+      background: linear-gradient(135deg, #ff8c42, #ff6b35);
+      box-shadow: 0 0 20px rgba(255, 107, 53, 0.6);
+      transform: translateY(-2px);
+    }
+
+    .dex-btn-community {
+      background: linear-gradient(135deg, #1a237e, #283593);
+      color: white;
+    }
+
+    .dex-btn-community:hover {
+      background: linear-gradient(135deg, #283593, #3949ab);
+      box-shadow: 0 0 20px rgba(26, 35, 126, 0.6);
+      transform: translateY(-2px);
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 12px 24px;
+      margin-top: 20px;
+      border: 2px solid #00ffff;
+      background: rgba(0, 255, 255, 0.1);
+      color: #00ffff;
+      text-decoration: none;
+      border-radius: 8px;
+      transition: all 0.3s;
+      font-family: 'Courier New', monospace;
+    }
+
+    .btn:hover {
+      background: rgba(0, 255, 255, 0.2);
+      box-shadow: 0 0 20px #00ffff;
+    }
+
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 2rem;
+      }
+
+      .nav-links {
+        flex-direction: column;
+        gap: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-container">
+      <a href="/" class="logo">🌙 Luna AI</a>
+      <ul class="nav-links">
+        <li><a href="/">หน้าแรก</a></li>
+        <li><a href="/chat_tester.html">แชตกับ Luna</a></li>
+        <li><a href="/rps_game.html">เกม PvP</a></li>
+        <li><a href="/rps_vs_luna.html">VS Luna</a></li>
+        <li><a href="/rps_betting.html">เดิมพัน</a></li>
+        <li><a href="/rps_leaderboard.html">อันดับ</a></li>
+        <li><a href="/about.html">เกี่ยวกับ</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="container">
+    <h1>เกี่ยวกับ Luna AI</h1>
+
+    <div class="section">
+      <h2>🌙 Luna คืออะไร?</h2>
+      <p>Luna เป็น AI Streamer ที่สามารถแชตกับผู้ชม แสดงอารมณ์ และควบคุม VTube Studio character ได้อัตโนมัติ พร้อมระบบเกม Rock Paper Scissors ที่รองรับการเดิมพันด้วย Luna tokens</p>
+    </div>
+
+    <div class="section">
+      <h2>✨ ฟีเจอร์หลัก</h2>
+      
+      <h3>🤖 AI Chat System</h3>
+      <p>ระบบเลือกโมเดล AI อัตโนมัติตามความซับซ้อนของคำถาม:</p>
+      <ul>
+        <li><strong>คำถามง่าย</strong> → ใช้ GPT-4o-mini (ประหยัด cost)</li>
+        <li><strong>คำถามยาก</strong> → ใช้ GPT-4o หรือ Claude-3-Opus (ความแม่นยำสูง)</li>
+      </ul>
+
+      <h3>🎭 Emotion System</h3>
+      <p>ตรวจจับและแสดงอารมณ์ 5 แบบ: angry, sad, sleepy, hype, soft</p>
+
+      <h3>🎤 Text-to-Speech</h3>
+      <p>สร้างเสียงด้วย ElevenLabs API รองรับหลายโหมดเสียง</p>
+
+      <h3>🧠 Memory System</h3>
+      <ul>
+        <li>จำประวัติการสนทนา (5 messages ล่าสุด)</li>
+        <li>จำความชอบส่วนตัวของผู้ใช้</li>
+        <li>Memory Decay - ลืม memory เก่าเหมือนคนจริง</li>
+      </ul>
+
+      <h3>🎨 Personality System</h3>
+      <p>บุคลิกภาพที่เปลี่ยนแปลงตามอารมณ์ พร้อม Natural Speech Patterns</p>
+    </div>
+
+    <div class="section">
+      <h2>🎮 เกม Rock Paper Scissors</h2>
+      
+      <h3>🎯 PvP Mode</h3>
+      <ul>
+        <li>เล่นกับผู้เล่นอื่น</li>
+        <li>ต้องการ <strong>100K+ Luna tokens</strong></li>
+        <li>Auto-matchmaking (รอ 15 วินาทีเพื่อเจอ bot ถ้าไม่มีคน)</li>
+      </ul>
+
+      <h3>🤖 VS Luna Mode</h3>
+      <ul>
+        <li>เล่นกับ Luna (AI)</li>
+        <li>ต้องการ <strong>1M+ Luna tokens</strong></li>
+        <li>เล่นได้ทันทีไม่ต้องรอ</li>
+      </ul>
+
+      <h3>💰 Betting Mode</h3>
+      <ul>
+        <li>สร้างห้องเดิมพันด้วย Luna tokens</li>
+        <li>ผู้เล่นสามารถสร้างและเข้าร่วมห้องได้</li>
+        <li>ชนะได้ Luna tokens</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>❓ คำถามที่พบบ่อย (FAQ)</h2>
+
+      <div class="faq-item">
+        <div class="faq-question">Q: ต้องมี Luna tokens เท่าไหร่ถึงจะเล่นเกมได้?</div>
+        <div class="faq-answer">
+          A: 
+          <ul>
+            <li>PvP Mode: ต้องการ 100K+ Luna tokens</li>
+            <li>VS Luna Mode: ต้องการ 1M+ Luna tokens</li>
+            <li>Betting Mode: ขึ้นอยู่กับจำนวนเดิมพันของแต่ละห้อง</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question">Q: ต้องเชื่อมต่อ Phantom Wallet ไหม?</div>
+        <div class="faq-answer">
+          A: ใช่ ต้องเชื่อมต่อ Phantom Wallet เพื่อตรวจสอบยอด Luna tokens และทำธุรกรรมในเกม
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question">Q: Luna จำการสนทนาก่อนหน้าได้ไหม?</div>
+        <div class="faq-answer">
+          A: ใช่ Luna จำประวัติการสนทนาล่าสุด 5 ข้อความ และความชอบส่วนตัวของคุณ แต่จะลืม memory เก่าเหมือนคนจริง (Memory Decay)
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question">Q: Luna มีอารมณ์อะไรบ้าง?</div>
+        <div class="faq-answer">
+          A: Luna มีอารมณ์ 5 แบบ: angry (โกรธ), sad (เศร้า), sleepy (ง่วง), hype (ตื่นเต้น), soft (อ่อนโยน)
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question">Q: ใช้ AI model อะไร?</div>
+        <div class="faq-answer">
+          A: ระบบจะเลือกโมเดลอัตโนมัติ:
+          <ul>
+            <li>คำถามง่าย → GPT-4o-mini</li>
+            <li>คำถามยาก → GPT-4o หรือ Claude-3-Opus</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question">Q: มีคำสั่งพิเศษอะไรบ้าง?</div>
+        <div class="faq-answer">
+          A: มีคำสั่งพิเศษ เช่น:
+          <ul>
+            <li><code>/luna dance</code> - ให้ Luna เต้น</li>
+            <li><code>/luna mood</code> - ดูอารมณ์ปัจจุบัน</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>📡 API Endpoints</h2>
+      <p>สำหรับนักพัฒนา สามารถใช้ API endpoints ต่อไปนี้:</p>
+      <ul>
+        <li><code>POST /luna/message</code> - ส่งข้อความไปหา Luna</li>
+        <li><code>GET /luna/status</code> - ตรวจสอบสถานะระบบ</li>
+        <li><code>GET /luna/health</code> - Health check</li>
+        <li><code>GET /luna/stats</code> - สถิติการใช้งาน</li>
+      </ul>
+      <p>ดูรายละเอียดเพิ่มเติมใน <a href="https://github.com" class="btn">README.md</a></p>
+    </div>
+
+    <!-- Contract Address Section -->
+    <div class="contract-section">
+      <div class="contract-label">Contract Address:</div>
+      <div class="contract-input-group">
+        <input type="text" id="contractAddress" class="contract-input" readonly value="Loading...">
+        <button class="contract-btn contract-btn-copy" onclick="copyContractAddress()">
+          <span>📋</span> Copy
+        </button>
+        <button class="contract-btn contract-btn-view" onclick="viewContractAddress()">
+          <span>🔗</span> View
+        </button>
+      </div>
+      <div class="contract-warning">Always verify the contract address before buying.</div>
+    </div>
+
+    <!-- X DEX Links Section -->
+    <div class="dex-links">
+      <a href="#" id="buyDexLink" class="dex-btn dex-btn-buy" target="_blank" onclick="openBuyDex(event)">
+        <span>⚡</span> Buy Luna
+      </a>
+      <a href="#" id="communityLink" class="dex-btn dex-btn-community" target="_blank" onclick="openCommunity(event)">
+        <span>𝕏</span> Join Community
+      </a>
+    </div>
+
+    <div style="text-align: center; margin-top: 40px;">
+      <a href="/" class="btn">กลับหน้าหลัก</a>
+      <a href="/chat_tester.html" class="btn">เริ่มแชตกับ Luna</a>
+    </div>
+  </div>
+
+  <script>
+    // Load contract address from backend
+    async function loadContractAddress() {
+      try {
+        const response = await fetch('/luna/rps/contract-address');
+        const data = await response.json();
+        
+        if (data.ok && data.contractAddress) {
+          const contractInput = document.getElementById('contractAddress');
+          if (contractInput) {
+            contractInput.value = data.contractAddress;
+          }
+          
+          // Update buy DEX link from env
+          const buyDexLink = document.getElementById('buyDexLink');
+          if (buyDexLink && data.buyLink) {
+            buyDexLink.href = data.buyLink;
+          } else if (buyDexLink) {
+            // Fallback to pump.fun if buyLink not provided
+            buyDexLink.href = `https://pump.fun/${data.contractAddress}`;
+          }
+          
+          // Update X/Twitter community link from env
+          const communityLink = document.getElementById('communityLink');
+          if (communityLink && data.xLink) {
+            communityLink.href = data.xLink;
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load contract address:', error);
+        const contractInput = document.getElementById('contractAddress');
+        if (contractInput) {
+          contractInput.value = 'Error loading address';
+        }
+      }
+    }
+
+    // Copy contract address to clipboard
+    function copyContractAddress() {
+      const contractInput = document.getElementById('contractAddress');
+      if (contractInput) {
+        contractInput.select();
+        contractInput.setSelectionRange(0, 99999);
+        document.execCommand('copy');
+        
+        const btn = event.target.closest('.contract-btn-copy');
+        if (btn) {
+          const originalText = btn.innerHTML;
+          btn.innerHTML = '<span>✓</span> Copied!';
+          setTimeout(() => {
+            btn.innerHTML = originalText;
+          }, 2000);
+        }
+      }
+    }
+
+    // View contract address on Solscan
+    function viewContractAddress() {
+      const contractInput = document.getElementById('contractAddress');
+      if (contractInput && contractInput.value && contractInput.value !== 'Loading...' && contractInput.value !== 'Error loading address') {
+        window.open(`https://solscan.io/token/${contractInput.value}`, '_blank');
+      }
+    }
+
+    // Open buy DEX link
+    function openBuyDex(event) {
+      event.preventDefault();
+      const buyDexLink = document.getElementById('buyDexLink');
+      if (buyDexLink && buyDexLink.href && buyDexLink.href !== '#') {
+        window.open(buyDexLink.href, '_blank');
+      } else {
+        alert('Contract address not loaded yet. Please wait a moment and try again.');
+      }
+    }
+
+    // Open community link (X/Twitter)
+    function openCommunity(event) {
+      event.preventDefault();
+      const communityLink = document.getElementById('communityLink');
+      if (communityLink && communityLink.href && communityLink.href !== '#') {
+        window.open(communityLink.href, '_blank');
+      } else {
+        alert('Community link not loaded yet. Please wait a moment and try again.');
+      }
+    }
+
+    // Load contract address on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      loadContractAddress();
+    });
+  </script>
+</body>
+</html>
+
+
+
