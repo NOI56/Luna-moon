@@ -525,6 +525,45 @@
         inset 0 0 30px rgba(255, 255, 255, 0.2) !important;
       transform: scale(0.98) !important;
     }
+    
+    /* Neon Toggle Button */
+    #neonToggle {
+      position: fixed;
+      top: 40px;
+      right: 20px;
+      z-index: 99999;
+      background: rgba(0, 0, 0, 0.9);
+      border: 2px solid #00ffff;
+      color: #00ffff;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      transition: all 0.3s;
+      backdrop-filter: blur(5px);
+    }
+
+    #neonToggle:hover {
+      background: rgba(0, 255, 255, 0.2);
+      box-shadow: 0 0 10px #00ffff;
+    }
+
+    /* Neon Off Styles */
+    body.neon-off * {
+      text-shadow: none !important;
+      box-shadow: none !important;
+      filter: none !important;
+      animation: none !important;
+    }
+
+    body.neon-off .game-container::before {
+      display: none !important;
+    }
+
+    body.neon-off body::before {
+      opacity: 0.01 !important;
+    }
   </style>
   <link rel="stylesheet" href="/css/notifications.css">
   <link rel="stylesheet" href="/css/referral.css">
@@ -533,8 +572,11 @@
 <body>
   <div id="modeNavigation" style="position: fixed !important; top: 40px !important; left: 20px !important; display: flex !important; gap: 10px; z-index: 99999 !important; flex-wrap: wrap; pointer-events: auto !important; visibility: visible !important; opacity: 1 !important;">
     <a href="/rps_vs_luna.html" id="vsLunaLink" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">🎮 VS Luna</a>
+  
+  <button id="neonToggle" title="Toggle Neon Effects">💡 Neon: ON</button>
     <a href="/rps_game.html" id="pvpLink" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">Play PvP! Find</a>
     <a href="/rps_betting.html" id="bettingLink" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">💰 Betting Mode</a>
+    <a href="/group_chat.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 255, 255, 0.2) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important; box-shadow: 0 0 15px rgba(0, 255, 255, 0.5) !important;">💬 Group Chat</a>
     <a href="/rps_leaderboard.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">🏆 Leaderboard</a>
     <a href="/rps_stats.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">📊 Stats</a>
     <a href="/rps_history.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">📜 Match History</a>
@@ -550,6 +592,32 @@
       <div id="balanceCheck" class="balance-check hidden"></div>
       <div id="solBalanceDisplay" class="wallet-info hidden" style="margin-top: 10px; padding: 15px; background: rgba(0, 255, 255, 0.1); border: 1px solid #00ffff; border-radius: 8px; font-size: 0.9em; color: #00ffff;">
         <strong>💰 SOL Balance:</strong> <span id="solBalanceAmount">0.0000</span> SOL
+      </div>
+    </div>
+
+    <!-- Quick Stats Section -->
+    <div id="quickStatsSection" class="wallet-info hidden" style="margin-top: 15px; padding: 15px; background: rgba(0, 255, 255, 0.1); border: 1px solid #00ffff; border-radius: 8px; font-size: 0.9em; color: #00ffff;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <strong>📊 Your Stats (VS Luna):</strong>
+        <a href="/rps_stats.html" style="color: #00ffff; text-decoration: underline; font-size: 0.85em; opacity: 0.8;">View Full Stats →</a>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; text-align: center;">
+        <div>
+          <div style="font-size: 1.3em; font-weight: bold; color: #00ffff;" id="quickWins">0</div>
+          <div style="font-size: 0.8em; opacity: 0.8;">Wins</div>
+        </div>
+        <div>
+          <div style="font-size: 1.3em; font-weight: bold; color: #ff0066;" id="quickLosses">0</div>
+          <div style="font-size: 0.8em; opacity: 0.8;">Losses</div>
+        </div>
+        <div>
+          <div style="font-size: 1.3em; font-weight: bold; color: #ffff00;" id="quickTies">0</div>
+          <div style="font-size: 0.8em; opacity: 0.8;">Ties</div>
+        </div>
+        <div>
+          <div style="font-size: 1.3em; font-weight: bold; color: #00ff00;" id="quickWinRate">0%</div>
+          <div style="font-size: 0.8em; opacity: 0.8;">Win Rate</div>
+        </div>
       </div>
     </div>
 
@@ -624,6 +692,7 @@
     let balanceUpdateInterval = null;
     let solBalanceUpdateInterval = null;
     let solBalance = 0;
+    let playerStats = null;
 
     // Sound Effects System
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -900,7 +969,10 @@
           walletInfo.classList.remove('hidden');
 
           await checkLunaBalance();
+          await checkSolBalance();
+          await loadQuickStats(); // Load player stats
           startBalanceUpdate(); // Start real-time balance updates
+          startSolBalanceUpdate(); // Start real-time SOL balance updates
         } catch (error) {
           console.error('Wallet connection error:', error);
           alert('Failed to connect wallet: ' + error.message);
@@ -953,6 +1025,7 @@
           walletInfo.classList.remove('hidden');
           await checkLunaBalance();
           await checkSolBalance();
+          await loadQuickStats(); // Load player stats
           startBalanceUpdate(); // Start real-time balance updates
           startSolBalanceUpdate(); // Start real-time SOL balance updates
         });
@@ -978,8 +1051,50 @@
           walletInfo.classList.remove('hidden');
           checkLunaBalance();
           checkSolBalance();
+          loadQuickStats();
           startSolBalanceUpdate();
         }
+      }
+    }
+
+    // Load Quick Stats
+    async function loadQuickStats() {
+      const quickStatsSection = document.getElementById('quickStatsSection');
+      if (!quickStatsSection) return;
+
+      if (!walletConnected || !walletPublicKey) {
+        quickStatsSection.classList.add('hidden');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE}/luna/rps/stats?wallet=${walletPublicKey}`);
+        const data = await response.json();
+
+        if (data.ok && data.stats) {
+          playerStats = data.stats;
+          const stats = data.stats;
+
+          // Filter VS Luna mode stats only (if mode-specific stats available)
+          // For now, show all stats
+          const wins = stats.wins || 0;
+          const losses = stats.losses || 0;
+          const ties = stats.draws || stats.ties || 0;
+          const totalGames = stats.totalGames || (wins + losses + ties);
+          const winRate = totalGames > 0 ? ((wins / totalGames) * 100).toFixed(1) : 0;
+
+          document.getElementById('quickWins').textContent = wins.toLocaleString();
+          document.getElementById('quickLosses').textContent = losses.toLocaleString();
+          document.getElementById('quickTies').textContent = ties.toLocaleString();
+          document.getElementById('quickWinRate').textContent = winRate + '%';
+
+          quickStatsSection.classList.remove('hidden');
+        } else {
+          quickStatsSection.classList.add('hidden');
+        }
+      } catch (error) {
+        console.error('[VS Luna] Failed to load stats:', error);
+        quickStatsSection.classList.add('hidden');
       }
     }
 
@@ -1142,6 +1257,11 @@
         }
         result.textContent = finalResult;
 
+        // Update stats after game
+        setTimeout(() => {
+          loadQuickStats(); // Refresh stats display
+        }, 1000);
+
         setTimeout(() => {
           enableGame();
           status.textContent = '';
@@ -1192,8 +1312,40 @@
       });
     }
 
+    // Neon Toggle System
+    function initNeonToggle() {
+      const neonToggle = document.getElementById('neonToggle');
+      const body = document.body;
+      
+      // Load saved preference
+      const neonEnabled = localStorage.getItem('neonEnabled') !== 'false';
+      
+      if (!neonEnabled) {
+        body.classList.add('neon-off');
+        neonToggle.textContent = '💡 Neon: OFF';
+      } else {
+        body.classList.remove('neon-off');
+        neonToggle.textContent = '💡 Neon: ON';
+      }
+      
+      neonToggle.addEventListener('click', () => {
+        const isOff = body.classList.contains('neon-off');
+        
+        if (isOff) {
+          body.classList.remove('neon-off');
+          neonToggle.textContent = '💡 Neon: ON';
+          localStorage.setItem('neonEnabled', 'true');
+        } else {
+          body.classList.add('neon-off');
+          neonToggle.textContent = '💡 Neon: OFF';
+          localStorage.setItem('neonEnabled', 'false');
+        }
+      });
+    }
+
     // Initialize
     document.addEventListener('DOMContentLoaded', async () => {
+      initNeonToggle();
       initNavigationSounds();
       setupWalletConnection();
       setupEventListeners();
