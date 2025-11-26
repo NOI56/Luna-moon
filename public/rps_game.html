@@ -846,7 +846,9 @@
     <div id="modeNavigation" style="position: fixed !important; top: 40px !important; left: 20px !important; display: flex !important; gap: 10px; z-index: 99999 !important; flex-wrap: wrap; pointer-events: auto !important; visibility: visible !important; opacity: 1 !important;">
       <a href="/rps_vs_luna.html" id="vsLunaLink" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">🎮 VS Luna</a>
       <a href="/rps_game.html" id="pvpLink" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">Play PvP! Find</a>
-      <a href="/rps_betting.html" id="bettingLink" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">💰 Betting Mode</a>
+    <a href="/rps_betting.html" id="bettingLink" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">💰 Betting Mode</a>
+    <a href="/rps_deposit.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">💾 Deposit Luna</a>
+    <a href="/group_chat.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 255, 255, 0.2) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important; box-shadow: 0 0 15px rgba(0, 255, 255, 0.5) !important;">💬 Group Chat</a>
       <a href="/rps_leaderboard.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">🏆 Leaderboard</a>
       <a href="/rps_stats.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">📊 Stats</a>
       <a href="/rps_history.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">📜 Match History</a>
@@ -892,6 +894,7 @@
     <div id="balanceCheck" class="balance-check hidden">
       <span class="loading"></span> Checking balance...
     </div>
+
 
     <!-- PvP Matching Section -->
     <div id="matchSection" class="match-section">
@@ -1913,6 +1916,7 @@
       }
       return num.toLocaleString();
     }
+
 
     // Enable/disable game
     function enableGame() {

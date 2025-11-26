@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Notifications System</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Courier New', 'Monaco', monospace;
+      background: #0a0a0a;
+      color: #00ffff;
+      padding: 40px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: rgba(10, 10, 26, 0.8);
+      border: 2px solid #00ffff;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+    }
+
+    h1 {
+      font-size: 2em;
+      margin-bottom: 20px;
+      text-shadow: 0 0 10px #00ffff;
+      text-align: center;
+    }
+
+    .section {
+      margin-bottom: 30px;
+      padding: 20px;
+      background: rgba(0, 255, 255, 0.05);
+      border: 1px solid rgba(0, 255, 255, 0.3);
+      border-radius: 8px;
+    }
+
+    .section h2 {
+      font-size: 1.3em;
+      margin-bottom: 15px;
+      color: #00ffff;
+      text-shadow: 0 0 5px #00ffff;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #00ffff;
+      font-size: 0.9em;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid #00ffff;
+      border-radius: 6px;
+      color: #00ffff;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      margin-bottom: 15px;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    }
+
+    button {
+      background: linear-gradient(135deg, rgba(0, 255, 255, 0.3), rgba(0, 255, 255, 0.3));
+      border: 2px solid #00ffff;
+      color: #00ffff;
+      padding: 12px 24px;
+      font-size: 1em;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all 0.3s;
+      font-family: 'Courier New', monospace;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+
+    button:hover {
+      background: linear-gradient(135deg, rgba(0, 255, 255, 0.5), rgba(0, 255, 255, 0.5));
+      box-shadow: 0 0 15px #00ffff;
+      transform: translateY(-2px);
+    }
+
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(0, 255, 255, 0.3);
+      border-radius: 8px;
+      font-size: 0.9em;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .result.success {
+      border-color: #00ff00;
+      color: #00ff00;
+    }
+
+    .result.error {
+      border-color: #ff0000;
+      color: #ff0000;
+    }
+
+    .quick-test {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .quick-test button {
+      width: 100%;
+      margin: 0;
+    }
+
+    .info {
+      background: rgba(0, 255, 255, 0.1);
+      border-left: 4px solid #00ffff;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 4px;
+    }
+
+    .info p {
+      margin-bottom: 8px;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔔 Test Notifications System</h1>
+
+    <div class="info">
+      <p><strong>วิธีใช้:</strong></p>
+      <p>1. ใส่ wallet address (ถ้าต้องการส่งให้คนเดียว) หรือปล่อยว่าง (จะ broadcast ไปทุกคน)</p>
+      <p>2. เลือกประเภท notification หรือใช้ปุ่ม Quick Test</p>
+      <p>3. กดปุ่ม "Send Test Notification"</p>
+      <p>4. ตรวจสอบผลลัพธ์ในหน้าเว็บที่เปิดอยู่ (ควรเห็น toast notification และ badge อัปเดต)</p>
+    </div>
+
+    <div class="section">
+      <h2>📝 Custom Test</h2>
+      <label for="wallet">Wallet Address (optional - leave empty to broadcast to all):</label>
+      <input type="text" id="wallet" placeholder="Your wallet address here...">
+
+      <label for="type">Notification Type:</label>
+      <select id="type">
+        <option value="default">Default Test Notification</option>
+        <option value="match_found">Match Found</option>
+        <option value="room_new">New Betting Room</option>
+        <option value="reward_time">Reward Distribution Soon</option>
+        <option value="reward_received">Reward Received</option>
+        <option value="referral_reward">Referral Reward</option>
+      </select>
+
+      <button onclick="sendTestNotification()">🚀 Send Test Notification</button>
+    </div>
+
+    <div class="section">
+      <h2>⚡ Quick Test</h2>
+      <p style="margin-bottom: 15px; color: #00ffff; opacity: 0.8;">ทดสอบประเภท notification ต่างๆ:</p>
+      <div class="quick-test">
+        <button onclick="quickTest('match_found')">🎮 Match Found</button>
+        <button onclick="quickTest('room_new')">🏠 New Room</button>
+        <button onclick="quickTest('reward_time')">💰 Reward Time</button>
+        <button onclick="quickTest('reward_received')">🎁 Reward Received</button>
+        <button onclick="quickTest('referral_reward')">👥 Referral Reward</button>
+        <button onclick="quickTest('default')">🔔 Default Test</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>📊 Result</h2>
+      <div id="result" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="section">
+      <h2>📋 Get Notifications</h2>
+      <label for="getWallet">Wallet Address:</label>
+      <input type="text" id="getWallet" placeholder="Wallet address to get notifications...">
+      <button onclick="getNotifications()">📥 Get Notifications</button>
+      <button onclick="getUnreadOnly()">📬 Get Unread Only</button>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = window.location.origin;
+
+    function showResult(data, isError = false) {
+      const resultEl = document.getElementById('result');
+      resultEl.style.display = 'block';
+      resultEl.className = 'result ' + (isError ? 'error' : 'success');
+      resultEl.textContent = JSON.stringify(data, null, 2);
+    }
+
+    async function sendTestNotification() {
+      const wallet = document.getElementById('wallet').value.trim();
+      const type = document.getElementById('type').value;
+
+      try {
+        const response = await fetch(`${API_BASE}/luna/notifications/test`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            wallet: wallet || null,
+            type: type
+          })
+        });
+
+        const data = await response.json();
+        showResult(data, !data.ok);
+      } catch (error) {
+        showResult({ error: error.message }, true);
+      }
+    }
+
+    async function quickTest(type) {
+      const wallet = document.getElementById('wallet').value.trim();
+      
+      try {
+        const response = await fetch(`${API_BASE}/luna/notifications/test`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            wallet: wallet || null,
+            type: type
+          })
+        });
+
+        const data = await response.json();
+        showResult(data, !data.ok);
+      } catch (error) {
+        showResult({ error: error.message }, true);
+      }
+    }
+
+    async function getNotifications() {
+      const wallet = document.getElementById('getWallet').value.trim();
+      
+      if (!wallet) {
+        showResult({ error: 'Please enter wallet address' }, true);
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE}/luna/notifications?wallet=${wallet}`);
+        const data = await response.json();
+        showResult(data, !data.ok);
+      } catch (error) {
+        showResult({ error: error.message }, true);
+      }
+    }
+
+    async function getUnreadOnly() {
+      const wallet = document.getElementById('getWallet').value.trim();
+      
+      if (!wallet) {
+        showResult({ error: 'Please enter wallet address' }, true);
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE}/luna/notifications?wallet=${wallet}&unreadOnly=true`);
+        const data = await response.json();
+        showResult(data, !data.ok);
+      } catch (error) {
+        showResult({ error: error.message }, true);
+      }
+    }
+  </script>
+</body>
+</html>
+
+
+
+

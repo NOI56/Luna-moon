@@ -99,8 +99,8 @@ class ReferralManager {
           <label>Your Referral Link:</label>
           <div class="referral-link-container">
             <input type="text" id="referral-link-input" readonly value="Loading...">
-            <button onclick="referralManager.copyReferralLink()" class="copy-btn">📋 Copy</button>
-            <button onclick="referralManager.shareReferralLink()" class="share-btn">🔗 Share</button>
+            <button onclick="referralManager.copyReferralLink()" class="copy-btn"><span>📋 Copy</span></button>
+            <button onclick="referralManager.shareReferralLink()" class="share-btn"><span>🔗 Share</span></button>
           </div>
         </div>
         
@@ -126,9 +126,9 @@ class ReferralManager {
         <div class="referral-rewards">
           <h3>Reward Structure:</h3>
           <ul>
-            <li>✅ <strong>100 Luna</strong> - When friend signs up</li>
-            <li>✅ <strong>200 Luna</strong> - When friend plays first game</li>
-            <li>✅ <strong>1000 Luna</strong> - When friend reaches Top 10</li>
+            <li><strong>100 Luna</strong> - When friend signs up</li>
+            <li><strong>200 Luna</strong> - When friend plays first game</li>
+            <li><strong>1000 Luna</strong> - When friend reaches Top 10</li>
           </ul>
         </div>
       </div>
@@ -183,14 +183,19 @@ class ReferralManager {
       document.execCommand('copy');
       
       // Show feedback
-      const btn = event.target;
-      const originalText = btn.textContent;
-      btn.textContent = '✓ Copied!';
-      btn.style.background = '#00ff00';
-      setTimeout(() => {
-        btn.textContent = originalText;
-        btn.style.background = '';
-      }, 2000);
+      const btn = event.target.closest('.copy-btn') || event.target;
+      const span = btn.querySelector('span');
+      if (span) {
+        const originalText = span.textContent;
+        span.textContent = '✓ Copied!';
+        btn.style.background = 'linear-gradient(135deg, rgba(0, 255, 0, 0.3), rgba(0, 255, 0, 0.3))';
+        btn.style.borderColor = '#00ff00';
+        setTimeout(() => {
+          span.textContent = originalText;
+          btn.style.background = '';
+          btn.style.borderColor = '';
+        }, 2000);
+      }
     }
   }
 

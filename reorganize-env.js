@@ -69,3 +69,6 @@ while (i < lines.length) {
 writeFileSync('.env', newLines.join('\n'), 'utf-8');
 console.log('✅ จัดเรียงไฟล์ .env แล้ว!');
 
+
+
+

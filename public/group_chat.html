@@ -1,0 +1,1670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Luna Group Chat</title>
+  <style>
+    /* Hide Notifications, Chat +, and Referral Program */
+    #notification-btn,
+    #notification-panel,
+    .notification-btn,
+    .notification-panel,
+    #chat-container,
+    .chat-container,
+    #referral-container,
+    .referral-container,
+    #referral-manager,
+    .referral-manager {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Courier New', 'Monaco', monospace;
+      background: #0a0a0a;
+      background-image: 
+        radial-gradient(circle at 20% 50%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(255, 0, 255, 0.1) 0%, transparent 50%),
+        linear-gradient(135deg, #0a0a0a 0%, #1a0a2e 50%, #16213e 100%);
+      color: #00ffff;
+      min-height: 100vh;
+      padding: 140px 40px 40px;
+      margin: 0;
+      overflow-y: auto;
+    }
+
+    #modeNavigation a:hover {
+      box-shadow: 
+        0 0 20px currentColor,
+        0 0 40px currentColor,
+        0 0 60px currentColor,
+        inset 0 0 20px rgba(255, 255, 255, 0.1) !important;
+    }
+
+    #modeNavigation a:active {
+      box-shadow: 
+        0 0 30px currentColor,
+        0 0 60px currentColor,
+        0 0 90px currentColor,
+        inset 0 0 30px rgba(255, 255, 255, 0.2) !important;
+    }
+
+    /* Tab Navigation */
+    #tabNavigation {
+      position: fixed !important;
+      top: 40px !important;
+      left: 20px !important;
+      z-index: 99999 !important;
+      display: flex !important;
+      gap: 10px;
+      flex-wrap: wrap;
+      pointer-events: auto !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+    }
+    
+    #tabNavigation button {
+      color: #00ffff !important;
+      text-decoration: none !important;
+      padding: 10px 20px !important;
+      border: 2px solid #00ffff !important;
+      border-radius: 8px !important;
+      transition: all 0.3s !important;
+      background: rgba(0, 0, 0, 0.9) !important;
+      backdrop-filter: blur(5px);
+      display: inline-block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      cursor: pointer !important;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+    }
+    
+    #tabNavigation button:hover {
+      box-shadow: 
+        0 0 20px currentColor,
+        0 0 40px currentColor,
+        0 0 60px currentColor,
+        inset 0 0 20px rgba(255, 255, 255, 0.1) !important;
+      transform: scale(1.05) !important;
+      text-shadow: 
+        0 0 10px currentColor,
+        0 0 20px currentColor,
+        0 0 30px currentColor !important;
+      background: rgba(0, 0, 0, 0.95) !important;
+    }
+    
+    #tabNavigation button.active {
+      background: rgba(0, 255, 255, 0.2) !important;
+      box-shadow: 0 0 20px #00ffff !important;
+    }
+
+    /* Tab Content */
+    .tab-content {
+      display: none;
+      text-align: left;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Home Tab Styles */
+    .hero-logo {
+      width: 200px;
+      height: 200px;
+      margin: 0 auto 30px;
+      border-radius: 50%;
+      border: 3px solid #00ffff;
+      box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+      animation: pulseLogo 2s infinite;
+    }
+
+    @keyframes pulseLogo {
+      0%, 100% { box-shadow: 0 0 30px rgba(0, 255, 255, 0.5); }
+      50% { box-shadow: 0 0 50px rgba(0, 255, 255, 0.8); }
+    }
+
+    .cta-buttons {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 30px 0;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #00ffff, #ff00ff);
+      color: #0a0a0a;
+      border: none;
+      font-weight: bold;
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 0 30px rgba(0, 255, 255, 0.8);
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 30px;
+      margin-top: 40px;
+    }
+
+    .feature-card {
+      background: rgba(0, 255, 255, 0.05);
+      border: 1px solid rgba(0, 255, 255, 0.3);
+      border-radius: 12px;
+      padding: 30px;
+      transition: all 0.3s;
+    }
+
+    .feature-card:hover {
+      background: rgba(0, 255, 255, 0.1);
+      border-color: #00ffff;
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+      transform: translateY(-5px);
+    }
+
+    .feature-icon {
+      font-size: 3rem;
+      margin-bottom: 15px;
+    }
+
+    .feature-card h3 {
+      font-size: 1.5rem;
+      margin-bottom: 15px;
+      color: #00ffff;
+    }
+
+    .feature-card p {
+      color: #a0ffff;
+      line-height: 1.6;
+      margin-bottom: 15px;
+    }
+
+    .feature-details {
+      list-style: none;
+      padding: 0;
+      margin-top: 15px;
+    }
+
+    .feature-details li {
+      color: #80ffff;
+      font-size: 0.9rem;
+      padding: 5px 0;
+      padding-left: 20px;
+      position: relative;
+    }
+
+    .feature-details li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 6px;
+      height: 6px;
+      background: #00ffff;
+      border-radius: 50%;
+      box-shadow: 0 0 5px #00ffff;
+    }
+
+    .section-title {
+      font-size: 2.5rem;
+      text-align: center;
+      margin-bottom: 50px;
+      text-shadow: 0 0 15px #00ffff;
+    }
+
+    /* About Section Styles */
+    .section {
+      background: rgba(0, 255, 255, 0.05);
+      border: 1px solid rgba(0, 255, 255, 0.3);
+      border-radius: 12px;
+      padding: 30px;
+      margin-bottom: 30px;
+    }
+
+    h2 {
+      font-size: 2rem;
+      margin: 40px 0 20px;
+      color: #00ffff;
+      text-shadow: 0 0 10px #00ffff;
+    }
+
+    h3 {
+      font-size: 1.5rem;
+      margin: 30px 0 15px;
+      color: #00ffff;
+    }
+
+    p {
+      line-height: 1.8;
+      color: #a0ffff;
+      margin-bottom: 20px;
+    }
+
+    ul, ol {
+      margin-left: 30px;
+      margin-bottom: 20px;
+      color: #a0ffff;
+    }
+
+    li {
+      margin-bottom: 10px;
+      line-height: 1.6;
+    }
+
+    code {
+      background: rgba(0, 255, 255, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #00ffff;
+      font-family: 'Courier New', monospace;
+    }
+
+    .faq-item {
+      margin-bottom: 25px;
+      padding-bottom: 25px;
+      border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+    }
+
+    .faq-item:last-child {
+      border-bottom: none;
+    }
+
+    .faq-question {
+      font-size: 1.2rem;
+      color: #00ffff;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+
+    .faq-answer {
+      color: #a0ffff;
+      line-height: 1.8;
+    }
+
+    .subtitle {
+      font-size: 1.2em;
+      margin-bottom: 30px;
+      color: #00ffff;
+      text-shadow: 0 0 5px #00ffff;
+    }
+
+    .container {
+      max-width: 900px;
+      width: 100%;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      text-align: center;
+      padding: 30px 20px;
+      margin-bottom: 30px;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      text-shadow: 0 0 20px #00ffff, 0 0 40px #00ffff;
+      background: linear-gradient(135deg, #00ffff, #ff00ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header p {
+      color: #a0ffff;
+      font-size: 1.1rem;
+    }
+
+    .balance-requirement {
+      background: rgba(255, 0, 0, 0.1);
+      border: 2px solid rgba(255, 0, 0, 0.5);
+      border-radius: 12px;
+      padding: 25px;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .balance-requirement.success {
+      background: rgba(0, 255, 0, 0.1);
+      border-color: rgba(0, 255, 0, 0.5);
+    }
+
+    .balance-requirement h3 {
+      color: #ff6b6b;
+      margin-bottom: 10px;
+      font-size: 1.3rem;
+    }
+
+    .balance-requirement.success h3 {
+      color: #51cf66;
+    }
+
+    .balance-requirement p {
+      color: #ffa0a0;
+      font-size: 0.95rem;
+    }
+
+      .balance-requirement.success p {
+      color: #a0ffa0;
+    }
+
+    .balance-info {
+      margin-top: 15px;
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
+
+    .btn {
+      transition: all 0.3s ease;
+    }
+
+    .btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+    }
+
+    .btn.hidden {
+      display: none;
+    }
+
+    .group-chat-container {
+      background: rgba(10, 10, 26, 0.95);
+      border: 2px solid #00ffff;
+      border-radius: 16px;
+      box-shadow: 
+        0 0 20px rgba(0, 255, 255, 0.5),
+        0 0 40px rgba(0, 255, 255, 0.3),
+        inset 0 0 20px rgba(0, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      display: flex;
+      flex-direction: column;
+      height: 600px;
+      max-height: 80vh;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .group-chat-header {
+      padding: 20px;
+      background: rgba(0, 255, 255, 0.1);
+      border-bottom: 2px solid rgba(0, 255, 255, 0.3);
+      border-radius: 16px 16px 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+      box-shadow: 0 5px 20px rgba(0, 255, 255, 0.2);
+    }
+
+    .group-chat-header h2 {
+      color: #00ffff;
+      font-size: 1.5rem;
+      text-shadow: 0 0 5px #00ffff;
+    }
+
+    .online-count {
+      color: #a0ffff;
+      font-size: 0.9rem;
+    }
+
+    .group-chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .group-chat-message {
+      background: rgba(0, 255, 255, 0.05);
+      border: 1px solid rgba(0, 255, 255, 0.2);
+      border-radius: 10px;
+      padding: 15px;
+      max-width: 70%;
+      word-wrap: break-word;
+      animation: slideIn 0.3s ease-out;
+      box-shadow: 0 0 5px rgba(0, 255, 255, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    .group-chat-message:hover {
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+      border-color: #00ffff;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .group-chat-message.own {
+      background: rgba(0, 255, 255, 0.15);
+      border-color: #00ffff;
+      align-self: flex-end;
+      margin-left: auto;
+    }
+
+    .group-chat-message-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .group-chat-username {
+      font-weight: bold;
+      color: #00ffff;
+      font-size: 0.95rem;
+    }
+
+    .group-chat-time {
+      color: rgba(0, 255, 255, 0.5);
+      font-size: 0.8rem;
+    }
+
+    .group-chat-message-content {
+      color: rgba(0, 255, 255, 0.9);
+      font-size: 1rem;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+
+    .group-chat-message-badge {
+      display: inline-block;
+      margin-left: 5px;
+      font-size: 0.9rem;
+      vertical-align: middle;
+    }
+
+    .group-chat-message-reactions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+
+    .group-chat-reaction {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      background: rgba(0, 255, 255, 0.1);
+      border: 1px solid rgba(0, 255, 255, 0.3);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.85rem;
+    }
+
+    .group-chat-reaction:hover {
+      background: rgba(0, 255, 255, 0.2);
+      border-color: #00ffff;
+    }
+
+    .group-chat-reaction.active {
+      background: rgba(0, 255, 255, 0.3);
+      border-color: #00ffff;
+      box-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+    }
+
+    .group-chat-reaction-count {
+      color: rgba(0, 255, 255, 0.8);
+      font-weight: bold;
+    }
+
+    .group-chat-message-tips {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(0, 255, 255, 0.2);
+      font-size: 0.85rem;
+      color: rgba(0, 255, 255, 0.7);
+    }
+
+    .group-chat-tip-btn {
+      margin-top: 8px;
+      padding: 4px 12px;
+      background: rgba(255, 215, 0, 0.1);
+      border: 1px solid rgba(255, 215, 0, 0.5);
+      border-radius: 6px;
+      color: #ffd700;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+
+    .group-chat-tip-btn:hover {
+      background: rgba(255, 215, 0, 0.2);
+      box-shadow: 0 0 5px rgba(255, 215, 0, 0.3);
+    }
+
+    .group-chat-reward-notification {
+      background: rgba(255, 215, 0, 0.2);
+      border: 1px solid rgba(255, 215, 0, 0.5);
+      border-radius: 8px;
+      padding: 8px 12px;
+      margin-top: 8px;
+      font-size: 0.9rem;
+      color: #ffd700;
+    }
+
+    .group-chat-search-container {
+      padding: 15px 20px;
+      border-bottom: 2px solid rgba(0, 255, 255, 0.3);
+      background: rgba(0, 0, 0, 0.3);
+    }
+
+    .group-chat-search-input {
+      width: 100%;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(0, 255, 255, 0.3);
+      border-radius: 8px;
+      color: #00ffff;
+      font-size: 0.9rem;
+      font-family: 'Courier New', monospace;
+    }
+
+    .group-chat-search-input:focus {
+      outline: none;
+      border-color: #00ffff;
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+    }
+
+    .group-chat-commands-hint {
+      padding: 10px;
+      background: rgba(0, 255, 255, 0.05);
+      border: 1px solid rgba(0, 255, 255, 0.2);
+      border-radius: 8px;
+      margin-top: 10px;
+      font-size: 0.85rem;
+      color: rgba(0, 255, 255, 0.7);
+    }
+
+    .group-chat-link-preview {
+      margin-top: 8px;
+      padding: 8px;
+      background: rgba(0, 0, 0, 0.3);
+      border-left: 3px solid #00ffff;
+      border-radius: 4px;
+      font-size: 0.85rem;
+    }
+
+    .group-chat-link-preview a {
+      color: #00ffff;
+      text-decoration: none;
+    }
+
+    .group-chat-link-preview a:hover {
+      text-decoration: underline;
+    }
+
+    .group-chat-mention {
+      background: rgba(0, 255, 255, 0.2);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: bold;
+      color: #00ffff;
+    }
+
+    .group-chat-link {
+      color: #00ffff;
+      text-decoration: underline;
+    }
+
+    .group-chat-link:hover {
+      color: #a0ffff;
+    }
+
+    code {
+      font-family: 'Courier New', monospace;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 2px 4px;
+      border-radius: 3px;
+    }
+
+    .group-chat-empty {
+      text-align: center;
+      color: rgba(0, 255, 255, 0.5);
+      padding: 60px 20px;
+      font-size: 1.1rem;
+    }
+
+    .group-chat-input-container {
+      padding: 20px;
+      border-top: 2px solid rgba(0, 255, 255, 0.3);
+      display: flex;
+      gap: 10px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 0 0 16px 16px;
+      flex-shrink: 0;
+    }
+
+    .group-chat-input-container input {
+      flex: 1;
+      padding: 15px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(0, 255, 255, 0.3);
+      border-radius: 8px;
+      color: #00ffff;
+      font-size: 1rem;
+      font-family: 'Courier New', monospace;
+      transition: all 0.3s ease;
+    }
+
+    .group-chat-input-container input:focus {
+      outline: none;
+      border-color: #00ffff;
+      box-shadow: 0 0 15px #00ffff;
+    }
+
+    .group-chat-input-container input:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .group-chat-input-container input::placeholder {
+      color: rgba(0, 255, 255, 0.5);
+    }
+
+    #group-chat-send-btn {
+      padding: 15px 30px;
+      background: rgba(0, 255, 255, 0.1);
+      border: 2px solid #00ffff;
+      border-radius: 8px;
+      color: #00ffff;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: bold;
+      font-size: 1rem;
+      font-family: 'Courier New', monospace;
+    }
+
+    #group-chat-send-btn:hover:not(:disabled) {
+      background: rgba(0, 255, 255, 0.2);
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+      transform: scale(1.05);
+    }
+
+    #group-chat-send-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    #group-chat-send-btn:active:not(:disabled) {
+      transform: scale(0.95);
+    }
+
+    nav ul li a:hover {
+      background: rgba(0, 255, 255, 0.1);
+      border-color: #00ffff;
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+    }
+
+    /* Scrollbar styling */
+    .group-chat-messages::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .group-chat-messages::-webkit-scrollbar-track {
+      background: rgba(0, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+
+    .group-chat-messages::-webkit-scrollbar-thumb {
+      background: rgba(0, 255, 255, 0.3);
+      border-radius: 4px;
+    }
+
+    .group-chat-messages::-webkit-scrollbar-thumb:hover {
+      background: rgba(0, 255, 255, 0.5);
+    }
+
+    /* Hide any floating chat containers */
+    .chat-container {
+      display: none !important;
+    }
+
+    /* Neon Toggle Button */
+    #neonToggle {
+      position: fixed;
+      top: 40px;
+      right: 20px;
+      z-index: 99999;
+      background: rgba(0, 0, 0, 0.9);
+      border: 2px solid #00ffff;
+      color: #00ffff;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      transition: all 0.3s;
+      backdrop-filter: blur(5px);
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+    }
+
+    #neonToggle:hover {
+      background: rgba(0, 255, 255, 0.2);
+      box-shadow: 0 0 20px #00ffff;
+    }
+
+    /* Neon Off Styles */
+    body.neon-off * {
+      text-shadow: none !important;
+      box-shadow: none !important;
+      filter: none !important;
+      animation: none !important;
+    }
+
+    body.neon-off body::before {
+      opacity: 0.01 !important;
+    }
+
+    body.neon-off .group-chat-container {
+      box-shadow: 0 0 5px rgba(0, 255, 255, 0.2) !important;
+      border-color: rgba(0, 255, 255, 0.5) !important;
+    }
+
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 1.5rem;
+      }
+
+      .header p {
+        font-size: 0.8rem;
+      }
+
+      .group-chat-message {
+        max-width: 85%;
+      }
+
+      #neonToggle {
+        top: 90px;
+        right: 10px;
+        font-size: 0.8em;
+        padding: 8px 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <div id="modeNavigation" style="position: fixed !important; top: 40px !important; left: 20px !important; display: flex !important; gap: 10px; z-index: 99999 !important; flex-wrap: wrap; pointer-events: auto !important; visibility: visible !important; opacity: 1 !important;">
+    <a href="/rps_vs_luna.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">🎮 VS Luna</a>
+    <a href="/rps_game.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">Play PvP! Find</a>
+    <a href="/rps_betting.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">💰 Betting Mode</a>
+    <a href="/rps_deposit.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">💾 Deposit Luna</a>
+    <a href="/group_chat.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 255, 255, 0.2) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important; box-shadow: 0 0 15px rgba(0, 255, 255, 0.5) !important;">💬 Group Chat</a>
+    <a href="/rps_leaderboard.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">🏆 Leaderboard</a>
+    <a href="/rps_stats.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">📊 Stats</a>
+    <a href="/rps_history.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">📜 Match History</a>
+  </div>
+
+  <button id="neonToggle" title="Toggle Neon Effects">💡 Neon: ON</button>
+
+  <div class="container">
+    <!-- Group Chat Tab -->
+    <div id="groupChatTab" class="tab-content active">
+    <div class="header">
+      <h1>💬 Luna Group Chat</h1>
+      <p>Chat with Luna Community members</p>
+    </div>
+
+    <div class="balance-requirement" id="balanceRequirement">
+      <h3>⚠️ Minimum Balance Required: 100,000 Luna</h3>
+      <p>You need at least 100,000 Luna to send messages in Group Chat</p>
+      <div style="margin-top: 15px;">
+        <button id="connectWalletBtn" class="btn" style="padding: 12px 24px; background: rgba(0, 255, 255, 0.1); border: 2px solid #00ffff; border-radius: 8px; color: #00ffff; cursor: pointer; font-family: 'Courier New', monospace; font-size: 1rem;">🔗 Connect Phantom Wallet</button>
+        <button id="disconnectWalletBtn" class="btn hidden" style="padding: 12px 24px; background: rgba(255, 0, 0, 0.1); border: 2px solid #ff6b6b; border-radius: 8px; color: #ff6b6b; cursor: pointer; font-family: 'Courier New', monospace; font-size: 1rem; margin-left: 10px;">🔌 Disconnect</button>
+      </div>
+      <div class="balance-info" id="balanceInfo">Please connect Wallet to check balance</div>
+    </div>
+
+    <div class="group-chat-container">
+      <div class="group-chat-header">
+        <h2>💬 Group Chat</h2>
+        <div class="online-count" id="onlineCount">Loading...</div>
+      </div>
+      
+      <div class="group-chat-search-container">
+        <input 
+          type="text" 
+          id="groupChatSearch" 
+          class="group-chat-search-input"
+          placeholder="🔍 Search messages..."
+          onkeyup="handleSearch()"
+        >
+      </div>
+      
+      <div class="group-chat-messages" id="groupChatMessages">
+        <div class="group-chat-empty">Loading messages...</div>
+      </div>
+      
+      <div class="group-chat-input-container">
+        <input 
+          type="text" 
+          id="groupChatInput" 
+          placeholder="Type a message... (requires 100,000+ Luna)" 
+          maxlength="500"
+          disabled
+        >
+        <button id="group-chat-send-btn" onclick="sendGroupMessage()" disabled>Send</button>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = window.location.origin;
+
+    // Tab System
+    function showTab(tabName) {
+      // Hide all tabs
+      document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      
+      // Remove active class from all buttons
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      
+      // Show selected tab
+      document.getElementById(tabName + 'Tab').classList.add('active');
+      
+      // Add active class to clicked button
+      if (event && event.target) {
+        event.target.classList.add('active');
+      }
+      
+      // Scroll to top when switching tabs
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    const GROUP_CHAT_ROOM_ID = 'group_chat';
+    const MIN_BALANCE_REQUIRED = 100000;
+
+    let walletConnected = false;
+    let walletPublicKey = null;
+    let username = null;
+    let currentBalance = 0;
+    let ws = null;
+    let messages = [];
+
+    // Prevent Notifications, Chat +, and Referral Program from showing
+    if (typeof notificationManager !== 'undefined') {
+      notificationManager.createUI = function() {}; // Disable notifications
+    }
+    if (typeof chatManager !== 'undefined') {
+      chatManager.createUI = function() {}; // Disable chat +
+    }
+    if (typeof referralManager !== 'undefined') {
+      referralManager.createUI = function() {}; // Disable referral
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      initWalletButtons();
+      connectWebSocket();
+      loadMessages();
+      initNeonToggle();
+      
+      // Remove any existing notification/chat/referral elements
+      const notificationBtn = document.getElementById('notification-btn');
+      const notificationPanel = document.getElementById('notification-panel');
+      const chatContainer = document.getElementById('chat-container');
+      const referralContainer = document.getElementById('referral-container');
+      
+      if (notificationBtn) notificationBtn.remove();
+      if (notificationPanel) notificationPanel.remove();
+      if (chatContainer) chatContainer.remove();
+      if (referralContainer) referralContainer.remove();
+      
+      // Enter key to send
+      const input = document.getElementById('groupChatInput');
+      if (input) {
+        input.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter' && !input.disabled) {
+            sendGroupMessage();
+          }
+        });
+      }
+    });
+
+    // Initialize Neon Toggle
+    function initNeonToggle() {
+      const neonToggle = document.getElementById('neonToggle');
+      const body = document.body;
+      
+      if (!neonToggle) return;
+      
+      // Load saved preference
+      const neonEnabled = localStorage.getItem('neonEnabled') !== 'false';
+      
+      if (!neonEnabled) {
+        body.classList.add('neon-off');
+        neonToggle.textContent = '💡 Neon: OFF';
+      } else {
+        body.classList.remove('neon-off');
+        neonToggle.textContent = '💡 Neon: ON';
+      }
+      
+      neonToggle.addEventListener('click', () => {
+        const isOff = body.classList.contains('neon-off');
+        
+        if (isOff) {
+          body.classList.remove('neon-off');
+          neonToggle.textContent = '💡 Neon: ON';
+          localStorage.setItem('neonEnabled', 'true');
+        } else {
+          body.classList.add('neon-off');
+          neonToggle.textContent = '💡 Neon: OFF';
+          localStorage.setItem('neonEnabled', 'false');
+        }
+      });
+    }
+
+    // Initialize wallet connection buttons
+    function initWalletButtons() {
+      const connectBtn = document.getElementById('connectWalletBtn');
+      const disconnectBtn = document.getElementById('disconnectWalletBtn');
+      
+      if (!connectBtn) return;
+      
+      // Check if Phantom wallet is available
+      if (typeof window.solana === 'undefined' || !window.solana.isPhantom) {
+        connectBtn.textContent = '⚠️ Phantom Wallet Not Found';
+        connectBtn.disabled = true;
+        connectBtn.style.cursor = 'not-allowed';
+        connectBtn.onclick = () => {
+          alert('Please install Phantom wallet extension!\n\nDownload: https://phantom.app/');
+        };
+        showWalletRequired();
+        return;
+      }
+      
+      // Check if already connected
+      if (window.solana.isConnected) {
+        window.solana.publicKey && handleWalletConnected(window.solana.publicKey.toString());
+      }
+      
+      // Connect button
+      connectBtn.onclick = async () => {
+        try {
+          const response = await window.solana.connect();
+          handleWalletConnected(response.publicKey.toString());
+        } catch (error) {
+          console.error('Wallet connection error:', error);
+          alert('Failed to connect Wallet: ' + error.message);
+        }
+      };
+      
+      // Disconnect button
+      if (disconnectBtn) {
+        disconnectBtn.onclick = async () => {
+          try {
+            await window.solana.disconnect();
+            handleWalletDisconnected();
+          } catch (error) {
+            console.error('Wallet disconnect error:', error);
+          }
+        };
+      }
+      
+      // Listen for wallet disconnect
+      window.solana.on('disconnect', () => {
+        handleWalletDisconnected();
+      });
+    }
+
+    // Handle wallet connected
+    function handleWalletConnected(publicKey) {
+      walletPublicKey = publicKey;
+      walletConnected = true;
+      username = walletPublicKey.substring(0, 8) + '...';
+      
+      const connectBtn = document.getElementById('connectWalletBtn');
+      const disconnectBtn = document.getElementById('disconnectWalletBtn');
+      
+      if (connectBtn) {
+        connectBtn.classList.add('hidden');
+      }
+      if (disconnectBtn) {
+        disconnectBtn.classList.remove('hidden');
+      }
+      
+      // Check balance
+      checkBalance();
+    }
+
+    // Handle wallet disconnected
+    function handleWalletDisconnected() {
+      walletPublicKey = null;
+      walletConnected = false;
+      username = null;
+      currentBalance = 0;
+      
+      const connectBtn = document.getElementById('connectWalletBtn');
+      const disconnectBtn = document.getElementById('disconnectWalletBtn');
+      
+      if (connectBtn) {
+        connectBtn.classList.remove('hidden');
+      }
+      if (disconnectBtn) {
+        disconnectBtn.classList.add('hidden');
+      }
+      
+      showWalletRequired();
+    }
+
+    // Check Luna balance
+    async function checkBalance() {
+      const balanceRequirement = document.getElementById('balanceRequirement');
+      const balanceInfo = document.getElementById('balanceInfo');
+      const input = document.getElementById('groupChatInput');
+      const sendBtn = document.getElementById('group-chat-send-btn');
+
+      if (!walletConnected || !walletPublicKey) {
+        balanceInfo.textContent = 'Please connect Wallet';
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE}/luna/rps/balance?wallet=${walletPublicKey}`);
+        const data = await response.json();
+        
+        if (!data.ok) {
+          throw new Error(data.error || 'Failed to check balance');
+        }
+        
+        currentBalance = data.balance || 0;
+        
+        if (currentBalance >= MIN_BALANCE_REQUIRED) {
+          balanceRequirement.classList.add('success');
+          balanceRequirement.querySelector('h3').textContent = '✅ Balance Sufficient';
+          balanceRequirement.querySelector('p').textContent = 'You can now send messages in Group Chat';
+          balanceInfo.textContent = `Current balance: ${formatNumber(currentBalance)} Luna`;
+          
+          if (input) input.disabled = false;
+          if (sendBtn) sendBtn.disabled = false;
+          if (input) input.placeholder = 'Type a message... (or use /help for commands)';
+        } else {
+          balanceRequirement.classList.remove('success');
+          balanceRequirement.querySelector('h3').textContent = '⚠️ Insufficient Balance';
+          balanceRequirement.querySelector('p').textContent = `You need at least ${formatNumber(MIN_BALANCE_REQUIRED)} Luna to send messages`;
+          balanceInfo.textContent = `Current balance: ${formatNumber(currentBalance)} Luna (Required: ${formatNumber(MIN_BALANCE_REQUIRED)} Luna)`;
+          
+          if (input) input.disabled = true;
+          if (sendBtn) sendBtn.disabled = true;
+        }
+      } catch (error) {
+        console.error('Balance check error:', error);
+        balanceInfo.textContent = `❌ Error: ${error.message}`;
+        if (input) input.disabled = true;
+        if (sendBtn) sendBtn.disabled = true;
+      }
+    }
+
+    function showWalletRequired() {
+      const balanceRequirement = document.getElementById('balanceRequirement');
+      const balanceInfo = document.getElementById('balanceInfo');
+      const input = document.getElementById('groupChatInput');
+      const sendBtn = document.getElementById('group-chat-send-btn');
+
+      balanceRequirement.classList.remove('success');
+      const h3 = balanceRequirement.querySelector('h3');
+      const p = balanceRequirement.querySelector('p');
+      if (h3) h3.textContent = '⚠️ Wallet Connection Required';
+      if (p) p.textContent = 'Please connect Phantom Wallet to use Group Chat';
+      if (balanceInfo) balanceInfo.textContent = 'Wallet not connected';
+      
+      if (input) {
+        input.disabled = true;
+        input.placeholder = 'Please connect Wallet';
+      }
+      if (sendBtn) sendBtn.disabled = true;
+    }
+
+    // Connect WebSocket
+    function connectWebSocket() {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      let wsUrl = `${protocol}//${window.location.host}`;
+      if (walletPublicKey) {
+        wsUrl += `?wallet=${walletPublicKey}`;
+      }
+      ws = new WebSocket(wsUrl);
+      
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          
+          if (msg.type === 'chat_message' && msg.roomId === GROUP_CHAT_ROOM_ID) {
+            addMessage(msg.message);
+          } else if (msg.type === 'chat_reaction') {
+            updateReaction(msg.messageId, msg.reactionType, msg.count, msg.active);
+          } else if (msg.type === 'chat_tip') {
+            updateTip(msg.messageId, msg.fromWallet, msg.amount);
+          } else if (msg.type === 'chat_reward') {
+            showRewardNotification(msg.amount, msg.reason);
+          } else if (msg.type === 'chat_online_update') {
+            updateOnlineCount();
+          } else if (msg.type === 'chat_command_response') {
+            handleCommandResponse(msg);
+          }
+        } catch (e) {
+          console.error('WebSocket message error:', e);
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+      };
+
+      ws.onclose = () => {
+        // Reconnect after 3 seconds
+        setTimeout(() => connectWebSocket(), 3000);
+      };
+    }
+
+    // Update reaction
+    function updateReaction(messageId, reactionType, count, active) {
+      const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
+      if (!messageEl) return;
+      
+      let reactionsEl = messageEl.querySelector('.group-chat-message-reactions');
+      if (!reactionsEl) {
+        reactionsEl = document.createElement('div');
+        reactionsEl.className = 'group-chat-message-reactions';
+        messageEl.appendChild(reactionsEl);
+      }
+      
+      let reactionEl = reactionsEl.querySelector(`[data-reaction="${reactionType}"]`);
+      if (count > 0) {
+        if (!reactionEl) {
+          reactionEl = document.createElement('div');
+          reactionEl.className = 'group-chat-reaction';
+          reactionEl.setAttribute('data-message-id', messageId);
+          reactionEl.setAttribute('data-reaction', reactionType);
+          reactionEl.innerHTML = `<span>${reactionType}</span><span class="group-chat-reaction-count">${count}</span>`;
+          reactionsEl.insertBefore(reactionEl, reactionsEl.querySelector('[data-reaction="add"]'));
+          reactionEl.addEventListener('click', () => addReaction(messageId, reactionType));
+        } else {
+          reactionEl.querySelector('.group-chat-reaction-count').textContent = count;
+        }
+        if (active) {
+          reactionEl.classList.add('active');
+        } else {
+          reactionEl.classList.remove('active');
+        }
+      } else if (reactionEl) {
+        reactionEl.remove();
+      }
+    }
+
+    // Update tip
+    function updateTip(messageId, fromWallet, amount) {
+      const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
+      if (!messageEl) return;
+      
+      let tipsEl = messageEl.querySelector('.group-chat-message-tips');
+      if (!tipsEl) {
+        tipsEl = document.createElement('div');
+        tipsEl.className = 'group-chat-message-tips';
+        messageEl.appendChild(tipsEl);
+      }
+      
+      // Update tip display (simplified)
+      tipsEl.textContent = `💰 Tip: ${formatNumber(amount)} Luna`;
+    }
+
+    // Show reward notification
+    function showRewardNotification(amount, reason) {
+      const notification = document.createElement('div');
+      notification.className = 'group-chat-reward-notification';
+      notification.textContent = `🎉 You received ${formatNumber(amount)} Luna! (${reason})`;
+      notification.style.cssText = 'position: fixed; top: 100px; right: 20px; z-index: 10000; padding: 15px 20px; background: rgba(255, 215, 0, 0.2); border: 2px solid rgba(255, 215, 0, 0.5); border-radius: 8px; color: #ffd700; font-weight: bold;';
+      
+      document.body.appendChild(notification);
+      setTimeout(() => notification.remove(), 5000);
+    }
+
+    // Handle command response
+    function handleCommandResponse(msg) {
+      if (msg.command === '/stats' && msg.data) {
+        alert(`Stats:\nMessages: ${msg.data.messageCount}\nTotal Rewards: ${formatNumber(msg.data.totalRewards)} Luna`);
+      } else if (msg.command === '/leaderboard' && msg.data) {
+        const leaderboard = msg.data.map((entry, idx) => 
+          `${idx + 1}. ${entry.wallet.substring(0, 8)}... - ${entry.count} messages`
+        ).join('\n');
+        alert(`Leaderboard:\n${leaderboard}`);
+      } else if (msg.message) {
+        alert(msg.message);
+      }
+    }
+
+    // Load messages
+    async function loadMessages(searchTerm = null) {
+      try {
+        let url = `${API_BASE}/luna/chat/messages?roomId=${GROUP_CHAT_ROOM_ID}&limit=100`;
+        if (searchTerm) {
+          url += `&search=${encodeURIComponent(searchTerm)}`;
+        }
+        
+        console.log('[Group Chat] Loading messages from:', url);
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        console.log('[Group Chat] Response:', data);
+        
+        if (data.ok) {
+          messages = data.messages || [];
+          console.log('[Group Chat] Loaded', messages.length, 'messages');
+          updateMessages();
+          scrollToBottom();
+        } else {
+          console.error('[Group Chat] Failed to load messages:', data.error);
+          messages = [];
+          updateMessages();
+        }
+      } catch (error) {
+        console.error('[Group Chat] Failed to load messages:', error);
+        messages = [];
+        updateMessages();
+      }
+    }
+
+    // Send message
+    async function sendGroupMessage() {
+      const input = document.getElementById('groupChatInput');
+      const sendBtn = document.getElementById('group-chat-send-btn');
+      
+      if (!input || !walletConnected || !walletPublicKey) {
+        alert('Please connect Wallet and check Luna balance');
+        return;
+      }
+
+      if (currentBalance < MIN_BALANCE_REQUIRED) {
+        alert(`You need at least ${formatNumber(MIN_BALANCE_REQUIRED)} Luna to send messages`);
+        await checkBalance(); // Refresh balance
+        return;
+      }
+
+      let message = input.value.trim();
+      if (message.length === 0) return;
+
+      // Handle commands
+      if (message.startsWith('/')) {
+        const parts = message.split(' ');
+        const command = parts[0];
+        const args = parts.slice(1);
+        
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({
+            type: 'chat_command',
+            command: command,
+            args: args
+          }));
+        }
+        
+        input.value = '';
+        return;
+      }
+
+      // Disable input and button while sending
+      const originalBtnText = sendBtn.textContent;
+      input.disabled = true;
+      sendBtn.disabled = true;
+      sendBtn.textContent = 'Sending...';
+
+      try {
+        const response = await fetch(`${API_BASE}/luna/chat/send`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            roomId: GROUP_CHAT_ROOM_ID,
+            wallet: walletPublicKey,
+            message: message,
+            username: username
+          })
+        });
+
+        const data = await response.json();
+        if (data.ok) {
+          input.value = '';
+          // Message will be added via WebSocket
+        } else {
+          alert('Failed to send message: ' + (data.error || data.message));
+          if (data.error && data.error.includes('balance')) {
+            await checkBalance(); // Refresh balance if balance error
+          }
+        }
+      } catch (error) {
+        console.error('Failed to send message:', error);
+        alert('Failed to send message. Please try again');
+      } finally {
+        // Re-enable input and button
+        input.disabled = false;
+        sendBtn.disabled = false;
+        sendBtn.textContent = originalBtnText;
+        input.focus();
+      }
+    }
+
+    // Add message to UI
+    function addMessage(message) {
+      // Check if message already exists
+      if (messages.find(m => m.id === message.id)) {
+        return;
+      }
+      
+      messages.push(message);
+      
+      // Keep only last 100 messages
+      if (messages.length > 100) {
+        messages.shift();
+      }
+      
+      updateMessages();
+      scrollToBottom();
+    }
+
+    // Process message content for rich media
+    function processMessageContent(text) {
+      if (!text) return '';
+      
+      // Escape HTML first
+      let processed = escapeHtml(text);
+      
+      // Detect and format links
+      const urlRegex = /(https?:\/\/[^\s]+)/g;
+      processed = processed.replace(urlRegex, (url) => {
+        return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="group-chat-link">${url}</a>`;
+      });
+      
+      // Format mentions
+      processed = processed.replace(/@(\w+)/g, '<span class="group-chat-mention">@$1</span>');
+      
+      // Format code blocks (simple)
+      processed = processed.replace(/`([^`]+)`/g, '<code style="background: rgba(0,0,0,0.3); padding: 2px 4px; border-radius: 3px;">$1</code>');
+      
+      return processed;
+    }
+
+    // Update messages UI
+    function updateMessages() {
+      const container = document.getElementById('groupChatMessages');
+      if (!container) {
+        console.error('[Group Chat] Container not found!');
+        return;
+      }
+
+      console.log('[Group Chat] Updating messages UI, count:', messages.length);
+
+      if (messages.length === 0) {
+        container.innerHTML = '<div class="group-chat-empty">No messages yet. Start the conversation!</div>';
+        return;
+      }
+
+      container.innerHTML = messages.map(msg => {
+        const badgeHtml = msg.badge ? `<span class="group-chat-message-badge" title="${msg.badge.name}">${msg.badge.emoji}</span>` : '';
+        const rewardHtml = msg.reward ? `<div class="group-chat-reward-notification">🎉 Reward: ${formatNumber(msg.reward.amount)} Luna!</div>` : '';
+        const reactionsHtml = renderReactions(msg.id, msg.reactions || {});
+        const tipsHtml = renderTips(msg.id, msg.tips || []);
+        const tipBtnHtml = msg.wallet !== walletPublicKey ? `<button class="group-chat-tip-btn" onclick="showTipDialog('${msg.id}', '${msg.wallet}')">💰 Tip</button>` : '';
+        
+        return `
+          <div class="group-chat-message ${msg.wallet === walletPublicKey ? 'own' : ''}" data-message-id="${msg.id}">
+            <div class="group-chat-message-header">
+              <span class="group-chat-username">
+                ${msg.username || (msg.wallet ? msg.wallet.substring(0, 8) + '...' : 'Guest')}
+                ${badgeHtml}
+              </span>
+              <span class="group-chat-time">${formatTime(msg.timestamp)}</span>
+            </div>
+            <div class="group-chat-message-content">${processMessageContent(msg.message)}</div>
+            ${rewardHtml}
+            ${reactionsHtml}
+            ${tipsHtml}
+            ${tipBtnHtml}
+          </div>
+        `;
+      }).join('');
+      
+      // Attach reaction event listeners
+      attachReactionListeners();
+    }
+
+    // Render reactions
+    function renderReactions(messageId, reactions) {
+      if (!reactions || Object.keys(reactions).length === 0) {
+        return '<div class="group-chat-message-reactions"></div>';
+      }
+      
+      const reactionTypes = ['👍', '❤️', '🎉', '🔥', '💬'];
+      return `
+        <div class="group-chat-message-reactions">
+          ${reactionTypes.map(type => {
+            const count = reactions[type] || 0;
+            if (count === 0) return '';
+            return `<div class="group-chat-reaction" data-message-id="${messageId}" data-reaction="${type}">
+              <span>${type}</span>
+              <span class="group-chat-reaction-count">${count}</span>
+            </div>`;
+          }).join('')}
+          <div class="group-chat-reaction" data-message-id="${messageId}" data-reaction="add">+</div>
+        </div>
+      `;
+    }
+
+    // Render tips
+    function renderTips(messageId, tips) {
+      if (!tips || tips.length === 0) return '';
+      
+      const totalTips = tips.reduce((sum, tip) => sum + tip.amount, 0);
+      return `<div class="group-chat-message-tips">💰 ${tips.length} tip(s) - ${formatNumber(totalTips)} Luna total</div>`;
+    }
+
+    // Attach reaction listeners
+    function attachReactionListeners() {
+      document.querySelectorAll('.group-chat-reaction').forEach(el => {
+        el.addEventListener('click', async (e) => {
+          const messageId = el.getAttribute('data-message-id');
+          const reactionType = el.getAttribute('data-reaction');
+          
+          if (reactionType === 'add') {
+            showReactionPicker(messageId);
+          } else if (reactionType && walletConnected && walletPublicKey) {
+            await addReaction(messageId, reactionType);
+          }
+        });
+      });
+    }
+
+    // Show reaction picker
+    function showReactionPicker(messageId) {
+      const picker = document.createElement('div');
+      picker.style.cssText = 'position: fixed; background: rgba(0,0,0,0.9); border: 2px solid #00ffff; border-radius: 8px; padding: 10px; z-index: 10000; display: flex; gap: 10px;';
+      picker.innerHTML = ['👍', '❤️', '🎉', '🔥', '💬'].map(type => 
+        `<span style="font-size: 1.5rem; cursor: pointer; padding: 5px;" onclick="addReaction('${messageId}', '${type}'); this.parentElement.remove();">${type}</span>`
+      ).join('');
+      
+      document.body.appendChild(picker);
+      setTimeout(() => picker.remove(), 5000);
+    }
+
+    // Add reaction
+    async function addReaction(messageId, reactionType) {
+      if (!walletConnected || !walletPublicKey) {
+        alert('Please connect wallet to react');
+        return;
+      }
+      
+      try {
+        const response = await fetch(`${API_BASE}/luna/chat/reaction`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messageId: messageId,
+            wallet: walletPublicKey,
+            reactionType: reactionType
+          })
+        });
+        
+        const data = await response.json();
+        if (data.ok) {
+          // Update will come via WebSocket
+        }
+      } catch (error) {
+        console.error('Failed to add reaction:', error);
+      }
+    }
+
+    // Show tip dialog
+    function showTipDialog(messageId, toWallet) {
+      const amount = prompt('Enter tip amount (Luna):', '1000');
+      if (!amount || isNaN(amount) || parseInt(amount) <= 0) return;
+      
+      sendTip(messageId, toWallet, parseInt(amount));
+    }
+
+    // Send tip
+    async function sendTip(messageId, toWallet, amount) {
+      if (!walletConnected || !walletPublicKey) {
+        alert('Please connect wallet to tip');
+        return;
+      }
+      
+      try {
+        const response = await fetch(`${API_BASE}/luna/chat/tip`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messageId: messageId,
+            fromWallet: walletPublicKey,
+            toWallet: toWallet,
+            amount: amount
+          })
+        });
+        
+        const data = await response.json();
+        if (data.ok) {
+          alert(`Tip of ${amount} Luna recorded! (Note: Actual transfer would happen via Solana transaction)`);
+        } else {
+          alert('Failed to send tip: ' + (data.error || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Failed to send tip:', error);
+        alert('Failed to send tip. Please try again.');
+      }
+    }
+
+    // Handle search
+    function handleSearch() {
+      const searchTerm = document.getElementById('groupChatSearch').value.trim();
+      if (searchTerm.length === 0) {
+        updateMessages();
+        return;
+      }
+      
+      loadMessages(searchTerm);
+    }
+
+    // Load messages with search
+    async function loadMessages(searchTerm = null) {
+      try {
+        let url = `${API_BASE}/luna/chat/messages?roomId=${GROUP_CHAT_ROOM_ID}&limit=100`;
+        if (searchTerm) {
+          url += `&search=${encodeURIComponent(searchTerm)}`;
+        }
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.ok) {
+          messages = data.messages || [];
+          updateMessages();
+          scrollToBottom();
+        }
+      } catch (error) {
+        console.error('Failed to load messages:', error);
+      }
+    }
+
+    // Helper functions
+    function formatTime(timestamp) {
+      const date = new Date(timestamp);
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      return `${hours}:${minutes}`;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function formatNumber(num) {
+      if (num >= 1000000) {
+        return (num / 1000000).toFixed(2) + 'M';
+      } else if (num >= 1000) {
+        return (num / 1000).toFixed(2) + 'K';
+      }
+      return num.toString();
+    }
+
+    function scrollToBottom() {
+      const container = document.getElementById('groupChatMessages');
+      if (container) {
+        container.scrollTop = container.scrollHeight;
+      }
+    }
+
+    // Update online count
+    async function updateOnlineCount() {
+      const onlineCount = document.getElementById('onlineCount');
+      if (!onlineCount) return;
+      
+      try {
+        const response = await fetch(`${API_BASE}/luna/chat/online?roomId=${GROUP_CHAT_ROOM_ID}`);
+        const data = await response.json();
+        
+        if (data.ok) {
+          onlineCount.textContent = `👥 ${data.count} online`;
+        } else {
+          onlineCount.textContent = '💬 Group Chat';
+        }
+      } catch (error) {
+        console.error('Failed to get online count:', error);
+        onlineCount.textContent = '💬 Group Chat';
+      }
+    }
+
+    // Initialize online count
+    updateOnlineCount();
+    setInterval(updateOnlineCount, 10000); // Update every 10 seconds
+  </script>
+</body>
+</html>
+

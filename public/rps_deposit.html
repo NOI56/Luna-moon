@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Luna Deposit - Reduce Betting Fee</title>
+  <link rel="stylesheet" href="/css/notifications.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Courier New', 'Monaco', monospace;
+      background: #0a0a0a;
+      background-image: 
+        radial-gradient(circle at 20% 50%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+        linear-gradient(135deg, #0a0a0a 0%, #1a0a2e 50%, #16213e 100%);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 20px;
+      color: #00ffff;
+      position: relative;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 2px,
+          rgba(0, 255, 255, 0.03) 2px,
+          rgba(0, 255, 255, 0.03) 4px
+        );
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .game-container {
+      text-align: center;
+      padding: 40px;
+      padding-top: 100px;
+      background: rgba(10, 10, 26, 0.8);
+      border: none;
+      border-radius: 0;
+      box-shadow: 
+        0 0 20px rgba(0, 255, 255, 0.25),
+        0 0 40px rgba(0, 255, 255, 0.15),
+        inset 0 0 20px rgba(0, 255, 255, 0.05);
+      max-width: 800px;
+      width: 100%;
+      position: relative;
+      z-index: 1;
+      margin-top: 20px;
+    }
+    
+    .game-container::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      background: linear-gradient(45deg, #00ffff, #00ffff, #00ffff);
+      z-index: -1;
+      animation: borderGlow 3s ease-in-out infinite;
+      opacity: 0.5;
+    }
+    
+    @keyframes borderGlow {
+      0%, 100% { opacity: 0.15; }
+      50% { opacity: 0.35; }
+    }
+
+    h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+      color: #00ffff;
+      text-shadow: 
+        0 0 5px #00ffff,
+        0 0 10px #00ffff,
+        0 0 15px #00ffff,
+        2px 2px 4px rgba(0, 0, 0, 0.8);
+      font-weight: bold;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      animation: textGlow 2s ease-in-out infinite alternate;
+    }
+    
+    @keyframes textGlow {
+      0% { text-shadow: 0 0 5px #00ffff, 0 0 10px #00ffff, 0 0 15px #00ffff; }
+      100% { text-shadow: 0 0 10px #00ffff, 0 0 15px #00ffff, 0 0 20px #00ffff; }
+    }
+
+    .subtitle {
+      font-size: 1.2em;
+      margin-bottom: 30px;
+      color: #00ffff;
+      text-shadow: 0 0 5px #00ffff;
+    }
+    
+    /* Ensure mode navigation is always visible */
+    #modeNavigation {
+      position: fixed !important;
+      top: 40px !important;
+      left: 20px !important;
+      z-index: 99999 !important;
+      display: flex !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+    }
+    
+    #modeNavigation a {
+      display: inline-block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      cursor: pointer !important;
+    }
+    
+    #modeNavigation a:hover {
+      box-shadow: 
+        0 0 20px currentColor,
+        0 0 40px currentColor,
+        0 0 60px currentColor,
+        inset 0 0 20px rgba(255, 255, 255, 0.1) !important;
+      transform: scale(1.05) !important;
+      text-shadow: 
+        0 0 10px currentColor,
+        0 0 20px currentColor,
+        0 0 30px currentColor !important;
+      background: rgba(0, 0, 0, 0.95) !important;
+    }
+
+    /* Neon Toggle Button */
+    #neonToggle {
+      position: fixed;
+      top: 40px;
+      right: 20px;
+      z-index: 99999;
+      background: rgba(0, 0, 0, 0.9);
+      border: 2px solid #00ffff;
+      color: #00ffff;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      transition: all 0.3s;
+      backdrop-filter: blur(5px);
+    }
+
+    #neonToggle:hover {
+      background: rgba(0, 255, 255, 0.2);
+      box-shadow: 0 0 10px #00ffff;
+    }
+
+    /* Neon Off Styles */
+    body.neon-off * {
+      text-shadow: none !important;
+      box-shadow: none !important;
+      filter: none !important;
+      animation: none !important;
+    }
+
+    body.neon-off .game-container::before {
+      display: none !important;
+    }
+
+    .wallet-connect {
+      margin-bottom: 30px;
+    }
+
+    .wallet-btn {
+      background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(0, 255, 255, 0.2));
+      border: none;
+      color: #00ffff;
+      padding: 15px 30px;
+      font-size: 1.1em;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all 0.3s;
+      font-family: 'Courier New', monospace;
+      margin: 5px;
+    }
+
+    .wallet-btn:hover {
+      background: linear-gradient(135deg, rgba(0, 255, 255, 0.4), rgba(0, 255, 255, 0.4));
+      box-shadow: 0 0 10px #00ffff;
+      transform: scale(1.05);
+    }
+
+    .wallet-info {
+      margin-top: 15px;
+      padding: 15px;
+      background: rgba(0, 255, 255, 0.1);
+      border: 1px solid #00ffff;
+      border-radius: 8px;
+      font-size: 0.9em;
+    }
+
+    .balance-check {
+      margin: 15px 0;
+      padding: 10px;
+      color: #00ffff;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .deposit-section {
+      margin: 20px 0;
+      padding: 30px;
+      background: rgba(0, 255, 255, 0.05);
+      border: 1px solid rgba(0, 255, 255, 0.3);
+      border-radius: 8px;
+    }
+
+    .deposit-section h3 {
+      color: #00ffff;
+      margin-bottom: 15px;
+      text-shadow: 0 0 5px #00ffff;
+      font-size: 1.8em;
+    }
+
+    .info-box {
+      margin: 20px 0;
+      padding: 20px;
+      background: rgba(0, 255, 255, 0.1);
+      border: 1px solid #00ffff;
+      border-radius: 8px;
+      font-size: 0.95em;
+      line-height: 1.6;
+    }
+
+    .info-box h4 {
+      color: #00ffff;
+      margin-bottom: 10px;
+      font-size: 1.2em;
+    }
+
+    .info-box ul {
+      list-style: none;
+      padding-left: 0;
+      margin-top: 10px;
+    }
+
+    .info-box li {
+      margin: 8px 0;
+      padding-left: 25px;
+      position: relative;
+    }
+
+    .info-box li:before {
+      content: '→';
+      position: absolute;
+      left: 0;
+      color: #00ffff;
+    }
+  </style>
+</head>
+<body>
+  <div id="modeNavigation" style="position: fixed !important; top: 40px !important; left: 20px !important; display: flex !important; gap: 10px; z-index: 99999 !important; flex-wrap: wrap; pointer-events: auto !important; visibility: visible !important; opacity: 1 !important;">
+    <a href="/rps_vs_luna.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">🎮 VS Luna</a>
+    <a href="/rps_game.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">Play PvP! Find</a>
+    <a href="/rps_betting.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">💰 Betting Mode</a>
+    <a href="/rps_deposit.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 255, 255, 0.2) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important; box-shadow: 0 0 15px rgba(0, 255, 255, 0.5) !important;">💾 Deposit Luna</a>
+    <a href="/group_chat.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">💬 Group Chat</a>
+    <a href="/rps_leaderboard.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">🏆 Leaderboard</a>
+    <a href="/rps_stats.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">📊 Stats</a>
+    <a href="/rps_history.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">📜 Match History</a>
+  </div>
+
+  <button id="neonToggle" title="Toggle Neon Effects">💡 Neon: ON</button>
+
+  <div class="game-container">
+    <h1>💰 Deposit Luna</h1>
+    <div class="subtitle">Reduce Betting Mode Fee by Holding Luna</div>
+    
+    <div id="walletConnect" class="wallet-connect">
+      <button id="connectWalletBtn" class="wallet-btn">🔗 Connect Phantom Wallet</button>
+      <button id="disconnectWalletBtn" class="wallet-btn disconnect-btn hidden">🔌 Disconnect / Change Wallet</button>
+      <div id="walletInfo" class="wallet-info hidden"></div>
+    </div>
+    
+    <div id="balanceCheck" class="balance-check hidden">
+      <span class="loading"></span> Checking balance...
+    </div>
+
+    <!-- Info Box -->
+    <div class="info-box">
+      <h4>📋 How It Works</h4>
+      <ul>
+        <li>Hold at least 150,000 Luna tokens to deposit</li>
+        <li>Deposit Luna for 3 days → Betting Mode fee reduces to 2% (from 3%)</li>
+        <li>Deposit Luna for 6 days → Betting Mode fee reduces to 1% (from 3%)</li>
+        <li>You can withdraw your Luna anytime</li>
+        <li>Withdrawal fee: 0% (we pay SOL transaction fees)</li>
+        <li>Deposit fee: 3% (deducted from deposit amount)</li>
+      </ul>
+    </div>
+
+    <!-- Deposit/Withdraw Section -->
+    <div id="depositSection" class="deposit-section hidden">
+      <h3>💰 Deposit Luna (Reduce Betting Fee)</h3>
+      <div style="font-size: 0.9em; color: #00ffff; opacity: 0.8; margin-bottom: 15px;">
+        Hold 150,000+ Luna to deposit. Deposit for 3 days → 2% fee, 6 days → 1% fee (default: 3%)
+      </div>
+      
+      <!-- Deposit Status -->
+      <div id="depositStatus" style="margin-bottom: 15px; padding: 15px; background: rgba(0, 255, 255, 0.1); border-radius: 8px;">
+        <div style="color: #00ffff; font-size: 0.9em;">Checking deposit status...</div>
+      </div>
+      
+      <!-- Deposit Form -->
+      <div id="depositForm" style="display: none;">
+        <div style="margin-bottom: 15px;">
+          <label style="color: #00ffff; display: block; margin-bottom: 5px;">Deposit Amount (Luna):</label>
+          <input type="number" id="depositAmount" min="1" placeholder="Enter amount" style="width: 100%; padding: 10px; background: rgba(0, 0, 0, 0.5); border: 1px solid #00ffff; border-radius: 8px; color: #00ffff; font-family: 'Courier New', monospace; font-size: 1em;">
+          <div style="font-size: 0.85em; color: #00ffff; opacity: 0.7; margin-top: 5px;">
+            Fee: 3% (will be deducted from amount)
+          </div>
+        </div>
+        <button id="depositBtn" class="wallet-btn" style="width: 100%;">💾 Deposit Luna</button>
+      </div>
+      
+      <!-- Withdraw Button -->
+      <button id="withdrawBtn" class="wallet-btn" style="width: 100%; margin-top: 10px; display: none; background: linear-gradient(135deg, rgba(255, 0, 0, 0.3), rgba(255, 100, 100, 0.3)); border: 2px solid #ff0000; color: #ff0000;">
+        💸 Withdraw Luna
+      </button>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+  <script>
+    // Load SPL Token library with multiple fallbacks
+    (function() {
+      const cdnUrls = [
+        'https://unpkg.com/@solana/spl-token@0.4.0/lib/index.iife.js',
+        'https://cdn.jsdelivr.net/npm/@solana/spl-token@0.4.0/lib/index.iife.js',
+        'https://unpkg.com/@solana/spl-token@latest/lib/index.iife.js'
+      ];
+      
+      let currentIndex = 0;
+      
+      function tryLoadLibrary() {
+        if (currentIndex >= cdnUrls.length) {
+          console.error('[Deposit] Failed to load SPL Token library from all CDNs');
+          console.warn('[Deposit] You can still send Luna manually through Phantom wallet');
+          return;
+        }
+        
+        const script = document.createElement('script');
+        script.src = cdnUrls[currentIndex];
+        script.onload = function() {
+          console.log(`[Deposit] SPL Token library loaded from: ${cdnUrls[currentIndex]}`);
+          // Check what global variable it creates
+          setTimeout(() => {
+            const possibleNames = ['splToken', 'spl', 'SPLToken', 'SPL', 'spl_token', 'Token'];
+            for (const name of possibleNames) {
+              if (typeof window[name] !== 'undefined') {
+                console.log(`[Deposit] Found SPL Token library as window.${name}`);
+                break;
+              }
+            }
+          }, 500);
+        };
+        script.onerror = function() {
+          console.warn(`[Deposit] Failed to load from ${cdnUrls[currentIndex]}, trying next...`);
+          currentIndex++;
+          tryLoadLibrary();
+        };
+        document.head.appendChild(script);
+      }
+      
+      tryLoadLibrary();
+    })();
+  </script>
+  <script>
+    // Wait for libraries to load and verify
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        console.log('[Deposit] Libraries check:', {
+          solanaWeb3: typeof window.solanaWeb3 !== 'undefined',
+          solanaWeb3Global: typeof solanaWeb3 !== 'undefined',
+          splToken: typeof window.splToken !== 'undefined',
+          splTokenGlobal: typeof splToken !== 'undefined',
+          solana: typeof window.solana !== 'undefined',
+          solanaPhantom: window.solana?.isPhantom || false
+        });
+        
+        // Check what's actually available
+        if (typeof window.solanaWeb3 !== 'undefined') {
+          console.log('[Deposit] solanaWeb3 keys:', Object.keys(window.solanaWeb3).slice(0, 10));
+        }
+        if (typeof window.splToken !== 'undefined') {
+          console.log('[Deposit] splToken keys:', Object.keys(window.splToken).slice(0, 10));
+        }
+      }, 3000);
+    });
+  </script>
+  <script>
+    const API_BASE = window.location.origin;
+    let walletConnected = false;
+    let walletPublicKey = null;
+    let playerBalance = 0;
+    let balanceUpdateInterval = null;
+    let lunaMintAddress = null;
+    let escrowWalletAddress = null;
+
+    // Security: HTML Sanitization function
+    function escapeHtml(text) {
+      if (text == null) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+    
+    // Security: Sanitize wallet address for display
+    function sanitizeWalletAddress(address) {
+      if (!address || typeof address !== 'string') return '';
+      return address.replace(/[^A-Za-z0-9]/g, '').substring(0, 44);
+    }
+
+    function formatNumber(num) {
+      return num.toLocaleString('en-US');
+    }
+
+    // Copy to clipboard function
+    function copyToClipboard(text) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        alert('✅ Copied to clipboard!');
+      } catch (err) {
+        console.error('Failed to copy:', err);
+        alert('Failed to copy. Please copy manually.');
+      }
+      document.body.removeChild(textarea);
+    }
+
+    // Send Luna via Phantom wallet - creates transaction and asks user to sign
+    // Make it a global function so it can be called from onclick
+    window.sendViaPhantom = async function(mintAddress, escrowWallet, amount) {
+      console.log('[Deposit] ========== sendViaPhantom CALLED ==========');
+      console.log('[Deposit] Parameters:', { mintAddress, escrowWallet, amount });
+      console.log('[Deposit] Wallet connected:', window.solana?.isConnected);
+      console.log('[Deposit] Wallet public key:', walletPublicKey);
+      
+      try {
+        if (!window.solana || !window.solana.isPhantom) {
+          alert('Phantom wallet not found. Please install Phantom wallet extension.');
+          return;
+        }
+
+        if (!window.solana.isConnected) {
+          alert('Please connect your wallet first!');
+          return;
+        }
+
+        if (!mintAddress || !escrowWallet || !amount || amount <= 0) {
+          alert('Missing or invalid parameters. Please refresh the page and try again.');
+          console.error('[Deposit] Missing or invalid parameters:', { mintAddress, escrowWallet, amount });
+          return;
+        }
+
+        console.log('[Deposit] Starting transaction creation...');
+        // Show loading message
+        const depositStatus = document.getElementById('depositStatus');
+        if (depositStatus) {
+          depositStatus.innerHTML = `
+            <div style="color: #00ffff; font-size: 0.9em;">
+              <div style="margin-bottom: 10px; color: #ffff00; font-weight: bold;">⏳ Preparing transaction... Please wait...</div>
+            </div>
+          `;
+        }
+
+        // Wait for libraries to load
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        // Check if libraries are available
+        let Connection, PublicKey, Transaction, TransactionInstruction;
+
+        // Try to get Solana Web3.js from various possible locations
+        if (typeof window.solanaWeb3 !== 'undefined') {
+          ({ Connection, PublicKey, Transaction, TransactionInstruction } = window.solanaWeb3);
+        } else if (typeof solanaWeb3 !== 'undefined') {
+          ({ Connection, PublicKey, Transaction, TransactionInstruction } = solanaWeb3);
+        } else {
+          throw new Error('Solana Web3.js library not loaded. Please refresh the page (Ctrl+F5).');
+        }
+        
+        // Verify TransactionInstruction is available
+        if (!TransactionInstruction) {
+          throw new Error('TransactionInstruction not found in Solana Web3.js library. Please refresh the page (Ctrl+F5).');
+        }
+
+        // Try to get SPL Token library from various possible locations
+        let splTokenLib = null;
+        const possibleNames = ['splToken', 'spl', 'SPLToken', 'SPL', 'spl_token'];
+        
+        for (const name of possibleNames) {
+          if (typeof window[name] !== 'undefined') {
+            splTokenLib = window[name];
+            console.log(`[Deposit] Found SPL Token library as window.${name}`);
+            break;
+          }
+        }
+        
+        if (!splTokenLib && typeof splToken !== 'undefined') {
+          splTokenLib = splToken;
+          console.log('[Deposit] Found SPL Token library as global splToken');
+        }
+        
+        if (!splTokenLib) {
+          // Last attempt: check if it's attached to solanaWeb3
+          if (typeof window.solanaWeb3 !== 'undefined' && window.solanaWeb3.splToken) {
+            splTokenLib = window.solanaWeb3.splToken;
+            console.log('[Deposit] Found SPL Token library in solanaWeb3.splToken');
+          }
+        }
+        
+        // If SPL Token library not found, create instructions manually using Solana Web3.js
+        if (!splTokenLib) {
+          console.log('[Deposit] SPL Token library not found, creating instructions manually...');
+          
+          // Create SPL token transfer instruction manually
+          const TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
+          const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
+          
+          const fromPublicKey = new PublicKey(walletPublicKey);
+          const toPublicKey = new PublicKey(escrowWallet);
+          const mintPublicKey = new PublicKey(mintAddress);
+          
+          // Use default decimals (6) since RPC endpoints are failing
+          // Most SPL tokens use 6 decimals
+          const decimals = 6;
+          console.log('[Deposit] Using default token decimals:', decimals);
+          
+          // Convert amount to raw token amount
+          const rawAmount = BigInt(Math.floor(amount * Math.pow(10, decimals)));
+          console.log('[Deposit] Raw amount:', rawAmount.toString());
+          
+          // Helper function to find associated token address (synchronous)
+          function findAssociatedTokenAddressSync(mint, owner) {
+            const mintPubkey = new PublicKey(mint);
+            const ownerPubkey = new PublicKey(owner);
+            
+            // Derive ATA address using PDA
+            const seeds = [
+              ownerPubkey.toBuffer(),
+              TOKEN_PROGRAM_ID.toBuffer(),
+              mintPubkey.toBuffer()
+            ];
+            
+            const [ata] = PublicKey.findProgramAddressSync(seeds, ASSOCIATED_TOKEN_PROGRAM_ID);
+            return ata;
+          }
+          
+          // Get associated token addresses
+          console.log('[Deposit] Finding associated token addresses...');
+          const fromTokenAccount = findAssociatedTokenAddressSync(mintAddress, walletPublicKey);
+          const toTokenAccount = findAssociatedTokenAddressSync(mintAddress, escrowWallet);
+          console.log('[Deposit] From token account:', fromTokenAccount.toString());
+          console.log('[Deposit] To token account:', toTokenAccount.toString());
+          
+          // Helper function to write BigInt as little-endian 64-bit unsigned integer
+          function writeBigUInt64LE(value, buffer, offset = 0) {
+            // Convert BigInt to little-endian bytes
+            for (let i = 0; i < 8; i++) {
+              buffer[offset + i] = Number((value >> BigInt(i * 8)) & BigInt(0xff));
+            }
+            return offset + 8;
+          }
+          
+          // Create transaction
+          const transaction = new Transaction();
+          
+          // Always create associated token account instruction (Phantom will handle if it already exists)
+          console.log('[Deposit] Adding create associated token account instruction...');
+          const SYSTEM_PROGRAM_ID = new PublicKey('11111111111111111111111111111111');
+          const createATAInstruction = new TransactionInstruction({
+            keys: [
+              { pubkey: fromPublicKey, isSigner: true, isWritable: true },
+              { pubkey: toTokenAccount, isSigner: false, isWritable: true },
+              { pubkey: toPublicKey, isSigner: false, isWritable: false },
+              { pubkey: mintPublicKey, isSigner: false, isWritable: false },
+              { pubkey: SYSTEM_PROGRAM_ID, isSigner: false, isWritable: false },
+              { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+            ],
+            programId: ASSOCIATED_TOKEN_PROGRAM_ID,
+            data: new Uint8Array(0) // Empty data for create ATA instruction
+          });
+          transaction.add(createATAInstruction);
+          
+          // Create transfer instruction manually
+          // SPL Token Transfer instruction format: [instruction_type: u8, amount: u64]
+          console.log('[Deposit] Creating transfer instruction...');
+          const amountBuffer = new Uint8Array(8);
+          writeBigUInt64LE(rawAmount, amountBuffer, 0);
+          
+          // Concatenate instruction type (3 = Transfer) with amount
+          const transferData = new Uint8Array(9); // 1 byte for instruction type + 8 bytes for amount
+          transferData[0] = 3; // Transfer instruction type
+          transferData.set(amountBuffer, 1);
+          
+          const transferInstruction = new TransactionInstruction({
+            keys: [
+              { pubkey: fromTokenAccount, isSigner: false, isWritable: true },
+              { pubkey: toTokenAccount, isSigner: false, isWritable: true },
+              { pubkey: fromPublicKey, isSigner: true, isWritable: false },
+            ],
+            programId: TOKEN_PROGRAM_ID,
+            data: transferData
+          });
+          
+          transaction.add(transferInstruction);
+          
+          // Phantom wallet requires recentBlockhash
+          // Try to get blockhash from Phantom's request method or Connection
+          console.log('[Deposit] Getting blockhash from Phantom...');
+          
+          let blockhash = null;
+          let lastValidBlockHeight = null;
+          
+          // Try to get blockhash using Phantom's request method
+          try {
+            const blockhashResponse = await window.solana.request({
+              method: 'getLatestBlockhash',
+              params: [{ commitment: 'finalized' }]
+            });
+            
+            if (blockhashResponse && blockhashResponse.value) {
+              blockhash = blockhashResponse.value.blockhash;
+              lastValidBlockHeight = blockhashResponse.value.lastValidBlockHeight;
+              console.log('[Deposit] Got blockhash from Phantom:', blockhash.substring(0, 16) + '...');
+            }
+          } catch (blockhashErr) {
+            console.warn('[Deposit] Failed to get blockhash from Phantom request, trying Connection...', blockhashErr);
+            
+            // Fallback: Try to use Connection with Phantom's RPC
+            try {
+              const phantomConnection = new Connection('https://api.mainnet-beta.solana.com', 'confirmed');
+              const { blockhash: bh, lastValidBlockHeight: lvbh } = await phantomConnection.getLatestBlockhash('finalized');
+              blockhash = bh;
+              lastValidBlockHeight = lvbh;
+              console.log('[Deposit] Got blockhash from Connection:', blockhash.substring(0, 16) + '...');
+            } catch (connErr) {
+              console.warn('[Deposit] Failed to get blockhash from Connection:', connErr);
+              // If all else fails, use a placeholder - Phantom might replace it
+              blockhash = '11111111111111111111111111111111';
+              console.warn('[Deposit] Using placeholder blockhash, Phantom will replace it');
+            }
+          }
+          
+          if (blockhash) {
+            transaction.recentBlockhash = blockhash;
+            transaction.feePayer = fromPublicKey;
+            if (lastValidBlockHeight) {
+              transaction.lastValidBlockHeight = lastValidBlockHeight;
+            }
+            console.log('[Deposit] Transaction prepared with blockhash, requesting signature from Phantom...');
+          } else {
+            throw new Error('Failed to get blockhash. Please try again.');
+          }
+          
+          // Update status
+          if (depositStatus) {
+            depositStatus.innerHTML = `
+              <div style="color: #00ffff; font-size: 0.9em;">
+                <div style="margin-bottom: 10px; color: #ffff00; font-weight: bold;">⏳ Please approve transaction in Phantom wallet popup...</div>
+              </div>
+            `;
+          }
+          
+          // Use Phantom's signAndSendTransaction
+          console.log('[Deposit] Calling Phantom signAndSendTransaction (will show popup)...');
+          const signed = await window.solana.signAndSendTransaction(transaction);
+          const signature = signed.signature;
+          console.log('[Deposit] Transaction sent! Signature:', signature);
+          
+          // Update status
+          if (depositStatus) {
+            depositStatus.innerHTML = `
+              <div style="color: #00ffff; font-size: 0.9em;">
+                <div style="margin-bottom: 10px; color: #00ff00; font-weight: bold;">✅ Transaction sent! Waiting for confirmation...</div>
+              </div>
+            `;
+          }
+          
+          // Transaction is sent, Phantom will handle confirmation
+          console.log('[Deposit] Transaction will be confirmed by Phantom wallet.');
+          
+          alert(`✅ Transaction successful!\n\nTransaction: ${signature}\n\nAmount: ${formatNumber(amount)} Luna sent to escrow wallet.\n\nSOL transaction fee was automatically deducted from your wallet.`);
+          
+          // Refresh status
+          setTimeout(async () => {
+            await checkDepositStatus();
+            await checkLunaBalance();
+          }, 2000);
+          
+          return;
+        }
+        
+        // If SPL Token library is available, use it
+        const {
+          getAssociatedTokenAddressSync,
+          createTransferInstruction,
+          createAssociatedTokenAccountInstruction,
+          TOKEN_PROGRAM_ID
+        } = splTokenLib;
+
+        const connection = new Connection('https://api.mainnet-beta.solana.com', 'confirmed');
+        const fromPublicKey = new PublicKey(walletPublicKey);
+        const toPublicKey = new PublicKey(escrowWallet);
+        const mintPublicKey = new PublicKey(mintAddress);
+
+        // Get token decimals
+        const mintInfo = await connection.getParsedAccountInfo(mintPublicKey);
+        if (!mintInfo.value) {
+          throw new Error('Failed to get token information. Please check the token mint address.');
+        }
+        const decimals = mintInfo.value.data?.parsed?.info?.decimals || 6;
+
+        // Convert amount to raw token amount
+        const rawAmount = BigInt(Math.floor(amount * Math.pow(10, decimals)));
+
+        // Get associated token addresses
+        const fromTokenAccount = getAssociatedTokenAddressSync(mintPublicKey, fromPublicKey);
+        const toTokenAccount = getAssociatedTokenAddressSync(mintPublicKey, toPublicKey);
+
+        // Create transaction
+        const transaction = new Transaction();
+
+        // Check if recipient token account exists
+        const toTokenAccountInfo = await connection.getAccountInfo(toTokenAccount);
+        if (!toTokenAccountInfo) {
+          // Create associated token account first
+          transaction.add(
+            createAssociatedTokenAccountInstruction(
+              fromPublicKey,
+              toTokenAccount,
+              toPublicKey,
+              mintPublicKey
+            )
+          );
+        }
+
+        // Add transfer instruction
+        transaction.add(
+          createTransferInstruction(
+            fromTokenAccount,
+            toTokenAccount,
+            fromPublicKey,
+            rawAmount,
+            [],
+            TOKEN_PROGRAM_ID
+          )
+        );
+
+        // Get recent blockhash
+        const { blockhash } = await connection.getLatestBlockhash();
+        transaction.recentBlockhash = blockhash;
+        transaction.feePayer = fromPublicKey;
+
+        // Update status
+        if (depositStatus) {
+          depositStatus.innerHTML = `
+            <div style="color: #00ffff; font-size: 0.9em;">
+              <div style="margin-bottom: 10px; color: #ffff00; font-weight: bold;">⏳ Please approve transaction in Phantom wallet popup...</div>
+            </div>
+          `;
+        }
+
+        // Sign and send transaction via Phantom
+        const signed = await window.solana.signAndSendTransaction(transaction);
+        console.log('[Deposit] Transaction signed and sent:', signed.signature);
+        
+        // Update status
+        if (depositStatus) {
+          depositStatus.innerHTML = `
+            <div style="color: #00ffff; font-size: 0.9em;">
+              <div style="margin-bottom: 10px; color: #00ff00; font-weight: bold;">✅ Transaction sent! Waiting for confirmation...</div>
+            </div>
+          `;
+        }
+        
+        // Wait for confirmation
+        await connection.confirmTransaction(signed.signature, 'confirmed');
+        
+        alert(`✅ Transaction successful!\n\nTransaction: ${signed.signature}\n\nAmount: ${formatNumber(amount)} Luna sent to escrow wallet.\n\nSOL transaction fee was automatically deducted from your wallet.`);
+        
+        // Refresh status
+        setTimeout(async () => {
+          await checkDepositStatus();
+          await checkLunaBalance();
+        }, 2000);
+      } catch (txError) {
+        console.error('[Deposit] Transaction error:', txError);
+        
+        // Show error message to user
+        const depositStatus = document.getElementById('depositStatus');
+        if (depositStatus) {
+          depositStatus.innerHTML = `
+            <div style="color: #00ffff; font-size: 0.9em;">
+              <div style="margin-bottom: 10px; padding: 10px; background: rgba(255, 0, 0, 0.1); border: 2px solid #ff0000; border-radius: 8px; color: #ff0000; font-weight: bold;">
+                ❌ Transaction failed: ${txError.message || 'Unknown error'}
+              </div>
+              <div style="margin-bottom: 10px; padding: 15px; background: rgba(0, 0, 0, 0.5); border: 2px solid #00ffff; border-radius: 8px;">
+                <div style="margin-bottom: 10px; font-weight: bold; color: #00ffff;">📤 Please send ${formatNumber(amount)} Luna manually to Escrow Wallet:</div>
+                <div style="font-family: monospace; font-size: 0.85em; word-break: break-all; margin-bottom: 15px; padding: 10px; background: rgba(0, 0, 0, 0.7); border: 1px solid #00ffff; border-radius: 6px; color: #00ffff;">
+                  ${escrowWallet}
+                </div>
+                <button onclick="copyToClipboard('${escrowWallet}')" style="width: 100%; padding: 10px 15px; background: linear-gradient(135deg, rgba(0, 255, 255, 0.3), rgba(0, 255, 255, 0.3)); border: 2px solid #00ffff; border-radius: 6px; color: #00ffff; cursor: pointer; font-family: 'Courier New', monospace; font-size: 0.9em; font-weight: bold; margin-bottom: 10px;">📋 Copy Address</button>
+                <div style="padding: 10px; background: rgba(0, 255, 0, 0.1); border: 1px solid #00ff00; border-radius: 6px; font-size: 0.85em; color: #00ff00;">
+                  <strong>📝 Step-by-step instructions:</strong><br>
+                  1. Open Phantom wallet extension<br>
+                  2. Click "Send" button<br>
+                  3. Select "Luna" token from the token list<br>
+                  4. Enter amount: ${formatNumber(amount)} Luna<br>
+                  5. Paste the escrow address above<br>
+                  6. Click "Send" and confirm transaction<br>
+                  7. Phantom will automatically deduct SOL for transaction fee
+                </div>
+              </div>
+            </div>
+          `;
+        }
+        
+        alert(`Transaction failed: ${txError.message}\n\nPlease send Luna manually through Phantom wallet.`);
+      }
+    };
+
+    // Wallet Connection
+    async function setupWalletConnection() {
+      console.log('[Deposit] Setting up wallet connection...');
+      const connectBtn = document.getElementById('connectWalletBtn');
+      const disconnectBtn = document.getElementById('disconnectWalletBtn');
+      const walletInfo = document.getElementById('walletInfo');
+
+      if (!connectBtn) {
+        console.error('[Deposit] connectWalletBtn not found!');
+        return;
+      }
+
+      try {
+        console.log('[Deposit] Checking for Phantom wallet...');
+        // Check if Phantom wallet is available
+        if (typeof window.solana === 'undefined' || !window.solana.isPhantom) {
+          console.warn('[Deposit] Phantom wallet not found');
+          connectBtn.textContent = '⚠️ Phantom Wallet not found!';
+          connectBtn.disabled = true;
+          connectBtn.style.cursor = 'not-allowed';
+          connectBtn.onclick = () => {
+            alert('Please install Phantom wallet extension!\n\nDownload: https://phantom.app/');
+          };
+          return;
+        }
+
+        console.log('[Deposit] Phantom wallet found, enabling connect button');
+        // Enable button and add click handler
+        connectBtn.disabled = false;
+        connectBtn.style.cursor = 'pointer';
+        
+        // Remove any existing event listeners by cloning the button
+        const newConnectBtn = connectBtn.cloneNode(true);
+        connectBtn.parentNode.replaceChild(newConnectBtn, connectBtn);
+        
+        newConnectBtn.addEventListener('click', async () => {
+          try {
+            console.log('[Deposit] Connect button clicked');
+            if (!window.solana || !window.solana.isPhantom) {
+              alert('Please install Phantom wallet extension!\n\nDownload: https://phantom.app/');
+              return;
+            }
+
+            console.log('[Deposit] Connecting to Phantom wallet...');
+            const resp = await window.solana.connect();
+            walletPublicKey = resp.publicKey.toString();
+            walletConnected = true;
+            
+            console.log('[Deposit] Wallet connected:', walletPublicKey);
+            
+            newConnectBtn.classList.add('hidden');
+            if (disconnectBtn) disconnectBtn.classList.remove('hidden');
+            if (walletInfo) {
+              walletInfo.classList.remove('hidden');
+              const sanitizedWallet = sanitizeWalletAddress(walletPublicKey);
+              const shortWallet = sanitizedWallet.length > 16 
+                ? `${sanitizedWallet.substring(0, 8)}...${sanitizedWallet.substring(sanitizedWallet.length - 8)}`
+                : sanitizedWallet;
+              walletInfo.innerHTML = `
+                <strong>Connected:</strong> ${escapeHtml(shortWallet)}<br>
+                <strong>Balance:</strong> <span id="balanceDisplay">Checking...</span>
+              `;
+            }
+            
+            await checkLunaBalance();
+            startBalanceUpdate();
+            setupDepositSystem();
+            await checkDepositStatus();
+          } catch (err) {
+            console.error('[Deposit] Wallet connection error:', err);
+            alert('Failed to connect wallet: ' + err.message);
+          }
+        });
+      } catch (error) {
+        console.error('[Deposit] Error in setupWalletConnection:', error);
+      }
+
+      // Setup disconnect button
+      if (disconnectBtn) {
+        disconnectBtn.addEventListener('click', () => {
+          try {
+            if (window.solana && window.solana.isConnected) {
+              window.solana.disconnect();
+            }
+            stopBalanceUpdate();
+            walletConnected = false;
+            walletPublicKey = null;
+            playerBalance = 0;
+            const connectBtnAfter = document.getElementById('connectWalletBtn');
+            if (connectBtnAfter) connectBtnAfter.classList.remove('hidden');
+            disconnectBtn.classList.add('hidden');
+            if (walletInfo) walletInfo.classList.add('hidden');
+            const depositSection = document.getElementById('depositSection');
+            if (depositSection) depositSection.classList.add('hidden');
+          } catch (err) {
+            console.error('[Deposit] Wallet disconnect error:', err);
+          }
+        });
+      }
+
+      // Check if already connected
+      if (window.solana && window.solana.isPhantom) {
+        window.solana.on('connect', async () => {
+          walletPublicKey = window.solana.publicKey.toString();
+          walletConnected = true;
+          connectBtn.classList.add('hidden');
+          disconnectBtn.classList.remove('hidden');
+          walletInfo.textContent = `Wallet: ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}`;
+          walletInfo.classList.remove('hidden');
+          await checkLunaBalance();
+          startBalanceUpdate();
+          setupDepositSystem();
+          await checkDepositStatus();
+        });
+
+        window.solana.on('disconnect', () => {
+          stopBalanceUpdate();
+          walletPublicKey = null;
+          walletConnected = false;
+          playerBalance = 0;
+          connectBtn.classList.remove('hidden');
+          disconnectBtn.classList.add('hidden');
+          walletInfo.classList.add('hidden');
+          const depositSection = document.getElementById('depositSection');
+          if (depositSection) depositSection.classList.add('hidden');
+        });
+
+        if (window.solana.isConnected) {
+          walletPublicKey = window.solana.publicKey.toString();
+          walletConnected = true;
+          connectBtn.classList.add('hidden');
+          disconnectBtn.classList.remove('hidden');
+          walletInfo.textContent = `Wallet: ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}`;
+          walletInfo.classList.remove('hidden');
+          checkLunaBalance();
+          startBalanceUpdate();
+          setupDepositSystem();
+          checkDepositStatus();
+        }
+      }
+    }
+
+    async function checkLunaBalance() {
+      const balanceCheck = document.getElementById('balanceCheck');
+      const balanceDisplay = document.getElementById('balanceDisplay');
+      if (balanceCheck) balanceCheck.classList.remove('hidden');
+      
+      if (!walletConnected || !walletPublicKey) {
+        if (balanceDisplay) balanceDisplay.textContent = 'Not connected';
+        if (balanceCheck) balanceCheck.classList.add('hidden');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE}/luna/rps/balance?wallet=${walletPublicKey}`);
+        const data = await response.json();
+        
+        if (!data.ok) {
+          throw new Error(data.error || 'Failed to check balance');
+        }
+        
+        playerBalance = data.balance || 0;
+        
+        if (balanceDisplay) {
+          balanceDisplay.textContent = formatNumber(playerBalance) + ' Luna';
+        }
+        
+        await checkDepositStatus();
+      } catch (err) {
+        console.error('[Deposit] Balance check error:', err);
+        if (balanceDisplay) balanceDisplay.textContent = 'Error';
+        await checkDepositStatus();
+      } finally {
+        if (balanceCheck) balanceCheck.classList.add('hidden');
+      }
+    }
+
+    function startBalanceUpdate() {
+      if (balanceUpdateInterval) {
+        clearInterval(balanceUpdateInterval);
+      }
+      
+      balanceUpdateInterval = setInterval(async () => {
+        if (walletConnected && walletPublicKey) {
+          await checkLunaBalance();
+        }
+      }, 15000);
+    }
+
+    function stopBalanceUpdate() {
+      if (balanceUpdateInterval) {
+        clearInterval(balanceUpdateInterval);
+        balanceUpdateInterval = null;
+      }
+    }
+
+    // Deposit/Withdraw System
+    async function checkDepositStatus() {
+      const depositSection = document.getElementById('depositSection');
+      
+      if (!walletConnected || !walletPublicKey) {
+        if (depositSection) depositSection.classList.add('hidden');
+        return;
+      }
+      
+      // Show deposit section when wallet is connected
+      if (depositSection) depositSection.classList.remove('hidden');
+
+      try {
+        const response = await fetch(`${API_BASE}/luna/deposit/status?wallet=${walletPublicKey}`);
+        const data = await response.json();
+
+        const depositStatus = document.getElementById('depositStatus');
+        const depositForm = document.getElementById('depositForm');
+        const withdrawBtn = document.getElementById('withdrawBtn');
+
+        if (!depositSection) return;
+
+        if (data.ok && data.hasDeposit) {
+          // Show deposit form for additional deposits
+          depositForm.style.display = 'block';
+          withdrawBtn.style.display = 'block';
+
+          const deposit = data.deposit;
+          // Get escrow wallet from API or use default
+          const escrowWallet = data.escrowWallet || 'FLMbMZXn6d5mWf6EWFAeVFcV4w7ioZ6PZAWSp8wxK4RU';
+          
+          depositStatus.innerHTML = `
+            <div style="color: #00ffff; font-size: 0.9em;">
+              <div style="margin-bottom: 10px; padding: 10px; background: rgba(0, 255, 0, 0.1); border: 1px solid #00ff00; border-radius: 8px;">
+                <div style="margin-bottom: 5px;"><strong>💰 Deposited:</strong> ${formatNumber(deposit.amount)} Luna</div>
+                <div style="margin-bottom: 5px;"><strong>📅 Days:</strong> ${deposit.daysSinceDeposit.toFixed(1)} days</div>
+                <div style="margin-bottom: 5px;"><strong>💸 Betting Fee:</strong> ${deposit.feePercentageDisplay}</div>
+                ${deposit.daysSinceDeposit >= 6 ? '<div style="color: #00ff00;">✅ Maximum discount reached!</div>' : 
+                  deposit.daysSinceDeposit >= 3 ? '<div style="color: #ffff00;">⏳ Keep depositing for 1% fee!</div>' : 
+                  '<div style="color: #ffff00;">⏳ Keep depositing for lower fees!</div>'}
+              </div>
+              
+              <div style="margin-top: 15px; padding: 15px; background: rgba(0, 0, 0, 0.5); border: 2px solid #00ffff; border-radius: 8px;">
+                <div style="margin-bottom: 10px; font-weight: bold; color: #00ffff;">📤 Send Luna to Escrow Wallet:</div>
+                <div style="font-family: monospace; font-size: 0.85em; word-break: break-all; margin-bottom: 10px; padding: 10px; background: rgba(0, 0, 0, 0.7); border: 1px solid #00ffff; border-radius: 6px; color: #00ffff;">
+                  ${escrowWallet}
+                </div>
+                <button onclick="copyToClipboard('${escrowWallet}')" style="width: 100%; padding: 10px 15px; background: linear-gradient(135deg, rgba(0, 255, 255, 0.3), rgba(0, 255, 255, 0.3)); border: 2px solid #00ffff; border-radius: 6px; color: #00ffff; cursor: pointer; font-family: 'Courier New', monospace; font-size: 0.9em; font-weight: bold; margin-bottom: 10px;">📋 Copy Address</button>
+                <button onclick="console.log('Button clicked!'); if (typeof window.sendViaPhantom === 'function') { window.sendViaPhantom('${lunaMintAddress || ''}', '${escrowWallet}', ${deposit.amount || 0}); } else { alert('Function not loaded. Please refresh the page.'); }" style="width: 100%; padding: 10px 15px; background: linear-gradient(135deg, rgba(147, 51, 234, 0.5), rgba(147, 51, 234, 0.5)); border: 2px solid #9333ea; border-radius: 6px; color: #ffffff; cursor: pointer; font-family: 'Courier New', monospace; font-size: 0.9em; font-weight: bold; margin-bottom: 10px;">👻 Try Send via Phantom (may not work if library not loaded)</button>
+                <div style="margin-top: 10px; padding: 10px; background: rgba(255, 255, 0, 0.1); border: 1px solid #ffff00; border-radius: 6px; font-size: 0.85em; color: #ffff00;">
+                  ⚠️ <strong>Important:</strong> You need SOL in your wallet to pay for transaction fees. Phantom will automatically deduct SOL for the transaction fee when you send Luna.
+                </div>
+                <div style="margin-top: 10px; padding: 10px; background: rgba(0, 255, 0, 0.1); border: 1px solid #00ff00; border-radius: 6px; font-size: 0.85em; color: #00ff00;">
+                  💡 <strong>How to send manually:</strong> Open Phantom wallet → Click "Send" → Select Luna token → Enter amount → Paste escrow address above → Confirm transaction
+                </div>
+              </div>
+            </div>
+          `;
+        } else {
+          depositForm.style.display = 'block';
+          withdrawBtn.style.display = 'none';
+
+          if (playerBalance < 150000) {
+            depositStatus.innerHTML = `
+              <div style="color: #ff0000; font-size: 0.9em;">
+                ❌ You need at least 150,000 Luna to deposit.<br>
+                Current: ${formatNumber(playerBalance)} Luna
+              </div>
+            `;
+            depositForm.style.display = 'none';
+          } else {
+            depositStatus.innerHTML = `
+              <div style="color: #00ffff; font-size: 0.9em;">
+                ✅ You can deposit Luna to reduce Betting Mode fees!<br>
+                Deposit for 3 days → 2% fee, 6 days → 1% fee (default: 3%)
+              </div>
+            `;
+          }
+        }
+      } catch (error) {
+        console.error('[Deposit] Error checking deposit status:', error);
+        const depositStatus = document.getElementById('depositStatus');
+        if (depositSection) depositSection.classList.remove('hidden');
+        if (depositStatus) {
+          depositStatus.innerHTML = `
+            <div style="color: #ff0000; font-size: 0.9em;">
+              ⚠️ Error checking deposit status. Please try again.
+            </div>
+          `;
+        }
+      }
+    }
+
+    function setupDepositSystem() {
+      const depositBtn = document.getElementById('depositBtn');
+      const withdrawBtn = document.getElementById('withdrawBtn');
+
+      if (depositBtn) {
+        depositBtn.addEventListener('click', async () => {
+          if (!walletConnected || !walletPublicKey) {
+            alert('Please connect your wallet first!');
+            return;
+          }
+
+          const amount = parseFloat(document.getElementById('depositAmount').value);
+          if (!amount || amount <= 0) {
+            alert('Please enter a valid deposit amount!');
+            return;
+          }
+
+          if (playerBalance < 150000) {
+            alert(`You need at least 150,000 Luna to deposit. Current: ${formatNumber(playerBalance)} Luna`);
+            return;
+          }
+
+          try {
+            depositBtn.disabled = true;
+            depositBtn.textContent = 'Processing...';
+
+            // First, get escrow wallet address
+            depositBtn.textContent = 'Getting escrow address...';
+            
+            const escrowResponse = await fetch(`${API_BASE}/luna/deposit/status?wallet=${walletPublicKey}`);
+            const escrowData = await escrowResponse.json();
+            const escrowWallet = escrowData.deposit?.escrowWallet || 'FLMbMZXn6d5mWf6EWFAeVFcV4w7ioZ6PZAWSp8wxK4RU';
+            
+            // Get Luna mint address
+            if (!lunaMintAddress) {
+              const contractResponse = await fetch(`${API_BASE}/luna/rps/contract-address`);
+              const contractData = await contractResponse.json();
+              if (contractData.ok && contractData.contractAddress) {
+                lunaMintAddress = contractData.contractAddress;
+              } else {
+                throw new Error('Failed to get Luna token address');
+              }
+            }
+            
+            // Record deposit first
+            depositBtn.textContent = 'Recording deposit...';
+            
+            const response = await fetch(`${API_BASE}/luna/deposit`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                wallet: walletPublicKey,
+                amount: amount,
+              }),
+            });
+            
+            const data = await response.json();
+            
+            if (data.ok) {
+              // Show escrow wallet address with "Send via Phantom" button
+              const depositStatus = document.getElementById('depositStatus');
+              if (depositStatus) {
+                depositStatus.innerHTML = `
+                  <div style="color: #00ffff; font-size: 0.9em;">
+                    <div style="margin-bottom: 10px; color: #00ff00; font-weight: bold;">✅ Deposit recorded! Please send ${formatNumber(amount)} Luna to escrow wallet.</div>
+                    <div style="margin-bottom: 10px; padding: 15px; background: rgba(0, 0, 0, 0.5); border: 2px solid #00ffff; border-radius: 8px;">
+                      <div style="margin-bottom: 10px; font-weight: bold; color: #00ffff;">📤 Escrow Wallet Address:</div>
+                      <div style="font-family: monospace; font-size: 0.85em; word-break: break-all; margin-bottom: 15px; padding: 10px; background: rgba(0, 0, 0, 0.7); border: 1px solid #00ffff; border-radius: 6px; color: #00ffff;">
+                        ${data.deposit.escrowWallet}
+                      </div>
+                      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button onclick="copyToClipboard('${data.deposit.escrowWallet}')" style="flex: 1; min-width: 150px; padding: 10px 15px; background: linear-gradient(135deg, rgba(0, 255, 255, 0.3), rgba(0, 255, 255, 0.3)); border: 2px solid #00ffff; border-radius: 6px; color: #00ffff; cursor: pointer; font-family: 'Courier New', monospace; font-size: 0.9em; font-weight: bold;">📋 Copy Address</button>
+                        <button onclick="sendViaPhantom('${lunaMintAddress}', '${data.deposit.escrowWallet}', ${amount})" style="flex: 1; min-width: 150px; padding: 10px 15px; background: linear-gradient(135deg, rgba(147, 51, 234, 0.5), rgba(147, 51, 234, 0.5)); border: 2px solid #9333ea; border-radius: 6px; color: #ffffff; cursor: pointer; font-family: 'Courier New', monospace; font-size: 0.9em; font-weight: bold;">👻 Send via Phantom</button>
+                      </div>
+                    </div>
+                    <div style="margin-top: 10px; padding: 10px; background: rgba(255, 255, 0, 0.1); border: 1px solid #ffff00; border-radius: 6px; font-size: 0.85em; color: #ffff00;">
+                      ⚠️ <strong>Important:</strong> You need SOL in your wallet to pay for transaction fees. Phantom will automatically deduct SOL for the transaction fee when you send Luna.
+                    </div>
+                    <div style="margin-top: 10px; font-size: 0.85em; opacity: 0.8;">Note: ${data.note}</div>
+                  </div>
+                `;
+              }
+              
+              // Hide deposit form
+              const depositForm = document.getElementById('depositForm');
+              if (depositForm) depositForm.style.display = 'none';
+              
+              document.getElementById('depositAmount').value = '';
+              
+              // Refresh status after a delay
+              setTimeout(async () => {
+                await checkDepositStatus();
+                await checkLunaBalance();
+              }, 2000);
+            } else {
+              alert('Failed to deposit: ' + (data.message || data.error));
+            }
+          } catch (error) {
+            console.error('[Deposit] Error:', error);
+            alert('Failed to deposit: ' + error.message);
+          } finally {
+            depositBtn.disabled = false;
+            depositBtn.textContent = '💾 Deposit Luna';
+          }
+        });
+      }
+
+      if (withdrawBtn) {
+        withdrawBtn.addEventListener('click', async () => {
+          if (!walletConnected || !walletPublicKey) {
+            alert('Please connect your wallet first!');
+            return;
+          }
+
+          if (!confirm('Are you sure you want to withdraw? Your Betting Mode fee will return to 3%.')) {
+            return;
+          }
+
+          try {
+            withdrawBtn.disabled = true;
+            withdrawBtn.textContent = 'Processing...';
+
+            const response = await fetch(`${API_BASE}/luna/withdraw`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                wallet: walletPublicKey,
+              }),
+            });
+
+            const data = await response.json();
+
+            if (data.ok) {
+              alert(`Withdrawal successful! ${formatNumber(data.withdrawal.amount)} Luna sent to your wallet.\n\nTransaction: ${data.withdrawal.signature}`);
+              await checkDepositStatus();
+              await checkLunaBalance();
+            } else {
+              alert('Failed to withdraw: ' + (data.message || data.error));
+            }
+          } catch (error) {
+            console.error('[Withdraw] Error:', error);
+            alert('Failed to withdraw: ' + error.message);
+          } finally {
+            withdrawBtn.disabled = false;
+            withdrawBtn.textContent = '💸 Withdraw Luna';
+          }
+        });
+      }
+    }
+
+    // Neon Toggle System
+    function initNeonToggle() {
+      const neonToggle = document.getElementById('neonToggle');
+      const body = document.body;
+      
+      const neonEnabled = localStorage.getItem('neonEnabled') !== 'false';
+      
+      if (!neonEnabled) {
+        body.classList.add('neon-off');
+        neonToggle.textContent = '💡 Neon: OFF';
+      } else {
+        body.classList.remove('neon-off');
+        neonToggle.textContent = '💡 Neon: ON';
+      }
+      
+      neonToggle.addEventListener('click', () => {
+        const isOff = body.classList.contains('neon-off');
+        
+        if (isOff) {
+          body.classList.remove('neon-off');
+          neonToggle.textContent = '💡 Neon: ON';
+          localStorage.setItem('neonEnabled', 'true');
+        } else {
+          body.classList.add('neon-off');
+          neonToggle.textContent = '💡 Neon: OFF';
+          localStorage.setItem('neonEnabled', 'false');
+        }
+      });
+    }
+
+    // Load Luna mint address on page load
+    async function loadLunaMintAddress() {
+      try {
+        const response = await fetch(`${API_BASE}/luna/rps/contract-address`);
+        const data = await response.json();
+        if (data.ok && data.contractAddress) {
+          lunaMintAddress = data.contractAddress;
+        }
+      } catch (error) {
+        console.error('[Deposit] Failed to load Luna mint address:', error);
+      }
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', async () => {
+      initNeonToggle();
+      setupWalletConnection();
+      await loadLunaMintAddress();
+      
+      // Check if wallet already connected
+      if (window.solana && window.solana.isPhantom && window.solana.isConnected) {
+        walletPublicKey = window.solana.publicKey.toString();
+        walletConnected = true;
+        await checkDepositStatus();
+      }
+    });
+  </script>
+</body>
+</html>
+

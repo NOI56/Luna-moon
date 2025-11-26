@@ -67,3 +67,6 @@ REWARD_SENDER_PRIVATE_KEY=private_key_ที่ได้
 2. ใส่ Private Key ใน `REWARD_SENDER_PRIVATE_KEY`
 3. Wallet นี้จะใช้ทั้งรับค่าธรรมเนียมและส่งรางวัล
 
+
+
+

@@ -11,7 +11,6 @@
   <meta property="og:type" content="website">
   <title>Luna AI - AI Streamer</title>
   <link rel="stylesheet" href="/css/notifications.css">
-  <link rel="stylesheet" href="/css/referral.css">
   <link rel="stylesheet" href="/css/chat.css">
   <style>
     * {
@@ -143,7 +142,8 @@
       background-clip: text;
     }
 
-    .hero p {
+    .hero p,
+    .hero-subtitle {
       font-size: 1.3rem;
       color: #a0ffff;
       margin-bottom: 40px;
@@ -235,6 +235,138 @@
     .feature-card p {
       color: #a0ffff;
       line-height: 1.6;
+      margin-bottom: 15px;
+    }
+
+    .feature-details {
+      list-style: none;
+      padding: 0;
+      margin-top: 15px;
+    }
+
+    .feature-details li {
+      color: #80ffff;
+      font-size: 0.9rem;
+      padding: 5px 0;
+      padding-left: 20px;
+      position: relative;
+    }
+
+    .feature-details li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 6px;
+      height: 6px;
+      background: #00ffff;
+      border-radius: 50%;
+      box-shadow: 0 0 5px #00ffff;
+    }
+
+    /* Capabilities Intro Section */
+    .capabilities-intro {
+      text-align: center;
+      margin: 60px 0;
+      padding: 40px 20px;
+      background: rgba(0, 255, 255, 0.03);
+      border-radius: 12px;
+      border: 1px solid rgba(0, 255, 255, 0.2);
+    }
+
+    .intro-text {
+      font-size: 1.2rem;
+      color: #a0ffff;
+      max-width: 800px;
+      margin: 20px auto 0;
+      line-height: 1.8;
+    }
+
+    /* Section Variants */
+    .vts-features .feature-card {
+      background: rgba(255, 0, 255, 0.05);
+      border-color: rgba(255, 0, 255, 0.3);
+    }
+
+    .vts-features .feature-card:hover {
+      background: rgba(255, 0, 255, 0.1);
+      border-color: #ff00ff;
+      box-shadow: 0 0 20px rgba(255, 0, 255, 0.3);
+    }
+
+    .game-features .feature-card {
+      background: rgba(255, 107, 53, 0.05);
+      border-color: rgba(255, 107, 53, 0.3);
+    }
+
+    .game-features .feature-card:hover {
+      background: rgba(255, 107, 53, 0.1);
+      border-color: #ff6b35;
+      box-shadow: 0 0 20px rgba(255, 107, 53, 0.3);
+    }
+
+    .tech-features .feature-card {
+      background: rgba(26, 35, 126, 0.05);
+      border-color: rgba(26, 35, 126, 0.3);
+    }
+
+    .tech-features .feature-card:hover {
+      background: rgba(26, 35, 126, 0.1);
+      border-color: #1a237e;
+      box-shadow: 0 0 20px rgba(26, 35, 126, 0.3);
+    }
+
+    /* Quick Start Section */
+    .quick-start {
+      margin: 80px 0;
+      padding: 60px 20px;
+      background: rgba(0, 255, 255, 0.05);
+      border-radius: 20px;
+      border: 2px solid rgba(0, 255, 255, 0.3);
+    }
+
+    .quick-start-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 30px;
+      margin-top: 40px;
+    }
+
+    .quick-start-card {
+      background: rgba(0, 255, 255, 0.1);
+      border: 2px solid rgba(0, 255, 255, 0.4);
+      border-radius: 16px;
+      padding: 40px 30px;
+      text-align: center;
+      transition: all 0.3s;
+    }
+
+    .quick-start-card:hover {
+      background: rgba(0, 255, 255, 0.15);
+      border-color: #00ffff;
+      box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+      transform: translateY(-5px);
+    }
+
+    .quick-start-icon {
+      font-size: 4rem;
+      margin-bottom: 20px;
+      animation: pulse 2s infinite;
+    }
+
+    .quick-start-card h3 {
+      font-size: 1.8rem;
+      margin-bottom: 15px;
+      color: #00ffff;
+      text-shadow: 0 0 10px #00ffff;
+    }
+
+    .quick-start-card p {
+      color: #a0ffff;
+      margin-bottom: 25px;
+      line-height: 1.6;
+      font-size: 1.1rem;
     }
 
     /* Games Section */
@@ -421,10 +553,50 @@
       transform: translateY(-2px);
     }
 
+    /* Animations */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .feature-card {
+      animation: fadeInUp 0.6s ease-out;
+      animation-fill-mode: both;
+    }
+
+    .feature-card:nth-child(1) { animation-delay: 0.1s; }
+    .feature-card:nth-child(2) { animation-delay: 0.2s; }
+    .feature-card:nth-child(3) { animation-delay: 0.3s; }
+    .feature-card:nth-child(4) { animation-delay: 0.4s; }
+    .feature-card:nth-child(5) { animation-delay: 0.5s; }
+    .feature-card:nth-child(6) { animation-delay: 0.6s; }
+    .feature-card:nth-child(7) { animation-delay: 0.7s; }
+    .feature-card:nth-child(8) { animation-delay: 0.8s; }
+
+    /* Smooth Scroll */
+    html {
+      scroll-behavior: smooth;
+    }
+
+    /* Section Spacing */
+    section {
+      scroll-margin-top: 100px;
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
       .hero h1 {
         font-size: 2.5rem;
+      }
+
+      .hero-subtitle {
+        font-size: 1.1rem;
       }
 
       .nav-links {
@@ -453,6 +625,14 @@
         width: 100%;
         justify-content: center;
       }
+
+      .intro-text {
+        font-size: 1rem;
+      }
+
+      .section-title {
+        font-size: 2rem;
+      }
     }
   </style>
 </head>
@@ -464,6 +644,7 @@
       <ul class="nav-links">
         <li><a href="/">หน้าแรก</a></li>
         <li><a href="/chat_tester.html">แชตกับ Luna</a></li>
+        <li><a href="/group_chat.html">คุยรวม</a></li>
         <li><a href="/rps_game.html">เกม PvP</a></li>
         <li><a href="/rps_vs_luna.html">VS Luna</a></li>
         <li><a href="/rps_betting.html">เดิมพัน</a></li>
@@ -479,46 +660,256 @@
     <section class="hero">
       <img src="/images/logo/logo.png" alt="Luna AI Logo" class="hero-logo">
       <h1>Luna AI</h1>
-      <p>AI Streamer ที่สามารถแชตกับผู้ชม แสดงอารมณ์ และควบคุม VTube Studio character ได้อัตโนมัติ</p>
+      <p class="hero-subtitle">AI Streamer ที่สามารถแชตกับผู้ชม แสดงอารมณ์ และควบคุม VTube Studio character ได้อัตโนมัติ</p>
       <div class="cta-buttons">
         <a href="/chat_tester.html" class="btn btn-primary">เริ่มแชตกับ Luna</a>
         <a href="/about.html" class="btn">เรียนรู้เพิ่มเติม</a>
       </div>
     </section>
 
-    <!-- Features Section -->
+    <!-- Capabilities Overview Section -->
+    <section class="capabilities-intro">
+      <h2 class="section-title">🌟 ความสามารถของ Luna</h2>
+      <p class="intro-text">Luna เป็น AI Streamer ที่มีระบบครบครัน พร้อมฟีเจอร์มากมายที่ทำให้การแชตสนุกและสมจริง</p>
+    </section>
+
+    <!-- AI & Chat Features Section -->
     <section class="features">
-      <h2 class="section-title">✨ ฟีเจอร์หลัก</h2>
+      <h2 class="section-title">🤖 ระบบ AI และการแชต</h2>
       <div class="features-grid">
         <div class="feature-card">
           <div class="feature-icon">🤖</div>
           <h3>AI Chat System</h3>
           <p>ตอบแชตด้วย GPT-4o-mini (คำถามง่าย) และ GPT-4o/Claude (คำถามยาก) - เลือกอัตโนมัติตามความซับซ้อน</p>
+          <ul class="feature-details">
+            <li>✅ Smart Model Selection</li>
+            <li>✅ Caching System</li>
+            <li>✅ Rate Limiting</li>
+          </ul>
         </div>
         <div class="feature-card">
           <div class="feature-icon">🎭</div>
           <h3>Emotion System</h3>
           <p>แสดงอารมณ์ตามข้อความ (angry, sad, sleepy, hype, soft) พร้อม VTube Studio integration</p>
+          <ul class="feature-details">
+            <li>✅ Emotion Detection</li>
+            <li>✅ Emotion Decay</li>
+            <li>✅ VTS Integration</li>
+          </ul>
         </div>
         <div class="feature-card">
           <div class="feature-icon">🎤</div>
           <h3>Text-to-Speech</h3>
           <p>สร้างเสียงด้วย ElevenLabs รองรับหลายโหมดเสียง (soft, passion, ambient)</p>
+          <ul class="feature-details">
+            <li>✅ Multiple Voice Modes</li>
+            <li>✅ Natural Speech</li>
+            <li>✅ Real-time Generation</li>
+          </ul>
         </div>
         <div class="feature-card">
           <div class="feature-icon">🧠</div>
           <h3>Memory System</h3>
           <p>จำผู้ใช้และประวัติการแชต พร้อม Memory Decay ที่ทำให้ลืม memory เก่าเหมือนคนจริง</p>
+          <ul class="feature-details">
+            <li>✅ User Memory</li>
+            <li>✅ Conversation History</li>
+            <li>✅ Memory Decay</li>
+          </ul>
         </div>
         <div class="feature-card">
           <div class="feature-icon">🎨</div>
           <h3>Personality System</h3>
           <p>บุคลิกภาพที่เปลี่ยนแปลงตามอารมณ์ พร้อม Natural Speech Patterns</p>
+          <ul class="feature-details">
+            <li>✅ Dynamic Personality</li>
+            <li>✅ Natural Speech Patterns</li>
+            <li>✅ Emotion-based Traits</li>
+          </ul>
         </div>
         <div class="feature-card">
           <div class="feature-icon">💤</div>
           <h3>Sleepy Mode</h3>
           <p>โหมดง่วงตามเวลา (00:00-06:00 น. ตามเวลา US) เพื่อความสมจริง</p>
+          <ul class="feature-details">
+            <li>✅ Time-based Sleep</li>
+            <li>✅ Realistic Behavior</li>
+            <li>✅ Auto Wake/Sleep</li>
+          </ul>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">💬</div>
+          <h3>Group Chat</h3>
+          <p>คุยรวมกับสมาชิก Luna Community ต้องการยอดขั้นต่ำ 100,000 Luna tokens</p>
+          <ul class="feature-details">
+            <li>✅ Real-time Chat</li>
+            <li>✅ Multiple Rooms</li>
+            <li>✅ Community Features</li>
+          </ul>
+          <a href="/group_chat.html" class="btn" style="margin-top: 15px; display: inline-block; text-decoration: none;">เข้าสู่ Group Chat</a>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📢</div>
+          <h3>Chat Reading</h3>
+          <p>อ่านข้อความแชทออกเสียงอัตโนมัติ พร้อม WebSocket Broadcasting</p>
+          <ul class="feature-details">
+            <li>✅ Auto Read Chat</li>
+            <li>✅ WebSocket Support</li>
+            <li>✅ Real-time Updates</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- VTS & Character Features Section -->
+    <section class="features vts-features">
+      <h2 class="section-title">🎬 VTube Studio Integration</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🎭</div>
+          <h3>Talk-React</h3>
+          <p>ขยับปากตามเวลาพูดอัตโนมัติ</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">💨</div>
+          <h3>Breathing</h3>
+          <p>หายใจอัตโนมัติเพื่อความสมจริง</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🎪</div>
+          <h3>Idle Animations</h3>
+          <p>การเคลื่อนไหวตอนว่าง</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">😊</div>
+          <h3>Emotion Expressions</h3>
+          <p>แสดงอารมณ์ตามข้อความ</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Game & Rewards Features Section -->
+    <section class="features game-features">
+      <h2 class="section-title">🎮 ระบบเกมและรางวัล</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🎯</div>
+          <h3>Rock Paper Scissors</h3>
+          <p>เกมเป่ายิงฉุบ 3 โหมด: PvP, VS Luna, Betting</p>
+          <ul class="feature-details">
+            <li>✅ PvP Mode (100K+ tokens)</li>
+            <li>✅ VS Luna Mode (1M+ tokens)</li>
+            <li>✅ Betting Mode</li>
+            <li>✅ Auto-matchmaking</li>
+            <li>✅ Bot Fallback</li>
+          </ul>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🏆</div>
+          <h3>Competition System</h3>
+          <p>การแข่งขันรายสัปดาห์ รางวัลสำหรับ Top 5</p>
+          <ul class="feature-details">
+            <li>✅ Weekly Competition</li>
+            <li>✅ Top 5 Rewards</li>
+            <li>✅ Leaderboard</li>
+            <li>✅ Auto Distribution</li>
+          </ul>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">👥</div>
+          <h3>Referral System</h3>
+          <p>แนะนำเพื่อนรับรางวัล</p>
+          <ul class="feature-details">
+            <li>✅ Referral Links</li>
+            <li>✅ Signup Rewards (100 Luna)</li>
+            <li>✅ First Game Rewards (200 Luna)</li>
+            <li>✅ Top 10 Rewards (1000 Luna)</li>
+            <li>✅ Referral Stats</li>
+          </ul>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔔</div>
+          <h3>Notification System</h3>
+          <p>ระบบแจ้งเตือนแบบ Real-time</p>
+          <ul class="feature-details">
+            <li>✅ Match Found</li>
+            <li>✅ Room Notifications</li>
+            <li>✅ Reward Alerts</li>
+            <li>✅ Referral Updates</li>
+          </ul>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">💰</div>
+          <h3>Rewards Pool</h3>
+          <p>ระบบรางวัลและแจกจ่ายอัตโนมัติ</p>
+          <ul class="feature-details">
+            <li>✅ Weekly Rewards</li>
+            <li>✅ Competition Prizes</li>
+            <li>✅ Referral Rewards</li>
+            <li>✅ Auto Distribution</li>
+          </ul>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📊</div>
+          <h3>Statistics & Leaderboard</h3>
+          <p>สถิติและอันดับผู้เล่น</p>
+          <ul class="feature-details">
+            <li>✅ Win/Loss Stats</li>
+            <li>✅ Leaderboard</li>
+            <li>✅ Game History</li>
+            <li>✅ Performance Tracking</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Technical Features Section -->
+    <section class="features tech-features">
+      <h2 class="section-title">⚙️ ฟีเจอร์เทคนิค</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🔒</div>
+          <h3>Security Features</h3>
+          <p>ระบบความปลอดภัยที่แข็งแกร่ง</p>
+          <ul class="feature-details">
+            <li>✅ IP Self-Play Detection</li>
+            <li>✅ Wallet Blocking</li>
+            <li>✅ Cooldown System</li>
+            <li>✅ Suspicious Activity Log</li>
+          </ul>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🌐</div>
+          <h3>WebSocket Support</h3>
+          <p>Real-time communication</p>
+          <ul class="feature-details">
+            <li>✅ Live Updates</li>
+            <li>✅ Match Notifications</li>
+            <li>✅ Chat Broadcasting</li>
+            <li>✅ Connection Management</li>
+          </ul>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">💾</div>
+          <h3>Database System</h3>
+          <p>เก็บข้อมูลอย่างมีประสิทธิภาพ</p>
+          <ul class="feature-details">
+            <li>✅ SQLite Database</li>
+            <li>✅ Game History</li>
+            <li>✅ User Data</li>
+            <li>✅ Statistics</li>
+          </ul>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔗</div>
+          <h3>Solana Integration</h3>
+          <p>เชื่อมต่อกับ Solana Blockchain</p>
+          <ul class="feature-details">
+            <li>✅ Wallet Integration</li>
+            <li>✅ Balance Checking</li>
+            <li>✅ Token Operations</li>
+            <li>✅ Transaction Support</li>
+          </ul>
         </div>
       </div>
     </section>
@@ -546,6 +937,31 @@
       <a href="#" id="communityLink" class="dex-btn dex-btn-community" target="_blank" onclick="openCommunity(event)">
         <span>𝕏</span> Join Community
       </a>
+    </section>
+
+    <!-- Quick Start Section -->
+    <section class="quick-start">
+      <h2 class="section-title">🚀 เริ่มต้นใช้งาน</h2>
+      <div class="quick-start-grid">
+        <div class="quick-start-card">
+          <div class="quick-start-icon">💬</div>
+          <h3>แชตกับ Luna</h3>
+          <p>เริ่มแชตกับ Luna ได้ทันที ไม่ต้องมี tokens</p>
+          <a href="/chat_tester.html" class="btn btn-primary">เริ่มแชต</a>
+        </div>
+        <div class="quick-start-card">
+          <div class="quick-start-icon">🎮</div>
+          <h3>เล่นเกม</h3>
+          <p>เล่น Rock Paper Scissors กับผู้เล่นอื่นหรือ Luna</p>
+          <a href="/rps_game.html" class="btn btn-primary">เล่นเกม</a>
+        </div>
+        <div class="quick-start-card">
+          <div class="quick-start-icon">👥</div>
+          <h3>Group Chat</h3>
+          <p>คุยรวมกับชุมชน Luna (ต้องการ 100K+ tokens)</p>
+          <a href="/group_chat.html" class="btn btn-primary">เข้าสู่ Group Chat</a>
+        </div>
+      </div>
     </section>
 
     <!-- Games Section -->
@@ -669,40 +1085,11 @@
     });
   </script>
   <script src="/js/notifications.js"></script>
-  <script src="/js/referral.js"></script>
   <script>
-    // Initialize Referral System on page load
-    document.addEventListener('DOMContentLoaded', () => {
-      // Check for referral code in URL
-      const urlParams = new URLSearchParams(window.location.search);
-      const referrer = urlParams.get('ref');
-      
-      if (referrer) {
-        // Store referrer for when user connects wallet
-        sessionStorage.setItem('referrer', referrer);
-      }
-      
-      // Initialize referral UI (will be activated when wallet connects)
-      if (typeof referralManager !== 'undefined') {
-        referralManager.createUI();
-      }
-    });
-    
     // Function to initialize when wallet connects (if wallet connection exists)
     window.initializeWithWallet = function(walletAddress) {
       if (typeof notificationManager !== 'undefined') {
         notificationManager.init(walletAddress);
-      }
-      
-      if (typeof referralManager !== 'undefined') {
-        referralManager.init(walletAddress);
-        
-        // Register referral if exists
-        const referrer = sessionStorage.getItem('referrer');
-        if (referrer && referrer !== walletAddress) {
-          referralManager.registerReferral(referrer);
-          sessionStorage.removeItem('referrer');
-        }
       }
     };
   </script>

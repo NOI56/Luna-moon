@@ -113,3 +113,6 @@ API_BASE=http://localhost:3000 node test-backend-systems.js
 - ข้อมูลที่สร้างในการทดสอบจะถูกเก็บใน memory (จะหายเมื่อ restart server)
 - สำหรับ production ควรใช้ database เพื่อเก็บข้อมูลถาวร
 
+
+
+

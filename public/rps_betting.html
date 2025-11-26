@@ -757,6 +757,8 @@
     <a href="/rps_vs_luna.html" id="vsLunaLink" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">🎮 VS Luna</a>
     <a href="/rps_game.html" id="pvpLink" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">Play PvP! Find</a>
     <a href="/rps_betting.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">💰 Betting Mode</a>
+    <a href="/rps_deposit.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">💾 Deposit Luna</a>
+    <a href="/group_chat.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 255, 255, 0.2) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important; box-shadow: 0 0 15px rgba(0, 255, 255, 0.5) !important;">💬 Group Chat</a>
     <a href="/rps_leaderboard.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">🏆 Leaderboard</a>
     <a href="/rps_stats.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">📊 Stats</a>
     <a href="/rps_history.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">📜 Match History</a>
@@ -837,6 +839,36 @@
       </div>
     </div>
 
+    <!-- Deposit/Withdraw Section -->
+    <div id="depositSection" class="deposit-section hidden" style="margin: 20px 0; padding: 20px; background: rgba(0, 255, 255, 0.05); border: 1px solid rgba(0, 255, 255, 0.3); border-radius: 8px;">
+      <h3 style="color: #00ffff; margin-bottom: 15px; text-shadow: 0 0 5px #00ffff;">💰 Deposit Luna (Reduce Betting Fee)</h3>
+      <div style="font-size: 0.9em; color: #00ffff; opacity: 0.8; margin-bottom: 15px;">
+        Hold 150,000+ Luna to deposit. Deposit for 3 days → 2% fee, 6 days → 1% fee (default: 3%)
+      </div>
+      
+      <!-- Deposit Status -->
+      <div id="depositStatus" style="margin-bottom: 15px; padding: 15px; background: rgba(0, 255, 255, 0.1); border-radius: 8px;">
+        <div style="color: #00ffff; font-size: 0.9em;">Checking deposit status...</div>
+      </div>
+      
+      <!-- Deposit Form -->
+      <div id="depositForm" style="display: none;">
+        <div style="margin-bottom: 15px;">
+          <label style="color: #00ffff; display: block; margin-bottom: 5px;">Deposit Amount (Luna):</label>
+          <input type="number" id="depositAmount" min="1" placeholder="Enter amount" style="width: 100%; padding: 10px; background: rgba(0, 0, 0, 0.5); border: 1px solid #00ffff; border-radius: 8px; color: #00ffff; font-family: 'Courier New', monospace; font-size: 1em;">
+          <div style="font-size: 0.85em; color: #00ffff; opacity: 0.7; margin-top: 5px;">
+            Fee: 3% (will be deducted from amount)
+          </div>
+        </div>
+        <button id="depositBtn" class="wallet-btn" style="width: 100%;">💾 Deposit Luna</button>
+      </div>
+      
+      <!-- Withdraw Button -->
+      <button id="withdrawBtn" class="wallet-btn" style="width: 100%; margin-top: 10px; display: none; background: linear-gradient(135deg, rgba(255, 0, 0, 0.3), rgba(255, 100, 100, 0.3)); border: 2px solid #ff0000; color: #ff0000;">
+        💸 Withdraw Luna
+      </button>
+    </div>
+
     <div id="bettingSection" class="betting-section">
       <!-- Create Room Section -->
       <div class="create-room">
@@ -845,7 +877,7 @@
           <label for="betAmount">Bet Amount (Luna tokens):</label>
           <input type="number" id="betAmount" min="1" placeholder="Enter amount" oninput="updateFeeDisplay()" />
           <div id="feeDisplay" style="margin-top: 10px; padding: 10px; background: rgba(0, 255, 255, 0.1); border: 1px solid #00ffff; border-radius: 8px; font-size: 0.9em; color: #00ffff; display: none;">
-            <div>💰 Fee: <span id="feeAmount">0</span> SOL (1% of bet value)</div>
+            <div>💰 Fee: <span id="feeAmount">0</span> SOL (<span id="feePercentageDisplay">3%</span> of bet value)</div>
             <div style="font-size: 0.85em; opacity: 0.8; margin-top: 5px;">Bet value: <span id="betValueInSol">0</span> SOL</div>
           </div>
         </div>
@@ -1065,6 +1097,8 @@
           await loadRooms();
           startBalanceUpdate(); // Start real-time balance updates
           startSolBalanceUpdate(); // Start real-time SOL balance updates
+          setupDepositSystem(); // Setup deposit/withdraw system
+          await checkDepositStatus(); // Check deposit status
           
           // Initialize UI components
           if (typeof notificationManager !== 'undefined') {
@@ -1137,12 +1171,18 @@
         if (document.getElementById('createRoomBtn')) {
           document.getElementById('createRoomBtn').disabled = playerBalance < 1;
         }
+        
+        // Check deposit status after balance check
+        await checkDepositStatus();
       } catch (err) {
         console.error('[Betting] Balance check error:', err);
         if (balanceDisplay) balanceDisplay.textContent = 'Error';
         if (document.getElementById('createRoomBtn')) {
           document.getElementById('createRoomBtn').disabled = true;
         }
+        
+        // Still try to check deposit status
+        await checkDepositStatus();
       } finally {
         if (balanceCheck) balanceCheck.classList.add('hidden');
       }
@@ -1226,6 +1266,177 @@
 
     function formatNumber(num) {
       return num.toLocaleString('en-US');
+    }
+
+    // Deposit/Withdraw System
+    async function checkDepositStatus() {
+      const depositSection = document.getElementById('depositSection');
+      
+      if (!walletConnected || !walletPublicKey) {
+        if (depositSection) depositSection.classList.add('hidden');
+        return;
+      }
+      
+      // Show deposit section when wallet is connected
+      if (depositSection) depositSection.classList.remove('hidden');
+
+      try {
+        const response = await fetch(`${API_BASE}/luna/deposit/status?wallet=${walletPublicKey}`);
+        const data = await response.json();
+
+        const depositStatus = document.getElementById('depositStatus');
+        const depositForm = document.getElementById('depositForm');
+        const withdrawBtn = document.getElementById('withdrawBtn');
+
+        if (!depositSection) return;
+
+        if (data.ok && data.hasDeposit) {
+          depositForm.style.display = 'none';
+          withdrawBtn.style.display = 'block';
+
+          const deposit = data.deposit;
+          depositStatus.innerHTML = `
+            <div style="color: #00ffff; font-size: 0.9em;">
+              <div style="margin-bottom: 5px;"><strong>💰 Deposited:</strong> ${formatNumber(deposit.amount)} Luna</div>
+              <div style="margin-bottom: 5px;"><strong>📅 Days:</strong> ${deposit.daysSinceDeposit.toFixed(1)} days</div>
+              <div style="margin-bottom: 5px;"><strong>💸 Betting Fee:</strong> ${deposit.feePercentageDisplay}</div>
+              ${deposit.daysSinceDeposit >= 6 ? '<div style="color: #00ff00;">✅ Maximum discount reached!</div>' : 
+                deposit.daysSinceDeposit >= 3 ? '<div style="color: #ffff00;">⏳ Keep depositing for 1% fee!</div>' : 
+                '<div style="color: #ffff00;">⏳ Keep depositing for lower fees!</div>'}
+            </div>
+          `;
+        } else {
+          depositForm.style.display = 'block';
+          withdrawBtn.style.display = 'none';
+
+          if (playerBalance < 150000) {
+            depositStatus.innerHTML = `
+              <div style="color: #ff0000; font-size: 0.9em;">
+                ❌ You need at least 150,000 Luna to deposit.<br>
+                Current: ${formatNumber(playerBalance)} Luna
+              </div>
+            `;
+            depositForm.style.display = 'none';
+          } else {
+            depositStatus.innerHTML = `
+              <div style="color: #00ffff; font-size: 0.9em;">
+                ✅ You can deposit Luna to reduce Betting Mode fees!<br>
+                Deposit for 3 days → 2% fee, 6 days → 1% fee (default: 3%)
+              </div>
+            `;
+          }
+        }
+      } catch (error) {
+        console.error('[Deposit] Error checking deposit status:', error);
+        // Keep section visible even on error, just show error message
+        const depositStatus = document.getElementById('depositStatus');
+        if (depositSection) depositSection.classList.remove('hidden');
+        if (depositStatus) {
+          depositStatus.innerHTML = `
+            <div style="color: #ff0000; font-size: 0.9em;">
+              ⚠️ Error checking deposit status. Please try again.
+            </div>
+          `;
+        }
+      }
+    }
+
+    function setupDepositSystem() {
+      const depositBtn = document.getElementById('depositBtn');
+      const withdrawBtn = document.getElementById('withdrawBtn');
+
+      if (depositBtn) {
+        depositBtn.addEventListener('click', async () => {
+          if (!walletConnected || !walletPublicKey) {
+            alert('Please connect your wallet first!');
+            return;
+          }
+
+          const amount = parseFloat(document.getElementById('depositAmount').value);
+          if (!amount || amount <= 0) {
+            alert('Please enter a valid deposit amount!');
+            return;
+          }
+
+          if (playerBalance < 150000) {
+            alert(`You need at least 150,000 Luna to deposit. Current: ${formatNumber(playerBalance)} Luna`);
+            return;
+          }
+
+          try {
+            depositBtn.disabled = true;
+            depositBtn.textContent = 'Processing...';
+
+            const response = await fetch(`${API_BASE}/luna/deposit`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                wallet: walletPublicKey,
+                amount: amount,
+              }),
+            });
+
+            const data = await response.json();
+
+            if (data.ok) {
+              alert(`Deposit recorded! Please send ${amount} Luna to the escrow wallet.\n\nEscrow Wallet: ${data.deposit.escrowWallet}\n\nNote: ${data.note}`);
+              document.getElementById('depositAmount').value = '';
+              await checkDepositStatus();
+              await checkLunaBalance();
+            } else {
+              alert('Failed to deposit: ' + (data.message || data.error));
+            }
+          } catch (error) {
+            console.error('[Deposit] Error:', error);
+            alert('Failed to deposit: ' + error.message);
+          } finally {
+            depositBtn.disabled = false;
+            depositBtn.textContent = '💾 Deposit Luna';
+          }
+        });
+      }
+
+      if (withdrawBtn) {
+        withdrawBtn.addEventListener('click', async () => {
+          if (!walletConnected || !walletPublicKey) {
+            alert('Please connect your wallet first!');
+            return;
+          }
+
+          if (!confirm('Are you sure you want to withdraw? Your Betting Mode fee will return to 3%.')) {
+            return;
+          }
+
+          try {
+            withdrawBtn.disabled = true;
+            withdrawBtn.textContent = 'Processing...';
+
+            const response = await fetch(`${API_BASE}/luna/withdraw`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                wallet: walletPublicKey,
+              }),
+            });
+
+            const data = await response.json();
+
+            if (data.ok) {
+              alert(`Withdrawal successful! ${formatNumber(data.withdrawal.amount)} Luna sent to your wallet.\n\nTransaction: ${data.withdrawal.signature}`);
+              await checkDepositStatus();
+              await checkLunaBalance();
+            } else {
+              alert('Failed to withdraw: ' + (data.message || data.error));
+            }
+          } catch (error) {
+            console.error('[Withdraw] Error:', error);
+            alert('Failed to withdraw: ' + error.message);
+          } finally {
+            withdrawBtn.disabled = false;
+            withdrawBtn.textContent = '💸 Withdraw Luna';
+          }
+        });
+      }
     }
 
     /**
@@ -2010,16 +2221,36 @@
     }
 
     // Update fee display when bet amount changes
-    window.updateFeeDisplay = function() {
+    window.updateFeeDisplay = async function() {
       const betAmount = parseInt(document.getElementById('betAmount').value) || 0;
       const feeDisplay = document.getElementById('feeDisplay');
       
       if (betAmount > 0) {
         const betValueInSol = lunaToSol(betAmount);
-        const feeInSol = calculateFee(betAmount);
+        
+        // Get current betting fee percentage based on deposit status
+        let feePercentage = 0.03; // Default 3%
+        if (walletConnected && walletPublicKey) {
+          try {
+            const response = await fetch(`${API_BASE}/luna/deposit/status?wallet=${walletPublicKey}`);
+            const data = await response.json();
+            if (data.ok && data.hasDeposit) {
+              feePercentage = data.deposit.feePercentage;
+            }
+          } catch (error) {
+            console.error('[Fee] Error getting deposit status:', error);
+            // Use default 3% on error
+          }
+        }
+        
+        const feeInSol = betValueInSol * feePercentage;
         
         document.getElementById('betValueInSol').textContent = formatSol(betValueInSol);
         document.getElementById('feeAmount').textContent = formatSol(feeInSol);
+        const feePercentageDisplay = document.getElementById('feePercentageDisplay');
+        if (feePercentageDisplay) {
+          feePercentageDisplay.textContent = `${(feePercentage * 100).toFixed(0)}%`;
+        }
         feeDisplay.style.display = 'block';
       } else {
         feeDisplay.style.display = 'none';
@@ -2242,6 +2473,16 @@
       startTotalFeesUpdates();
       // Start CSRF token management
       startCSRFTokenRefresh();
+      
+      // Setup deposit system on page load
+      setupDepositSystem();
+      
+      // Check if wallet already connected
+      if (window.solana && window.solana.isPhantom && window.solana.isConnected) {
+        walletPublicKey = window.solana.publicKey.toString();
+        walletConnected = true;
+        await checkDepositStatus();
+      }
     });
     
     // Refresh rooms every 5 seconds

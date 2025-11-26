@@ -9,15 +9,17 @@ import path from "path";
 import { fileURLToPath } from "url";
 import crypto from "crypto";
 import { Connection, PublicKey, Keypair, SystemProgram, Transaction, sendAndConfirmTransaction, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { getAssociatedTokenAddressSync, createTransferInstruction, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import bs58 from "bs58";
 import fetch from "node-fetch";
 
 import { callModel, callSimpleModel, isComplexQuestion } from "./modules/ai.js";
-import { initDB, logChat } from "./modules/db.js";
+import { initDB, logChat, saveGroupChatMessage, loadGroupChatMessages, saveLunaDeposit, getActiveDeposit, withdrawDeposit, updateLunaDeposit } from "./modules/db.js";
 import { getUserMemory, updateUserMemory } from "./modules/memory.js";
 import { shouldRespondHeuristic, classifyEmotion, calculateEmotionIntensity, classifyMixedEmotions, classifyEmotionContext } from "./modules/classifier.js";
 import { startSolanaWatcher } from "./modules/solana.js";
 import { startPumpFunWatcher } from "./modules/pumpfun.js";
+import { getTokenHolders, getTokenInfoFromDexScreener, getWalletIpsBatch } from "./modules/pumpfun_api.js";
 
 import {
   startVTS,
@@ -231,7 +233,19 @@ const RPS_BETTING_ROOM_TIMEOUT = 300000; // 5 minutes (300,000ms) - rooms expire
 
 // Fee Collection System
 const collectedFees = new Map(); // Map<wallet, { totalFees: number, transactions: Array }>
-const FEE_PERCENTAGE = 0.01; // 1% fee
+const FEE_PERCENTAGE = 0.03; // 3% fee for betting (default)
+const BETTING_FEE_DEFAULT = 0.03; // 3% fee for betting (default)
+const BETTING_FEE_3_DAYS = 0.02; // 2% fee after 3 days deposit
+const BETTING_FEE_6_DAYS = 0.01; // 1% fee after 6 days deposit
+// PvP matching has no fee
+
+// Luna Deposit System
+const DEPOSIT_MIN_BALANCE = 150000; // Minimum Luna balance required to deposit
+const DEPOSIT_FEE_PERCENTAGE = 0.03; // 3% fee when depositing
+const DEPOSIT_FEE_3_DAYS = 0.02; // 2% fee after 3 days
+const DEPOSIT_FEE_6_DAYS = 0.01; // 1% fee after 6 days
+const DEPOSIT_ESCROW_WALLET = process.env.DEPOSIT_ESCROW_WALLET || "FLMbMZXn6d5mWf6EWFAeVFcV4w7ioZ6PZAWSp8wxK4RU";
+const DEPOSIT_ESCROW_PRIVATE_KEY = process.env.DEPOSIT_ESCROW_PRIVATE_KEY || "2UvbSMjgyPfkXNyuoRtETH4h5RqCnfkr8wf4FtPjCzXk1NALax4qtz1c9dwj5ng7cxYZBL18N7ixpyeQVdyqw2Ce";
 
 // Leaderboard System
 // Map<wallet, { wins: number, losses: number, totalWon: number, totalSolWon: number }>
@@ -285,8 +299,32 @@ const REFERRAL_REWARD_TOP10 = 1000; // รางวัลเมื่อเพ�
 
 // Chat System - ระบบแชต
 const chatRooms = new Map(); // Map<roomId, { messages: Array, participants: Set<wallet>, createdAt }>
-const CHAT_MESSAGE_LIMIT = 100; // จำกัดจำนวนข้อความต่อห้อง
-const CHAT_MESSAGE_EXPIRY = 24 * 60 * 60 * 1000; // ข้อความหมดอายุ 24 ชั่วโมง
+const CHAT_MESSAGE_LIMIT = 10000; // เพิ่ม limit เป็น 10,000 ข้อความ (เกือบไม่จำกัด)
+const CHAT_MESSAGE_EXPIRY = null; // ปิดการลบข้อความตาม expiry (เก็บถาวร)
+
+// Chat System Extensions
+const messageReactions = new Map(); // Map<messageId, Map<reactionType, Set<wallet>>>
+const messageTips = new Map(); // Map<messageId, Array<{wallet, amount, timestamp}>>
+const chatRewards = new Map(); // Map<wallet, {totalRewards, messageCount, lastRewardTime}>
+const onlineUsers = new Map(); // Map<wallet, {ws, lastSeen, roomId}>
+const chatLeaderboard = new Map(); // Map<wallet, messageCount> - for daily/weekly leaderboard
+const badgeCache = new Map(); // Map<wallet, {badge, balance, timestamp}> - Cache VIP badges
+const BADGE_CACHE_TTL = 5 * 60 * 1000; // Cache badges for 5 minutes
+
+// VIP Badge thresholds (Luna balance)
+const VIP_BADGES = {
+  BRONZE: 100000,    // 🥉
+  SILVER: 500000,   // 🥈
+  GOLD: 1000000,    // 🥇
+  DIAMOND: 5000000, // 💎
+  LEGEND: 10000000  // 👑
+};
+
+// Message Rewards Configuration
+const MESSAGE_REWARD_CHANCE = 0.05; // 5% chance per message
+const MESSAGE_REWARD_MIN = 1000;    // Minimum reward (Luna)
+const MESSAGE_REWARD_MAX = 10000;   // Maximum reward (Luna)
+const FIRST_MESSAGE_BONUS = 5000;   // Bonus for first message of the day
 
 // Weekly Competition System
 // Competition ends every Monday at 00:00:00 UTC (Universal Time)
@@ -985,13 +1023,21 @@ function getLunaPriceSync() {
 }
 
 /**
- * Calculate 1% fee in SOL from Luna bet amount
+ * Calculate betting fee in SOL from Luna bet amount (based on deposit status)
  * @param {number} lunaAmount - Bet amount in Luna tokens
+ * @param {string} wallet - Wallet address (optional, for checking deposit status)
  * @returns {Promise<number>} - Fee in SOL
  */
-async function calculateFee(lunaAmount) {
+async function calculateFee(lunaAmount, wallet = null) {
   const solValue = await lunaToSol(lunaAmount);
-  return solValue * FEE_PERCENTAGE;
+  let feePercentage = FEE_PERCENTAGE; // Default 3%
+  
+  // If wallet provided, check deposit status for reduced fee
+  if (wallet) {
+    feePercentage = await getBettingFeePercentage(wallet);
+  }
+  
+  return solValue * feePercentage;
 }
 
 /**
@@ -1329,8 +1375,8 @@ app.post("/luna/rps/betting/create", async (req, res) => {
       timestamp: Date.now(),
     });
     
-    // Collect 1% fee in SOL from creator
-    const feeInSol = await calculateFee(betAmount);
+    // Collect betting fee in SOL from creator (3% default, reduced if deposited)
+    const feeInSol = await calculateFee(betAmount, wallet);
     await collectFee(wallet, feeInSol, roomId, betAmount);
     
     // Auto-cleanup after timeout
@@ -1577,8 +1623,8 @@ app.post("/luna/rps/betting/join", async (req, res) => {
     room.player2 = wallet;
     room.choices = {};
     
-    // Collect 1% fee in SOL from player2 (challenger)
-    const feeInSol = await calculateFee(room.betAmount);
+    // Collect betting fee in SOL from player2 (challenger) (3% default, reduced if deposited)
+    const feeInSol = await calculateFee(room.betAmount, wallet);
     await collectFee(wallet, feeInSol, roomId, room.betAmount);
     
     // Broadcast room joined
@@ -1893,8 +1939,13 @@ app.get("/rps_vs_luna.html", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "rps_vs_luna.html"));
 });
 
+
 app.get("/rps_betting.html", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "rps_betting.html"));
+});
+
+app.get("/rps_deposit.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "rps_deposit.html"));
 });
 
 app.get("/rps_history.html", (req, res) => {
@@ -1905,8 +1956,41 @@ app.get("/rps_leaderboard.html", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "rps_leaderboard.html"));
 });
 
+app.get("/test_notifications.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "test_notifications.html"));
+});
+
 app.get("/rps_stats.html", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "rps_stats.html"));
+});
+
+// Chat Tester
+app.get("/chat_tester.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "chat_tester.html"));
+});
+
+// Group Chat
+app.get("/group_chat.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "group_chat.html"));
+});
+
+// Mood Overlay
+app.get("/mood_overlay.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "mood_overlay.html"));
+});
+
+// Luna Character HTML (direct access)
+app.get("/luna_character.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "luna_character.html"));
+});
+
+app.get("/luna_character_vts.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "luna_character_vts.html"));
+});
+
+// Overlay HTML
+app.get("/overlay.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "overlay.html"));
 });
 
 // Main landing page
@@ -1923,7 +2007,11 @@ app.get("/about.html", (req, res) => {
 app.use("/js", express.static(path.join(__dirname, "public", "js"), {
   setHeaders: (res, filePath) => {
     if (filePath.endsWith('.js')) {
-      res.setHeader('Content-Type', 'application/javascript');
+      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+      // Prevent caching to avoid stale JavaScript files
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
     }
   }
 }));
@@ -1945,6 +2033,29 @@ wss.on("connection", (ws, req) => {
   const clientId = req.headers["sec-websocket-key"] || `${Date.now()}-${Math.random()}`;
   clientReconnectAttempts.set(ws, 0);
   
+  // Track wallet if provided in query or headers
+  let wallet = null;
+  if (req.url) {
+    const urlParams = new URL(req.url, `http://${req.headers.host}`).searchParams;
+    wallet = urlParams.get('wallet');
+  }
+  
+  if (wallet && typeof wallet === 'string' && wallet.length > 0) {
+    onlineUsers.set(wallet, {
+      ws: ws,
+      lastSeen: Date.now(),
+      roomId: null
+    });
+    
+    // Broadcast online count update
+    broadcast({
+      type: 'chat_online_update',
+      count: onlineUsers.size,
+      wallet: wallet,
+      action: 'join'
+    });
+  }
+  
   // Send welcome message
   try {
     ws.send(JSON.stringify({
@@ -1959,6 +2070,18 @@ wss.on("connection", (ws, req) => {
   ws.on("close", (code, reason) => {
     clients.delete(ws);
     clientReconnectAttempts.delete(ws);
+    
+    // Remove from online users
+    if (wallet) {
+      onlineUsers.delete(wallet);
+      broadcast({
+        type: 'chat_online_update',
+        count: onlineUsers.size,
+        wallet: wallet,
+        action: 'leave'
+      });
+    }
+    
     console.log(`[ws] Client disconnected: code=${code}, reason=${reason?.toString() || "none"}`);
   });
   
@@ -1966,6 +2089,29 @@ wss.on("connection", (ws, req) => {
     console.warn(`[ws] Client error:`, error.message);
     clients.delete(ws);
     clientReconnectAttempts.delete(ws);
+    
+    // Remove from online users
+    if (wallet) {
+      onlineUsers.delete(wallet);
+      broadcast({
+        type: 'chat_online_update',
+        count: onlineUsers.size,
+        wallet: wallet,
+        action: 'leave'
+      });
+    }
+  });
+  
+  // Handle incoming messages for chat commands
+  ws.on("message", (data) => {
+    try {
+      const msg = JSON.parse(data.toString());
+      if (msg.type === 'chat_command' && wallet) {
+        handleChatCommand(msg, wallet, ws);
+      }
+    } catch (e) {
+      // Ignore non-JSON messages
+    }
   });
   
   // Heartbeat: ping every 30 seconds to keep connection alive
@@ -2203,32 +2349,229 @@ function getOrCreateChatRoom(roomId, roomType = 'lobby') {
 }
 
 /**
+ * Get VIP badge based on balance (with caching)
+ */
+async function getVIPBadge(wallet, balance = null) {
+  try {
+    // Check cache first
+    const now = Date.now();
+    if (badgeCache.has(wallet)) {
+      const cached = badgeCache.get(wallet);
+      if ((now - cached.timestamp) < BADGE_CACHE_TTL) {
+        return cached.badge;
+      }
+    }
+    
+    // If balance is provided, use it (from balance check)
+    let actualBalance = balance;
+    
+    // If balance not provided, fetch from blockchain (slower)
+    if (actualBalance === null || actualBalance === undefined) {
+      const mint = process.env.LUNA_TOKEN_MINT;
+      if (!mint || mint === "your_token_mint_address_from_pumpfun_here" || mint.length < 32) {
+        return null;
+      }
+      
+      const connection = new Connection(
+        process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com",
+        "confirmed"
+      );
+      
+      const mintPublicKey = new PublicKey(mint);
+      const walletPubKey = new PublicKey(wallet);
+      
+      const tokenAccounts = await connection.getParsedTokenAccountsByOwner(
+        walletPubKey,
+        { mint: mintPublicKey }
+      );
+      
+      if (tokenAccounts.value && tokenAccounts.value.length > 0) {
+        const tokenAccount = tokenAccounts.value[0];
+        const tokenAmount = tokenAccount.account.data.parsed.info.tokenAmount;
+        
+        if (tokenAmount.uiAmountString) {
+          actualBalance = parseFloat(tokenAmount.uiAmountString);
+        } else if (tokenAmount.uiAmount !== null && tokenAmount.uiAmount !== undefined) {
+          actualBalance = tokenAmount.uiAmount;
+        } else {
+          const rawAmount = tokenAmount.amount;
+          const decimals = tokenAmount.decimals || 0;
+          actualBalance = parseFloat(rawAmount) / Math.pow(10, decimals);
+        }
+        
+        // Don't round to integer - keep decimal precision for accurate badge calculation
+        if (actualBalance >= 1000000) {
+          actualBalance = Math.round(actualBalance);
+        } else {
+          actualBalance = Math.round(actualBalance * 100) / 100;
+        }
+      } else {
+        actualBalance = 0;
+      }
+    }
+    
+    // Calculate badge
+    let badge = null;
+    if (actualBalance >= VIP_BADGES.LEGEND) badge = { emoji: '👑', name: 'Legend', level: 5 };
+    else if (actualBalance >= VIP_BADGES.DIAMOND) badge = { emoji: '💎', name: 'Diamond', level: 4 };
+    else if (actualBalance >= VIP_BADGES.GOLD) badge = { emoji: '🥇', name: 'Gold', level: 3 };
+    else if (actualBalance >= VIP_BADGES.SILVER) badge = { emoji: '🥈', name: 'Silver', level: 2 };
+    else if (actualBalance >= VIP_BADGES.BRONZE) badge = { emoji: '🥉', name: 'Bronze', level: 1 };
+    
+    // Cache the result
+    badgeCache.set(wallet, { badge, balance: actualBalance, timestamp: now });
+    
+    return badge;
+  } catch (e) {
+    console.error('[chat] Error getting VIP badge:', e);
+    return null;
+  }
+}
+
+/**
+ * Process message for mentions (@username)
+ */
+function extractMentions(message) {
+  const mentionRegex = /@(\w+)/g;
+  const mentions = [];
+  let match;
+  while ((match = mentionRegex.exec(message)) !== null) {
+    mentions.push(match[1]);
+  }
+  return mentions;
+}
+
+/**
+ * Process message rewards
+ * DISABLED: Rewards are disabled per user request
+ */
+async function processMessageReward(wallet, roomId, isFirstMessage = false) {
+  // Rewards disabled - always return null
+  return null;
+  
+  /* Original reward code (disabled):
+  try {
+    if (isFirstMessage) {
+      // First message bonus
+      const rewardAmount = FIRST_MESSAGE_BONUS;
+      await distributeReward(wallet, rewardAmount, 'first_message_bonus', roomId);
+      return { amount: rewardAmount, type: 'first_message_bonus' };
+    }
+    
+    // Random reward chance
+    if (Math.random() < MESSAGE_REWARD_CHANCE) {
+      const rewardAmount = Math.floor(Math.random() * (MESSAGE_REWARD_MAX - MESSAGE_REWARD_MIN + 1)) + MESSAGE_REWARD_MIN;
+      await distributeReward(wallet, rewardAmount, 'message_reward', roomId);
+      return { amount: rewardAmount, type: 'message_reward' };
+    }
+    
+    return null;
+  } catch (e) {
+    console.error('[chat] Error processing message reward:', e);
+    return null;
+  }
+  */
+}
+
+/**
+ * Distribute reward to wallet
+ */
+async function distributeReward(wallet, amount, reason, roomId) {
+  // Update chat rewards tracking
+  if (!chatRewards.has(wallet)) {
+    chatRewards.set(wallet, { totalRewards: 0, messageCount: 0, lastRewardTime: 0 });
+  }
+  const rewardData = chatRewards.get(wallet);
+  rewardData.totalRewards += amount;
+  rewardData.lastRewardTime = Date.now();
+  
+  // Send notification
+  sendNotification(wallet, 'chat_reward', '🎉 Message Reward!', 
+    `You received ${amount.toLocaleString()} Luna for ${reason === 'first_message_bonus' ? 'first message of the day!' : 'sending a message!'}`,
+    { amount, reason, roomId });
+  
+  console.log(`[chat] Reward distributed: ${wallet.substring(0, 8)}... received ${amount} Luna (${reason})`);
+  
+  // Broadcast reward notification
+  broadcast({
+    type: 'chat_reward',
+    roomId: roomId,
+    wallet: wallet,
+    amount: amount,
+    reason: reason
+  });
+}
+
+/**
  * Send chat message
  */
-function sendChatMessage(roomId, wallet, message, username = null) {
+async function sendChatMessage(roomId, wallet, message, username = null, balance = null) {
   const room = getOrCreateChatRoom(roomId);
   
   // Add sender to participants
   room.participants.add(wallet);
   
-  // Clean old messages (older than expiry)
-  const now = Date.now();
-  room.messages = room.messages.filter(msg => (now - msg.timestamp) < CHAT_MESSAGE_EXPIRY);
+  // Don't clean old messages - keep all messages permanently
+  // (CHAT_MESSAGE_EXPIRY is disabled)
   
-  // Limit message count
+  // Limit message count in memory (but all are saved in DB)
   if (room.messages.length >= CHAT_MESSAGE_LIMIT) {
     room.messages.shift();
   }
+  
+  // Get VIP badge (use cached balance if available, much faster)
+  const badge = await getVIPBadge(wallet, balance);
+  
+  // Extract mentions
+  const mentions = extractMentions(message);
+  
+  // Check if first message of the day
+  const rewardData = chatRewards.get(wallet) || { totalRewards: 0, messageCount: 0, lastRewardTime: 0 };
+  const lastRewardDate = new Date(rewardData.lastRewardTime);
+  const today = new Date();
+  const isFirstMessage = lastRewardDate.toDateString() !== today.toDateString();
+  
+  // Process message reward
+  const reward = await processMessageReward(wallet, roomId, isFirstMessage);
+  
+  // Update message count
+  rewardData.messageCount += 1;
+  chatRewards.set(wallet, rewardData);
+  
+  // Update leaderboard
+  if (!chatLeaderboard.has(wallet)) {
+    chatLeaderboard.set(wallet, 0);
+  }
+  chatLeaderboard.set(wallet, chatLeaderboard.get(wallet) + 1);
   
   const chatMessage = {
     id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     wallet: wallet,
     username: username || wallet.substring(0, 8) + '...',
     message: message,
-    timestamp: Date.now()
+    timestamp: Date.now(),
+    badge: badge,
+    mentions: mentions,
+    reward: reward
   };
   
   room.messages.push(chatMessage);
+  
+  // Save to database (persistent storage)
+  try {
+    await saveGroupChatMessage({
+      ...chatMessage,
+      roomId: roomId
+    });
+  } catch (dbError) {
+    console.error('[chat] Failed to save message to database:', dbError);
+    // Continue even if DB save fails
+  }
+  
+  // Initialize reactions for this message
+  if (!messageReactions.has(chatMessage.id)) {
+    messageReactions.set(chatMessage.id, new Map());
+  }
   
   // Broadcast message via WebSocket
   broadcast({
@@ -2237,24 +2580,124 @@ function sendChatMessage(roomId, wallet, message, username = null) {
     message: chatMessage
   });
   
-  console.log(`[chat] ${wallet.substring(0, 8)}... sent message in room ${roomId}`);
+  // Send mention notifications
+  if (mentions.length > 0) {
+    // Find wallets that match mentions (simplified - in real app, would need username mapping)
+    for (const participant of room.participants) {
+      const participantUsername = participant.substring(0, 8) + '...';
+      if (mentions.some(m => participantUsername.toLowerCase().includes(m.toLowerCase()))) {
+        sendNotification(participant, 'chat_mention', '💬 You were mentioned!', 
+          `${username || wallet.substring(0, 8) + '...'} mentioned you in group chat`,
+          { roomId, messageId: chatMessage.id, fromWallet: wallet });
+      }
+    }
+  }
+  
+  console.log(`[chat] ${wallet.substring(0, 8)}... sent message in room ${roomId}${reward ? ` (reward: ${reward.amount} Luna)` : ''}`);
   return chatMessage;
 }
 
 /**
  * Get chat messages for a room
  */
-function getChatMessages(roomId, limit = 50) {
+async function getChatMessages(roomId, limit = 50) {
   const room = chatRooms.get(roomId);
+  
+  // Load from database if room is empty or needs more messages
+  if (!room || room.messages.length === 0) {
+    try {
+      const dbMessages = await loadGroupChatMessages(roomId, limit);
+      if (dbMessages && dbMessages.length > 0) {
+        // Create room if it doesn't exist
+        if (!room) {
+          getOrCreateChatRoom(roomId);
+        }
+        const roomObj = chatRooms.get(roomId);
+        roomObj.messages = dbMessages;
+        return dbMessages;
+      } else {
+        // No messages in database, create empty room
+        if (!room) {
+          getOrCreateChatRoom(roomId);
+        }
+        return [];
+      }
+    } catch (dbError) {
+      console.error('[chat] Failed to load messages from database:', dbError);
+      // Return empty array on error
+      if (!room) {
+        getOrCreateChatRoom(roomId);
+      }
+      return [];
+    }
+  }
+  
   if (!room) {
     return [];
   }
   
-  // Clean old messages
-  const now = Date.now();
-  room.messages = room.messages.filter(msg => (now - msg.timestamp) < CHAT_MESSAGE_EXPIRY);
-  
+  // Don't clean old messages - keep all messages permanently
+  // Return last N messages
   return room.messages.slice(-limit);
+}
+
+/**
+ * Handle chat commands
+ */
+function handleChatCommand(msg, wallet, ws) {
+  const { command, args } = msg;
+  
+  switch (command) {
+    case '/balance':
+      // Return balance info (would need to fetch from Solana)
+      ws.send(JSON.stringify({
+        type: 'chat_command_response',
+        command: '/balance',
+        message: 'Use /stats to see your balance and stats'
+      }));
+      break;
+      
+    case '/stats':
+      const rewardData = chatRewards.get(wallet) || { totalRewards: 0, messageCount: 0, lastRewardTime: 0 };
+      const messageCount = chatLeaderboard.get(wallet) || 0;
+      ws.send(JSON.stringify({
+        type: 'chat_command_response',
+        command: '/stats',
+        data: {
+          messageCount: messageCount,
+          totalRewards: rewardData.totalRewards,
+          lastRewardTime: rewardData.lastRewardTime
+        }
+      }));
+      break;
+      
+    case '/help':
+      ws.send(JSON.stringify({
+        type: 'chat_command_response',
+        command: '/help',
+        message: 'Available commands: /balance, /stats, /help, /leaderboard'
+      }));
+      break;
+      
+    case '/leaderboard':
+      const leaderboard = Array.from(chatLeaderboard.entries())
+        .map(([w, count]) => ({ wallet: w, count: count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10);
+      ws.send(JSON.stringify({
+        type: 'chat_command_response',
+        command: '/leaderboard',
+        data: leaderboard
+      }));
+      break;
+      
+    default:
+      ws.send(JSON.stringify({
+        type: 'chat_command_response',
+        command: command,
+        message: 'Unknown command. Use /help for available commands.'
+      }));
+  }
 }
 
 // ----------------------
@@ -3471,6 +3914,7 @@ async function handleLunaMessageResponse(msg, name, res, startTime) {
       return res.json({ ok: true, skipped: true });
     }
 
+
     // ----------------------
     // คิดก่อนตอบ (สุ่ม 40% โอกาส)
     // ----------------------
@@ -3482,13 +3926,18 @@ async function handleLunaMessageResponse(msg, name, res, startTime) {
     let modelResult;
     let isCached = false;
     
+    // เดาอารมณ์ด้วย Emotion Engine (rule-based) - ประกาศนอกบล็อกเพื่อใช้ได้ทุกที่
+    let classifiedEmotion = null;
+    
     if (cached) {
       modelResult = cached;
       isCached = true;
       console.log(`[cache] Hit for message: ${msg.substring(0, 50)}...`);
+      // ยังต้อง classify emotion แม้จะใช้ cache เพื่อแสดงอารมณ์
+      classifiedEmotion = classifyEmotion(msg);
     } else {
       // เดาอารมณ์ด้วย Emotion Engine (rule-based)
-      const classifiedEmotion = classifyEmotion(msg); // angry / sad / sleepy / hype / soft / null
+      classifiedEmotion = classifyEmotion(msg); // angry / sad / sleepy / hype / soft / null
       
       // ----------------------
       // Mixed Emotions: ตรวจจับอารมณ์หลายตัวพร้อมกัน
@@ -3571,25 +4020,38 @@ async function handleLunaMessageResponse(msg, name, res, startTime) {
       // เรียกสมองหลักของ Luna (โมเดล GPT ผ่าน ai.js)
       // ส่ง context เพิ่มเติม: energy, social awareness, etc.
       // Response Time Optimization: ใช้ Promise.all() สำหรับ parallel processing
-      const [modelResult] = await Promise.all([
-        callModel(msg, { 
-          username: name,
-          lunaEnergy: lunaEnergy,
-          isNewUser: isNewUser,
-          viewerCount: viewerCount,
-          currentEmotion: currentEmotion,
-          emotionIntensity: emotionIntensity,
-          isAnnoyed: isAnnoyed,
-          isBored: isBored,
-          isUserSad: isUserSad,
-          isUserHappy: isUserHappy,
-          userDidSomething: userDidSomething,
-          hasNews: hasNews,
-          primaryEmotion: primaryEmotion,
-          secondaryEmotion: secondaryEmotion,
-          emotionContext: emotionContext,
-        }),
-      ]);
+      // ตรวจสอบ isNewUser ใน scope นี้
+      const isNewUser = !activeUsers.has(name);
+      let modelResult;
+      try {
+        [modelResult] = await Promise.all([
+          callModel(msg, { 
+            username: name,
+            lunaEnergy: lunaEnergy,
+            isNewUser: isNewUser,
+            viewerCount: viewerCount,
+            currentEmotion: currentEmotion,
+            emotionIntensity: emotionIntensity,
+            isAnnoyed: isAnnoyed,
+            isBored: isBored,
+            isUserSad: isUserSad,
+            isUserHappy: isUserHappy,
+            userDidSomething: userDidSomething,
+            hasNews: hasNews,
+            primaryEmotion: primaryEmotion,
+            secondaryEmotion: secondaryEmotion,
+            emotionContext: emotionContext,
+          }),
+        ]);
+      } catch (e) {
+        console.error("[ai] Failed to get model response:", e.message);
+        // Fallback response when AI fails
+        modelResult = {
+          reply: "Sorry, I'm having trouble thinking right now. Can you try again in a moment? 😅",
+          emotion: "neutral",
+          traits: []
+        };
+      }
       
       // Track model usage (ใช้ isComplexQuestion จาก modules/ai.js เพื่อความสอดคล้อง)
       const isComplex = isComplexQuestion(msg);
@@ -3599,8 +4061,19 @@ async function handleLunaMessageResponse(msg, name, res, startTime) {
         stats.messages.byModel.simple++;
       }
       
-      // Cache response
-      setCachedResponse(cacheKey, modelResult);
+      // Cache response (only if we got a valid result)
+      if (modelResult && modelResult.reply) {
+        setCachedResponse(cacheKey, modelResult);
+      }
+    }
+    
+    // Ensure modelResult exists before destructuring
+    if (!modelResult) {
+      modelResult = {
+        reply: "Sorry, I'm having trouble thinking right now. Can you try again in a moment? 😅",
+        emotion: "neutral",
+        traits: []
+      };
     }
     
     let { reply, emotion: modelEmotion, traits } = modelResult;
@@ -3635,70 +4108,33 @@ async function handleLunaMessageResponse(msg, name, res, startTime) {
       }
     }
     
-    // Emotion Transition: ถ้ามี transition → ใช้ transition
-    if (emotionTransition === "neutral") {
-      // เปลี่ยนเป็น neutral ก่อน (1-2 วินาที)
-      currentEmotion = "neutral";
-      emotionIntensity = 0.4;
-      emotionStartTime = Date.now();
-      lastEmotionDecayTime = Date.now();
-      
-      // หลังจาก 1-2 วินาที → เปลี่ยนเป็นอารมณ์ใหม่
-      setTimeout(() => {
-        currentEmotion = finalEmotion;
-        emotionIntensity = detectedIntensity;
-        emotionStartTime = Date.now();
-        lastEmotionDecayTime = Date.now();
-        triggerForEmotion(finalEmotion);
-        console.log(`[emotion] Transition complete: neutral → ${finalEmotion}`);
-      }, 1000 + Math.random() * 1000); // 1-2 วินาที
-    } else {
-    // Emotion Transition: ถ้ามี transition → ใช้ transition
-    if (emotionTransition === "neutral") {
-      // เปลี่ยนเป็น neutral ก่อน (1-2 วินาที)
-      currentEmotion = "neutral";
-      emotionIntensity = 0.4;
-      emotionStartTime = Date.now();
-      lastEmotionDecayTime = Date.now();
-      
-      // หลังจาก 1-2 วินาที → เปลี่ยนเป็นอารมณ์ใหม่
-      setTimeout(() => {
-        currentEmotion = finalEmotion;
-        emotionIntensity = detectedIntensity;
-        emotionStartTime = Date.now();
-        lastEmotionDecayTime = Date.now();
-        triggerForEmotion(finalEmotion);
-        console.log(`[emotion] Transition complete: neutral → ${finalEmotion}`);
-      }, 1000 + Math.random() * 1000); // 1-2 วินาที
-    } else {
-      // ถ้าอารมณ์เปลี่ยนเร็วเกินไป (< 30 วินาที) → ใช้อารมณ์เดิม (ความต่อเนื่อง)
-      if (timeSinceEmotionChange < EMOTION_DURATION && currentEmotion !== "neutral" && finalEmotion !== currentEmotion) {
-        // 30% โอกาสเปลี่ยนอารมณ์ทันที (ถ้าอารมณ์ใหม่แรงมาก)
-        const shouldChange = Math.random() < 0.3 || detectedIntensity > 0.8;
-        if (!shouldChange) {
-          finalEmotion = currentEmotion; // ใช้อารมณ์เดิม
-          emotionIntensity = Math.max(0.3, emotionIntensity - 0.1); // ลดความแรง
-        } else {
-          currentEmotion = finalEmotion;
-          emotionStartTime = Date.now();
-          emotionIntensity = detectedIntensity; // ใช้ความแรงที่คำนวณได้
-          lastEmotionDecayTime = Date.now(); // Reset decay timer
-        }
+    // Emotion Transition: ตรวจสอบว่าควรเปลี่ยนอารมณ์หรือไม่
+    // ถ้าอารมณ์เปลี่ยนเร็วเกินไป (< 30 วินาที) → ใช้อารมณ์เดิม (ความต่อเนื่อง)
+    if (timeSinceEmotionChange < EMOTION_DURATION && currentEmotion !== "neutral" && finalEmotion !== currentEmotion) {
+      // 30% โอกาสเปลี่ยนอารมณ์ทันที (ถ้าอารมณ์ใหม่แรงมาก)
+      const shouldChange = Math.random() < 0.3 || detectedIntensity > 0.8;
+      if (!shouldChange) {
+        finalEmotion = currentEmotion; // ใช้อารมณ์เดิม
+        emotionIntensity = Math.max(0.3, emotionIntensity - 0.1); // ลดความแรง
       } else {
-        // อารมณ์เปลี่ยนตามปกติ
-        if (finalEmotion !== currentEmotion) {
-          currentEmotion = finalEmotion;
-          emotionStartTime = Date.now();
-          emotionIntensity = detectedIntensity; // ใช้ความแรงที่คำนวณได้
-          lastEmotionDecayTime = Date.now(); // Reset decay timer
-        } else {
-          // อารมณ์เดิม → ลดความแรงลง (ถ้ายังไม่ถึงเวล decay)
-          if (timeSinceLastDecay < EMOTION_DECAY_INTERVAL) {
-            emotionIntensity = Math.max(0.2, emotionIntensity - 0.05);
-          }
+        currentEmotion = finalEmotion;
+        emotionStartTime = Date.now();
+        emotionIntensity = detectedIntensity; // ใช้ความแรงที่คำนวณได้
+        lastEmotionDecayTime = Date.now(); // Reset decay timer
+      }
+    } else {
+      // อารมณ์เปลี่ยนตามปกติ
+      if (finalEmotion !== currentEmotion) {
+        currentEmotion = finalEmotion;
+        emotionStartTime = Date.now();
+        emotionIntensity = detectedIntensity; // ใช้ความแรงที่คำนวณได้
+        lastEmotionDecayTime = Date.now(); // Reset decay timer
+      } else {
+        // อารมณ์เดิม → ลดความแรงลง (ถ้ายังไม่ถึงเวล decay)
+        if (timeSinceLastDecay < EMOTION_DECAY_INTERVAL) {
+          emotionIntensity = Math.max(0.2, emotionIntensity - 0.05);
         }
       }
-    }
     }
 
     // ถ้าอยู่ในโหมดง่วง (และไม่ได้ forceAwake) → ทับเป็น sleepy เว้นแต่โกรธ/ฮายป์
@@ -4117,7 +4553,7 @@ const RPS_MIN_BALANCE = 1000000;
 
 // Balance cache to reduce RPC requests (key: wallet+mint, value: { balance, timestamp })
 const balanceCache = new Map();
-const BALANCE_CACHE_TTL = 30000; // 30 seconds cache
+const BALANCE_CACHE_TTL = 10000; // 10 seconds cache (reduced to avoid stale data)
 
 /**
  * Check user's Luna token balance
@@ -4133,9 +4569,10 @@ app.get("/luna/rps/balance", async (req, res) => {
     if (wallet) {
       const cacheKey = `${wallet}:${mint}`;
       const now = Date.now();
+      const forceRefresh = req.query.refresh === 'true';
       
-      // Check cache first
-      if (balanceCache.has(cacheKey)) {
+      // Check cache first (but allow force refresh with ?refresh=true)
+      if (!forceRefresh && balanceCache.has(cacheKey)) {
         const cached = balanceCache.get(cacheKey);
         if (now - cached.timestamp < BALANCE_CACHE_TTL) {
           console.log(`[rps] Using cached balance for ${wallet.substring(0, 8)}...: ${cached.balance}`);
@@ -4241,8 +4678,13 @@ app.get("/luna/rps/balance", async (req, res) => {
             balance = parseFloat(rawAmount) / Math.pow(10, decimals);
           }
           
-          // Round to integer
-          balance = Math.floor(balance);
+          // Don't round to integer - keep decimal precision for accurate display
+          // Only round if balance is very large (to avoid floating point issues)
+          if (balance >= 1000000) {
+            balance = Math.round(balance);
+          } else {
+            balance = Math.round(balance * 100) / 100; // Round to 2 decimal places
+          }
           
           console.log(`[rps] Balance check for wallet ${wallet.substring(0, 8)}...: ${balance} (mint: ${mint})`);
         } else {
@@ -4354,15 +4796,19 @@ app.get("/luna/rps/leaderboard", async (req, res) => {
     // Sort by total Luna won (descending) - ใครได้ Luna เยอะสุดจะอยู่อันดับแรก
     leaderboardArray.sort((a, b) => (b.totalWon || 0) - (a.totalWon || 0));
     
+    // Limit to Top 50
+    const top50 = leaderboardArray.slice(0, 50);
+    
     // Add rank to each entry
-    leaderboardArray.forEach((entry, index) => {
+    top50.forEach((entry, index) => {
       entry.rank = index + 1;
     });
     
     return res.json({
       ok: true,
-      leaderboard: leaderboardArray,
-      message: "Leaderboard loaded successfully"
+      leaderboard: top50,
+      totalPlayers: leaderboardArray.length,
+      message: "Leaderboard loaded successfully (Top 50)"
     });
   } catch (e) {
     console.error("[rps] Leaderboard error:", e);
@@ -4373,6 +4819,108 @@ app.get("/luna/rps/leaderboard", async (req, res) => {
     });
   }
 });
+
+/**
+ * Send SPL Token (Luna) to a wallet
+ * @param {string} toWallet - Recipient wallet address
+ * @param {number} amount - Amount in Luna (raw amount, will be converted to token decimals)
+ * @param {string} mintAddress - Token mint address
+ * @returns {Promise<string|null>} - Transaction signature or null if failed
+ */
+async function sendLunaToken(toWallet, amount, mintAddress) {
+  try {
+    const privateKey = DEPOSIT_ESCROW_PRIVATE_KEY || process.env.DEPOSIT_ESCROW_PRIVATE_KEY;
+    if (!privateKey) {
+      console.warn("[deposit] DEPOSIT_ESCROW_PRIVATE_KEY not set, cannot send Luna token");
+      return null;
+    }
+    
+    if (!DEPOSIT_ESCROW_WALLET) {
+      console.warn("[deposit] DEPOSIT_ESCROW_WALLET not set, cannot send Luna token");
+      return null;
+    }
+    
+    const rpcUrl = process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com";
+    const connection = new Connection(rpcUrl, "confirmed");
+    
+    // Decode private key
+    let keypair;
+    try {
+      const secretKey = bs58.decode(privateKey);
+      keypair = Keypair.fromSecretKey(secretKey);
+      
+      // Verify wallet address matches private key
+      const derivedWallet = keypair.publicKey.toString();
+      if (derivedWallet !== DEPOSIT_ESCROW_WALLET) {
+        console.warn(`[deposit] Wallet address mismatch! Private key derives to ${derivedWallet}, but DEPOSIT_ESCROW_WALLET is ${DEPOSIT_ESCROW_WALLET}`);
+        // Continue anyway - user might have provided correct private key
+      }
+    } catch (e) {
+      console.error("[deposit] Invalid private key format:", e.message);
+      return null;
+    }
+    
+    // Get token mint info
+    const mintPublicKey = new PublicKey(mintAddress);
+    const fromPublicKey = keypair.publicKey; // Use derived wallet from private key
+    const toPublicKey = new PublicKey(toWallet);
+    
+    // Get token decimals
+    const mintInfo = await connection.getParsedAccountInfo(mintPublicKey);
+    const decimals = mintInfo.value?.data?.parsed?.info?.decimals || 6;
+    
+    // Convert amount to raw token amount
+    const rawAmount = BigInt(Math.floor(amount * Math.pow(10, decimals)));
+    
+    // Get associated token addresses
+    const fromTokenAccount = getAssociatedTokenAddressSync(mintPublicKey, fromPublicKey);
+    const toTokenAccount = getAssociatedTokenAddressSync(mintPublicKey, toPublicKey);
+    
+    // Check sender token balance
+    const fromTokenAccountInfo = await connection.getParsedAccountInfo(fromTokenAccount);
+    const fromBalance = fromTokenAccountInfo.value?.data?.parsed?.info?.tokenAmount?.uiAmount || 0;
+    
+    if (fromBalance < amount) {
+      console.error(`[deposit] Insufficient Luna balance. Need ${amount} Luna, have ${fromBalance} Luna`);
+      return null;
+    }
+    
+    // Check SOL balance for transaction fee
+    const senderBalance = await connection.getBalance(keypair.publicKey);
+    const transactionFee = 5000; // Estimated fee
+    
+    if (senderBalance < transactionFee) {
+      console.error(`[deposit] Insufficient SOL for transaction fee. Need ${transactionFee / LAMPORTS_PER_SOL} SOL, have ${senderBalance / LAMPORTS_PER_SOL} SOL`);
+      return null;
+    }
+    
+    // Create transfer instruction
+    const transaction = new Transaction().add(
+      createTransferInstruction(
+        fromTokenAccount,
+        toTokenAccount,
+        fromPublicKey,
+        rawAmount,
+        [],
+        TOKEN_PROGRAM_ID
+      )
+    );
+    
+    // Send transaction
+    const signature = await sendAndConfirmTransaction(
+      connection,
+      transaction,
+      [keypair],
+      { commitment: "confirmed" }
+    );
+    
+    console.log(`[deposit] Sent ${amount} Luna to ${toWallet.substring(0, 8)}... (tx: ${signature})`);
+    return signature;
+  } catch (e) {
+    console.error("[deposit] Error sending Luna token:", e.message);
+    return null;
+  }
+}
 
 /**
  * Send SOL to a wallet
@@ -4607,6 +5155,257 @@ app.post("/luna/rps/rewards/distribute", async (req, res) => {
       ok: false,
       error: e.message,
       message: "Failed to distribute rewards",
+    });
+  }
+});
+
+/**
+ * Calculate Betting fee percentage based on deposit status
+ * @param {string} wallet - Wallet address
+ * @returns {Promise<number>} - Fee percentage (0.03, 0.02, or 0.01)
+ */
+async function getBettingFeePercentage(wallet) {
+  try {
+    const deposit = await getActiveDeposit(wallet);
+    if (!deposit) {
+      return BETTING_FEE_DEFAULT; // 3% default if no deposit
+    }
+    
+    const now = Date.now();
+    const depositDate = deposit.deposit_date;
+    const daysSinceDeposit = (now - depositDate) / (1000 * 60 * 60 * 24);
+    
+    if (daysSinceDeposit >= 6) {
+      return BETTING_FEE_6_DAYS; // 1% after 6 days
+    } else if (daysSinceDeposit >= 3) {
+      return BETTING_FEE_3_DAYS; // 2% after 3 days
+    } else {
+      return BETTING_FEE_DEFAULT; // 3% default
+    }
+  } catch (e) {
+    console.error("[deposit] Error calculating betting fee:", e.message);
+    return BETTING_FEE_DEFAULT; // Default to 3% on error
+  }
+}
+
+/**
+ * Deposit Luna tokens
+ * POST /luna/deposit
+ * Body: { wallet: "wallet_address", amount: number, signature: "transaction_signature" }
+ */
+app.post("/luna/deposit", async (req, res) => {
+  try {
+    const { wallet, amount, signature } = req.body || {};
+    
+    if (!wallet || !amount || amount <= 0) {
+      return res.status(400).json({
+        ok: false,
+        error: "Invalid request",
+        message: "wallet and amount are required",
+      });
+    }
+    
+    // Check if wallet has minimum balance (150,000 Luna)
+    const mint = process.env.LUNA_TOKEN_MINT || "CbB4ivri6wLfqx4NwrWY3ArD7mXv1e91HeYeq3KBpump";
+    const balanceResponse = await fetch(`${req.protocol}://${req.get('host')}/luna/rps/balance?wallet=${wallet}&mint=${mint}`);
+    const balanceData = await balanceResponse.json();
+    
+    if (!balanceData.ok || balanceData.balance < DEPOSIT_MIN_BALANCE) {
+      return res.status(403).json({
+        ok: false,
+        error: "Insufficient balance",
+        message: `You need at least ${DEPOSIT_MIN_BALANCE.toLocaleString()} Luna tokens to deposit. Current: ${(balanceData.balance || 0).toLocaleString()}`,
+      });
+    }
+    
+    // Calculate deposit fee (3%)
+    const depositFee = amount * DEPOSIT_FEE_PERCENTAGE;
+    const depositAmount = amount - depositFee;
+    
+    // Check if already has active deposit - if yes, update it instead of creating new
+    const existingDeposit = await getActiveDeposit(wallet);
+    if (existingDeposit) {
+      // Update existing deposit by adding the new amount
+      const updated = await updateLunaDeposit(wallet, depositAmount);
+      if (!updated) {
+        return res.status(500).json({
+          ok: false,
+          error: "Update failed",
+          message: "Failed to update existing deposit",
+        });
+      }
+      
+      // Get updated deposit info
+      const updatedDeposit = await getActiveDeposit(wallet);
+      const totalAmount = updatedDeposit.deposit_amount;
+      
+      console.log(`[deposit] Deposit updated: ${wallet.substring(0, 8)}... added ${depositAmount} Luna (fee: ${depositFee} Luna). Total: ${totalAmount} Luna`);
+      
+      return res.json({
+        ok: true,
+        message: "Deposit updated successfully",
+        deposit: {
+          id: updatedDeposit.id,
+          wallet: wallet,
+          amount: totalAmount,
+          addedAmount: depositAmount,
+          fee: depositFee,
+          depositDate: updatedDeposit.deposit_date, // Keep original deposit date
+          escrowWallet: DEPOSIT_ESCROW_WALLET,
+        },
+        note: "Please send Luna tokens to the escrow wallet. The system will verify the transaction.",
+      });
+    }
+    
+    // Create new deposit
+    // Note: In a real implementation, you would verify the transaction signature
+    // For now, we'll just record the deposit
+    // The user should send Luna tokens to DEPOSIT_ESCROW_WALLET manually or via transaction
+    
+    const depositDate = Date.now();
+    const depositId = await saveLunaDeposit(wallet, depositAmount, depositDate);
+    
+    console.log(`[deposit] Deposit recorded: ${wallet.substring(0, 8)}... deposited ${depositAmount} Luna (fee: ${depositFee} Luna)`);
+    
+    return res.json({
+      ok: true,
+      message: "Deposit recorded successfully",
+      deposit: {
+        id: depositId,
+        wallet: wallet,
+        amount: depositAmount,
+        fee: depositFee,
+        depositDate: depositDate,
+        escrowWallet: DEPOSIT_ESCROW_WALLET,
+      },
+      note: "Please send Luna tokens to the escrow wallet. The system will verify the transaction.",
+    });
+  } catch (e) {
+    console.error("[deposit] Deposit error:", e);
+    res.status(500).json({
+      ok: false,
+      error: e.message,
+      message: "Failed to process deposit",
+    });
+  }
+});
+
+/**
+ * Get deposit status
+ * GET /luna/deposit/status?wallet=wallet_address
+ */
+app.get("/luna/deposit/status", async (req, res) => {
+  try {
+    const { wallet } = req.query || {};
+    
+    if (!wallet) {
+      return res.status(400).json({
+        ok: false,
+        error: "Invalid request",
+        message: "wallet is required",
+      });
+    }
+    
+    const deposit = await getActiveDeposit(wallet);
+    
+    if (!deposit) {
+      return res.json({
+        ok: true,
+        hasDeposit: false,
+        message: "No active deposit",
+      });
+    }
+    
+    const now = Date.now();
+    const depositDate = deposit.deposit_date;
+    const daysSinceDeposit = (now - depositDate) / (1000 * 60 * 60 * 24);
+    const feePercentage = await getBettingFeePercentage(wallet);
+    
+    return res.json({
+      ok: true,
+      hasDeposit: true,
+      deposit: {
+        amount: deposit.deposit_amount,
+        depositDate: depositDate,
+        daysSinceDeposit: Math.floor(daysSinceDeposit * 100) / 100,
+        feePercentage: feePercentage,
+        feePercentageDisplay: `${(feePercentage * 100).toFixed(0)}%`,
+        escrowWallet: DEPOSIT_ESCROW_WALLET,
+      },
+    });
+  } catch (e) {
+    console.error("[deposit] Get deposit status error:", e);
+    res.status(500).json({
+      ok: false,
+      error: e.message,
+      message: "Failed to get deposit status",
+    });
+  }
+});
+
+/**
+ * Withdraw Luna tokens
+ * POST /luna/withdraw
+ * Body: { wallet: "wallet_address" }
+ */
+app.post("/luna/withdraw", async (req, res) => {
+  try {
+    const { wallet } = req.body || {};
+    
+    if (!wallet) {
+      return res.status(400).json({
+        ok: false,
+        error: "Invalid request",
+        message: "wallet is required",
+      });
+    }
+    
+    const deposit = await getActiveDeposit(wallet);
+    
+    if (!deposit) {
+      return res.status(404).json({
+        ok: false,
+        error: "No active deposit",
+        message: "You don't have an active deposit to withdraw",
+      });
+    }
+    
+    const mint = process.env.LUNA_TOKEN_MINT || "CbB4ivri6wLfqx4NwrWY3ArD7mXv1e91HeYeq3KBpump";
+    const withdrawAmount = deposit.deposit_amount;
+    const withdrawDate = Date.now();
+    
+    // Send Luna tokens back to user
+    const signature = await sendLunaToken(wallet, withdrawAmount, mint);
+    
+    if (!signature) {
+      return res.status(500).json({
+        ok: false,
+        error: "Transaction failed",
+        message: "Failed to send Luna tokens. Please check escrow wallet balance and SOL for transaction fee.",
+      });
+    }
+    
+    // Mark deposit as withdrawn
+    await withdrawDeposit(wallet, withdrawDate);
+    
+    console.log(`[deposit] Withdrawal processed: ${wallet.substring(0, 8)}... withdrew ${withdrawAmount} Luna (tx: ${signature})`);
+    
+    return res.json({
+      ok: true,
+      message: "Withdrawal successful",
+      withdrawal: {
+        wallet: wallet,
+        amount: withdrawAmount,
+        signature: signature,
+        withdrawDate: withdrawDate,
+      },
+    });
+  } catch (e) {
+    console.error("[deposit] Withdraw error:", e);
+    res.status(500).json({
+      ok: false,
+      error: e.message,
+      message: "Failed to process withdrawal",
     });
   }
 });
@@ -5869,6 +6668,77 @@ app.post("/luna/notifications/read", async (req, res) => {
   }
 });
 
+/**
+ * Test notification system
+ * POST /luna/notifications/test
+ * Body: { wallet: "wallet_address" (optional), type: "test_type" (optional) }
+ * 
+ * ส่ง notification ทดสอบเพื่อทดสอบระบบ
+ */
+app.post("/luna/notifications/test", async (req, res) => {
+  try {
+    const { wallet, type } = req.body || {};
+    
+    const testTypes = {
+      'match_found': {
+        title: '🎮 Match Found!',
+        message: 'You have been matched with an opponent. Game starting soon!',
+        data: { matchId: 'test_match_' + Date.now(), opponent: 'TestOpponent123...' }
+      },
+      'room_new': {
+        title: '🏠 New Betting Room!',
+        message: 'A new betting room has been created with bet amount: 10,000 Luna tokens',
+        data: { roomId: 'test_room_' + Date.now(), betAmount: 10000 }
+      },
+      'reward_time': {
+        title: '💰 Reward Distribution Soon!',
+        message: 'Weekly competition ends in 1 hour. Make sure you are in top 5!',
+        data: { timeRemaining: 3600 }
+      },
+      'reward_received': {
+        title: '🎁 Reward Received!',
+        message: 'You received 0.5 SOL as reward for being in top 5!',
+        data: { amount: 0.5, rank: 3 }
+      },
+      'referral_reward': {
+        title: '👥 Referral Reward!',
+        message: 'You earned 0.1 SOL from your referral!',
+        data: { amount: 0.1, referredWallet: 'RefWallet123...' }
+      },
+      'default': {
+        title: '🔔 Test Notification',
+        message: 'This is a test notification to verify the notification system is working correctly!',
+        data: { test: true }
+      }
+    };
+    
+    const notificationType = type && testTypes[type] ? type : 'default';
+    const notificationData = testTypes[notificationType];
+    
+    // Send notification
+    sendNotification(wallet || null, notificationType, notificationData.title, notificationData.message, notificationData.data);
+    
+    return res.json({
+      ok: true,
+      message: `Test notification sent${wallet ? ` to ${wallet.substring(0, 8)}...` : ' (broadcast to all)'}`,
+      notification: {
+        type: notificationType,
+        title: notificationData.title,
+        message: notificationData.message,
+        data: notificationData.data
+      },
+      availableTypes: Object.keys(testTypes).filter(t => t !== 'default')
+    });
+  } catch (e) {
+    console.error("[notifications] Test notification error:", e);
+    res.status(500).json({
+      ok: false,
+      error: e.message,
+      message: "Failed to send test notification",
+    });
+  }
+});
+
 // ----------------------
 // Referral System API Endpoints
 // ----------------------
@@ -6044,7 +6914,108 @@ app.post("/luna/chat/send", async (req, res) => {
       });
     }
     
-    const chatMessage = sendChatMessage(roomId, wallet, trimmedMessage, username);
+    // Check balance for group chat (minimum 100,000 Luna required)
+    if (roomId === 'group_chat') {
+      const GROUP_CHAT_MIN_BALANCE = 100000;
+      
+      try {
+        // Validate wallet address
+        if (!isValidWalletAddress(wallet)) {
+          return res.status(400).json({
+            ok: false,
+            error: "Invalid wallet address format",
+          });
+        }
+        
+        // Get token mint address from env
+        const mint = process.env.LUNA_TOKEN_MINT;
+        if (!mint || mint === "your_token_mint_address_from_pumpfun_here" || mint.length < 32) {
+          return res.status(500).json({
+            ok: false,
+            error: "Token mint address not configured",
+          });
+        }
+        
+        // Check balance
+        const connection = new Connection(
+          process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com",
+          "confirmed"
+        );
+        
+        let mintPublicKey;
+        let walletPubKey;
+        try {
+          mintPublicKey = new PublicKey(mint);
+          walletPubKey = new PublicKey(wallet);
+        } catch (error) {
+          return res.status(400).json({
+            ok: false,
+            error: "Invalid wallet or mint address format",
+          });
+        }
+        
+        // Get token accounts
+        const tokenAccounts = await connection.getParsedTokenAccountsByOwner(
+          walletPubKey,
+          { mint: mintPublicKey }
+        );
+        
+        let balance = 0;
+        if (tokenAccounts.value && tokenAccounts.value.length > 0) {
+          const tokenAccount = tokenAccounts.value[0];
+          const tokenAmount = tokenAccount.account.data.parsed.info.tokenAmount;
+          
+          // Use uiAmountString for accurate balance, or calculate from amount and decimals
+          if (tokenAmount.uiAmountString) {
+            balance = parseFloat(tokenAmount.uiAmountString);
+          } else if (tokenAmount.uiAmount !== null && tokenAmount.uiAmount !== undefined) {
+            balance = tokenAmount.uiAmount;
+          } else {
+            // Calculate from raw amount and decimals
+            const rawAmount = tokenAmount.amount;
+            const decimals = tokenAmount.decimals || 0;
+            balance = parseFloat(rawAmount) / Math.pow(10, decimals);
+          }
+          
+          // Don't round to integer - keep decimal precision for accurate display
+          // Only round if balance is very large (to avoid floating point issues)
+          if (balance >= 1000000) {
+            balance = Math.round(balance);
+          } else {
+            balance = Math.round(balance * 100) / 100; // Round to 2 decimal places
+          }
+        }
+        
+        // Check if balance meets requirement
+        if (balance < GROUP_CHAT_MIN_BALANCE) {
+          return res.status(403).json({
+            ok: false,
+            error: `Insufficient balance. You need at least ${GROUP_CHAT_MIN_BALANCE.toLocaleString()} Luna tokens to send messages in group chat. Current balance: ${balance.toLocaleString()} Luna`,
+            balance: balance,
+            minRequired: GROUP_CHAT_MIN_BALANCE,
+          });
+        }
+        
+        console.log(`[group_chat] ${wallet.substring(0, 8)}... sent message (balance: ${balance} Luna)`);
+        
+        // Pass balance to sendChatMessage to avoid duplicate RPC call
+        const chatMessage = await sendChatMessage(roomId, wallet, trimmedMessage, username, balance);
+        
+        return res.json({
+          ok: true,
+          message: chatMessage
+        });
+      } catch (balanceError) {
+        console.error("[group_chat] Balance check error:", balanceError);
+        return res.status(500).json({
+          ok: false,
+          error: "Failed to verify balance. Please try again later.",
+        });
+      }
+    }
+    
+    // For non-group-chat rooms, send message without balance check
+    const chatMessage = await sendChatMessage(roomId, wallet, trimmedMessage, username);
     
     return res.json({
       ok: true,
@@ -6062,11 +7033,11 @@ app.post("/luna/chat/send", async (req, res) => {
 
 /**
  * Get chat messages
- * GET /luna/chat/messages?roomId=room_id&limit=50
+ * GET /luna/chat/messages?roomId=room_id&limit=50&search=keyword&wallet=wallet
  */
 app.get("/luna/chat/messages", async (req, res) => {
   try {
-    const { roomId, limit } = req.query || {};
+    const { roomId, limit, search, wallet } = req.query || {};
     
     if (!roomId || typeof roomId !== "string") {
       return res.status(400).json({
@@ -6076,7 +7047,34 @@ app.get("/luna/chat/messages", async (req, res) => {
     }
     
     const messageLimit = parseInt(limit || "50", 10);
-    const messages = getChatMessages(roomId, messageLimit);
+    let messages = await getChatMessages(roomId, messageLimit);
+    
+    // Filter by search keyword
+    if (search && typeof search === "string" && search.trim().length > 0) {
+      const searchLower = search.toLowerCase();
+      messages = messages.filter(msg => 
+        msg.message.toLowerCase().includes(searchLower) ||
+        msg.username.toLowerCase().includes(searchLower)
+      );
+    }
+    
+    // Filter by wallet
+    if (wallet && typeof wallet === "string") {
+      messages = messages.filter(msg => msg.wallet === wallet);
+    }
+    
+    // Add reactions and tips to messages
+    messages = messages.map(msg => {
+      const reactions = messageReactions.get(msg.id);
+      const tips = messageTips.get(msg.id) || [];
+      return {
+        ...msg,
+        reactions: reactions ? Object.fromEntries(
+          Array.from(reactions.entries()).map(([type, wallets]) => [type, wallets.size])
+        ) : {},
+        tips: tips.map(t => ({ wallet: t.wallet, amount: t.amount, timestamp: t.timestamp }))
+      };
+    });
     
     return res.json({
       ok: true,
@@ -6092,6 +7090,226 @@ app.get("/luna/chat/messages", async (req, res) => {
     });
   }
 });
+
+/**
+ * Add reaction to message
+ * POST /luna/chat/reaction
+ * Body: { messageId, wallet, reactionType }
+ */
+app.post("/luna/chat/reaction", async (req, res) => {
+  try {
+    const { messageId, wallet, reactionType } = req.body || {};
+    
+    if (!messageId || typeof messageId !== "string") {
+      return res.status(400).json({ ok: false, error: "Message ID is required" });
+    }
+    
+    if (!wallet || typeof wallet !== "string") {
+      return res.status(400).json({ ok: false, error: "Wallet is required" });
+    }
+    
+    if (!reactionType || typeof reactionType !== "string") {
+      return res.status(400).json({ ok: false, error: "Reaction type is required" });
+    }
+    
+    const validReactions = ['👍', '❤️', '🎉', '🔥', '💬'];
+    if (!validReactions.includes(reactionType)) {
+      return res.status(400).json({ ok: false, error: "Invalid reaction type" });
+    }
+    
+    if (!messageReactions.has(messageId)) {
+      messageReactions.set(messageId, new Map());
+    }
+    
+    const reactions = messageReactions.get(messageId);
+    if (!reactions.has(reactionType)) {
+      reactions.set(reactionType, new Set());
+    }
+    
+    const reactionSet = reactions.get(reactionType);
+    
+    // Toggle reaction
+    if (reactionSet.has(wallet)) {
+      reactionSet.delete(wallet);
+    } else {
+      reactionSet.add(wallet);
+    }
+    
+    // Broadcast reaction update
+    broadcast({
+      type: 'chat_reaction',
+      messageId: messageId,
+      reactionType: reactionType,
+      wallet: wallet,
+      count: reactionSet.size,
+      active: reactionSet.has(wallet)
+    });
+    
+    return res.json({
+      ok: true,
+      reactionType: reactionType,
+      count: reactionSet.size,
+      active: reactionSet.has(wallet)
+    });
+  } catch (e) {
+    console.error("[chat] Reaction error:", e);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+/**
+ * Tip a message
+ * POST /luna/chat/tip
+ * Body: { messageId, fromWallet, toWallet, amount }
+ */
+app.post("/luna/chat/tip", async (req, res) => {
+  try {
+    const { messageId, fromWallet, toWallet, amount } = req.body || {};
+    
+    if (!messageId || typeof messageId !== "string") {
+      return res.status(400).json({ ok: false, error: "Message ID is required" });
+    }
+    
+    if (!fromWallet || !toWallet || typeof fromWallet !== "string" || typeof toWallet !== "string") {
+      return res.status(400).json({ ok: false, error: "Wallet addresses are required" });
+    }
+    
+    if (fromWallet === toWallet) {
+      return res.status(400).json({ ok: false, error: "Cannot tip yourself" });
+    }
+    
+    const tipAmount = parseInt(amount, 10);
+    if (!tipAmount || tipAmount <= 0) {
+      return res.status(400).json({ ok: false, error: "Invalid tip amount" });
+    }
+    
+    // Note: In production, this would trigger an actual Solana transaction
+    // For now, we just record it
+    if (!messageTips.has(messageId)) {
+      messageTips.set(messageId, []);
+    }
+    
+    const tips = messageTips.get(messageId);
+    tips.push({
+      wallet: fromWallet,
+      amount: tipAmount,
+      timestamp: Date.now()
+    });
+    
+    // Send notification to recipient
+    sendNotification(toWallet, 'chat_tip', '💰 You received a tip!', 
+      `You received ${tipAmount.toLocaleString()} Luna tip`,
+      { messageId, fromWallet, amount: tipAmount });
+    
+    // Broadcast tip
+    broadcast({
+      type: 'chat_tip',
+      messageId: messageId,
+      fromWallet: fromWallet,
+      toWallet: toWallet,
+      amount: tipAmount
+    });
+    
+    return res.json({
+      ok: true,
+      message: "Tip recorded (Note: Actual transfer would happen via Solana transaction)"
+    });
+  } catch (e) {
+    console.error("[chat] Tip error:", e);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+/**
+ * Get online users count
+ * GET /luna/chat/online?roomId=room_id
+ */
+app.get("/luna/chat/online", async (req, res) => {
+  try {
+    const { roomId } = req.query || {};
+    
+    // Count users in the room
+    let count = 0;
+    if (roomId) {
+      const room = chatRooms.get(roomId);
+      if (room) {
+        count = room.participants.size;
+      }
+    } else {
+      // Count all online users
+      count = onlineUsers.size;
+    }
+    
+    return res.json({
+      ok: true,
+      count: count,
+      roomId: roomId || 'all'
+    });
+  } catch (e) {
+    console.error("[chat] Online count error:", e);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+/**
+ * Get chat leaderboard
+ * GET /luna/chat/leaderboard?type=daily|weekly|alltime
+ */
+app.get("/luna/chat/leaderboard", async (req, res) => {
+  try {
+    const { type = 'daily' } = req.query || {};
+    
+    // Convert Map to Array and sort
+    const leaderboard = Array.from(chatLeaderboard.entries())
+      .map(([wallet, count]) => ({
+        wallet: wallet,
+        username: wallet.substring(0, 8) + '...',
+        messageCount: count
+      }))
+      .sort((a, b) => b.messageCount - a.messageCount)
+      .slice(0, 10); // Top 10
+    
+    return res.json({
+      ok: true,
+      type: type,
+      leaderboard: leaderboard
+    });
+  } catch (e) {
+    console.error("[chat] Leaderboard error:", e);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+/**
+ * Get user chat stats
+ * GET /luna/chat/stats?wallet=wallet_address
+ */
+app.get("/luna/chat/stats", async (req, res) => {
+  try {
+    const { wallet } = req.query || {};
+    
+    if (!wallet || typeof wallet !== "string") {
+      return res.status(400).json({ ok: false, error: "Wallet is required" });
+    }
+    
+    const rewardData = chatRewards.get(wallet) || { totalRewards: 0, messageCount: 0, lastRewardTime: 0 };
+    const messageCount = chatLeaderboard.get(wallet) || 0;
+    const badge = await getVIPBadge(wallet);
+    
+    return res.json({
+      ok: true,
+      wallet: wallet,
+      messageCount: messageCount,
+      totalRewards: rewardData.totalRewards,
+      lastRewardTime: rewardData.lastRewardTime,
+      badge: badge
+    });
+  } catch (e) {
+    console.error("[chat] Stats error:", e);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
 
 // ----------------------
 // 404 Handler (must be after all routes)
@@ -6111,6 +7329,19 @@ server.listen(PORT, '0.0.0.0', async () => {
   console.log(`   Local: http://localhost:${PORT}`);
   console.log(`   Network: http://[YOUR_IP]:${PORT}`);
   await initDB();
+  
+  // Load group chat messages from database
+  try {
+    const groupChatMessages = await loadGroupChatMessages('group_chat', 1000);
+    if (groupChatMessages.length > 0) {
+      const room = getOrCreateChatRoom('group_chat');
+      room.messages = groupChatMessages;
+      console.log(`[chat] Loaded ${groupChatMessages.length} messages from database for group_chat`);
+    }
+  } catch (dbError) {
+    console.error('[chat] Failed to load messages from database on startup:', dbError);
+  }
+  
   startSolanaWatcher();
   startPumpFunWatcher();
   

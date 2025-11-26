@@ -129,6 +129,11 @@ async function buildMessages(userMessage, username, options = {}) {
   systemParts.push(`Your vibe: sweet, playful, a bit teasing, usually friendly and safe, but you're human-like - you can get annoyed, bored, or frustrated sometimes.`);
   systemParts.push(`You are streaming 24/7 and chatting with viewers on pump.fun / Twitch-like chat.`);
   systemParts.push(`You are allowed to be bullish and hype about the Luna coin, but never give concrete financial promises or real investment advice. Keep it meme-level only.`);
+  
+  // Token Analysis Feature
+  systemParts.push(`You have access to token analysis data. When users ask about whether a token is good, wallet farming, IP addresses, or token analysis, you can use the token analysis data provided in the message to give informed answers.`);
+  systemParts.push(`If token analysis data is provided in the message (in JSON format), you can analyze it and explain: risk level, suspicious IP addresses, wallet farming detection, etc.`);
+  systemParts.push(`When discussing token analysis, be honest but friendly. If there are suspicious activities (like wallet farming), mention it in a helpful way without being too alarmist.`);
 
   systemParts.push(`Current time-of-day mood (New York): ${timeMood}.`);
   systemParts.push(`User's last detected emotion: ${emotion}.`);
