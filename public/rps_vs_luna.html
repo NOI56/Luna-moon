@@ -565,9 +565,6 @@
       opacity: 0.01 !important;
     }
   </style>
-  <link rel="stylesheet" href="/css/notifications.css">
-  <link rel="stylesheet" href="/css/referral.css">
-  <link rel="stylesheet" href="/css/chat.css">
 </head>
 <body>
   <div id="modeNavigation" style="position: fixed !important; top: 40px !important; left: 20px !important; display: flex !important; gap: 10px; z-index: 99999 !important; flex-wrap: wrap; pointer-events: auto !important; visibility: visible !important; opacity: 1 !important;">
@@ -1439,59 +1436,24 @@
       }
     }
   </script>
-  <script src="/js/notifications.js" charset="UTF-8"></script>
-  <script src="/js/referral.js" charset="UTF-8"></script>
-  <script src="/js/chat.js" charset="UTF-8"></script>
   <script>
-    // Initialize UI components immediately (will work with or without wallet)
+    // Disable Notifications and Chat +
+    if (typeof notificationManager !== 'undefined') {
+      notificationManager.createUI = function() {}; // Disable notifications
+    }
+    if (typeof chatManager !== 'undefined') {
+      chatManager.createUI = function() {}; // Disable chat +
+    }
+    
+    // Remove any existing notification/chat elements
     document.addEventListener('DOMContentLoaded', () => {
-      setTimeout(() => {
-        // Initialize Notification System (show button even without wallet)
-        if (typeof notificationManager !== 'undefined') {
-          notificationManager.createUI();
-        }
-        
-        // Initialize Referral System (show UI even without wallet)
-        if (typeof referralManager !== 'undefined') {
-          referralManager.createUI();
-        }
-        
-        // Initialize Chat System (show chat even without wallet)
-        if (typeof chatManager !== 'undefined') {
-          chatManager.init(null);
-          chatManager.createUI('vs_luna_page', 'lobby');
-        }
-      }, 500);
+      const notificationBtn = document.getElementById('notification-btn');
+      const notificationPanel = document.getElementById('notification-panel');
+      const chatContainer = document.getElementById('chat-container');
+      if (notificationBtn) notificationBtn.remove();
+      if (notificationPanel) notificationPanel.remove();
+      if (chatContainer) chatContainer.remove();
     });
-    
-    // Initialize UI components when wallet is available
-    function initializeUIComponents() {
-      const wallet = walletPublicKey || window.walletPublicKey || localStorage.getItem('walletAddress');
-      if (wallet) {
-        if (typeof notificationManager !== 'undefined') notificationManager.init(wallet);
-        if (typeof referralManager !== 'undefined') referralManager.init(wallet);
-        if (typeof chatManager !== 'undefined') {
-          chatManager.init(wallet);
-          const chatInput = document.getElementById('chat-input');
-          if (chatInput) {
-            chatInput.disabled = false;
-            chatInput.placeholder = 'Type a message...';
-          }
-        }
-      }
-    }
-    
-    // Hook into wallet connection
-    const originalConnectWallet = window.connectWallet;
-    if (originalConnectWallet) {
-      window.connectWallet = async function() {
-        const result = await originalConnectWallet();
-        setTimeout(initializeUIComponents, 500);
-        return result;
-      };
-    }
-    
-    setTimeout(() => initializeUIComponents(), 1500);
   </script>
 </body>
 </html>

@@ -5193,6 +5193,9 @@ async function getBettingFeePercentage(wallet) {
  * POST /luna/deposit
  * Body: { wallet: "wallet_address", amount: number, signature: "transaction_signature" }
  */
+// Deposit request tracking to prevent duplicates
+const depositRequests = new Map(); // wallet:amount -> { timestamp, amount }
+
 app.post("/luna/deposit", async (req, res) => {
   try {
     const { wallet, amount, signature } = req.body || {};
@@ -5204,6 +5207,21 @@ app.post("/luna/deposit", async (req, res) => {
         message: "wallet and amount are required",
       });
     }
+    
+    // Prevent duplicate requests (within 5 seconds)
+    const requestKey = `${wallet}:${amount}`;
+    const now = Date.now();
+    if (depositRequests.has(requestKey)) {
+      const lastRequest = depositRequests.get(requestKey);
+      if (now - lastRequest.timestamp < 5000) {
+        return res.status(429).json({
+          ok: false,
+          error: "Duplicate request",
+          message: "Please wait a moment before submitting again",
+        });
+      }
+    }
+    depositRequests.set(requestKey, { timestamp: now, amount });
     
     // Check if wallet has minimum balance (150,000 Luna)
     const mint = process.env.LUNA_TOKEN_MINT || "CbB4ivri6wLfqx4NwrWY3ArD7mXv1e91HeYeq3KBpump";
@@ -5222,50 +5240,92 @@ app.post("/luna/deposit", async (req, res) => {
     const depositFee = amount * DEPOSIT_FEE_PERCENTAGE;
     const depositAmount = amount - depositFee;
     
+    // Verify actual balance in escrow wallet before recording
+    let actualBalance = 0;
+    try {
+      const mintPublicKey = new PublicKey(mint);
+      const escrowPublicKey = new PublicKey(DEPOSIT_ESCROW_WALLET);
+      const escrowTokenAccount = getAssociatedTokenAddressSync(mintPublicKey, escrowPublicKey);
+      
+      const rpcUrl = process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com";
+      const connection = new Connection(rpcUrl, "confirmed");
+      const tokenAccountInfo = await connection.getParsedAccountInfo(escrowTokenAccount);
+      
+      if (tokenAccountInfo.value) {
+        const parsedInfo = tokenAccountInfo.value.data?.parsed?.info;
+        actualBalance = parsedInfo?.tokenAmount?.uiAmount || 0;
+      }
+    } catch (verifyError) {
+      console.warn("[deposit] Could not verify escrow balance:", verifyError.message);
+      // Continue anyway - will verify later
+    }
+    
     // Check if already has active deposit - if yes, update it instead of creating new
     const existingDeposit = await getActiveDeposit(wallet);
     if (existingDeposit) {
-      // Update existing deposit by adding the new amount
-      const updated = await updateLunaDeposit(wallet, depositAmount);
-      if (!updated) {
-        return res.status(500).json({
+      // Only update if actual balance increased (tokens were actually sent)
+      const previousBalance = existingDeposit.deposit_amount;
+      const balanceIncrease = actualBalance - previousBalance;
+      
+      if (balanceIncrease > 0 && balanceIncrease >= depositAmount * 0.9) { // Allow 10% tolerance
+        // Update existing deposit by adding the new amount
+        const updated = await updateLunaDeposit(wallet, depositAmount);
+        if (!updated) {
+          return res.status(500).json({
+            ok: false,
+            error: "Update failed",
+            message: "Failed to update existing deposit",
+          });
+        }
+        
+        // Get updated deposit info
+        const updatedDeposit = await getActiveDeposit(wallet);
+        const totalAmount = updatedDeposit.deposit_amount;
+        
+        console.log(`[deposit] Deposit updated: ${wallet.substring(0, 8)}... added ${depositAmount} Luna (fee: ${depositFee} Luna). Total: ${totalAmount} Luna. Actual balance: ${actualBalance} Luna`);
+        
+        return res.json({
+          ok: true,
+          message: "Deposit updated successfully",
+          deposit: {
+            id: updatedDeposit.id,
+            wallet: wallet,
+            amount: totalAmount,
+            actualBalance: actualBalance,
+            addedAmount: depositAmount,
+            fee: depositFee,
+            depositDate: updatedDeposit.deposit_date,
+            escrowWallet: DEPOSIT_ESCROW_WALLET,
+          },
+          verified: true,
+        });
+      } else {
+        return res.status(400).json({
           ok: false,
-          error: "Update failed",
-          message: "Failed to update existing deposit",
+          error: "No tokens received",
+          message: `No new tokens detected in escrow wallet. Expected increase: ${depositAmount.toLocaleString()} Luna, but escrow balance is ${actualBalance.toLocaleString()} Luna. Please send tokens first.`,
+          actualBalance: actualBalance,
+          expectedAmount: depositAmount,
         });
       }
-      
-      // Get updated deposit info
-      const updatedDeposit = await getActiveDeposit(wallet);
-      const totalAmount = updatedDeposit.deposit_amount;
-      
-      console.log(`[deposit] Deposit updated: ${wallet.substring(0, 8)}... added ${depositAmount} Luna (fee: ${depositFee} Luna). Total: ${totalAmount} Luna`);
-      
-      return res.json({
-        ok: true,
-        message: "Deposit updated successfully",
-        deposit: {
-          id: updatedDeposit.id,
-          wallet: wallet,
-          amount: totalAmount,
-          addedAmount: depositAmount,
-          fee: depositFee,
-          depositDate: updatedDeposit.deposit_date, // Keep original deposit date
-          escrowWallet: DEPOSIT_ESCROW_WALLET,
-        },
-        note: "Please send Luna tokens to the escrow wallet. The system will verify the transaction.",
-      });
     }
     
-    // Create new deposit
-    // Note: In a real implementation, you would verify the transaction signature
-    // For now, we'll just record the deposit
-    // The user should send Luna tokens to DEPOSIT_ESCROW_WALLET manually or via transaction
+    // Create new deposit - only if tokens are actually in escrow
+    if (actualBalance < depositAmount * 0.9) { // Allow 10% tolerance
+      return res.status(400).json({
+        ok: false,
+        error: "No tokens received",
+        message: `Tokens not found in escrow wallet. Expected: ${depositAmount.toLocaleString()} Luna, but escrow balance is ${actualBalance.toLocaleString()} Luna. Please send tokens first.`,
+        actualBalance: actualBalance,
+        expectedAmount: depositAmount,
+        escrowWallet: DEPOSIT_ESCROW_WALLET,
+      });
+    }
     
     const depositDate = Date.now();
     const depositId = await saveLunaDeposit(wallet, depositAmount, depositDate);
     
-    console.log(`[deposit] Deposit recorded: ${wallet.substring(0, 8)}... deposited ${depositAmount} Luna (fee: ${depositFee} Luna)`);
+    console.log(`[deposit] Deposit recorded: ${wallet.substring(0, 8)}... deposited ${depositAmount} Luna (fee: ${depositFee} Luna). Actual balance: ${actualBalance} Luna`);
     
     return res.json({
       ok: true,
@@ -5274,11 +5334,12 @@ app.post("/luna/deposit", async (req, res) => {
         id: depositId,
         wallet: wallet,
         amount: depositAmount,
+        actualBalance: actualBalance,
         fee: depositFee,
         depositDate: depositDate,
         escrowWallet: DEPOSIT_ESCROW_WALLET,
       },
-      note: "Please send Luna tokens to the escrow wallet. The system will verify the transaction.",
+      verified: true,
     });
   } catch (e) {
     console.error("[deposit] Deposit error:", e);
@@ -5291,7 +5352,80 @@ app.post("/luna/deposit", async (req, res) => {
 });
 
 /**
- * Get deposit status
+ * Get actual deposit balance from blockchain (escrow wallet)
+ * GET /luna/deposit/verify?wallet=wallet_address
+ */
+app.get("/luna/deposit/verify", async (req, res) => {
+  try {
+    const { wallet } = req.query || {};
+    
+    if (!wallet) {
+      return res.status(400).json({
+        ok: false,
+        error: "Invalid request",
+        message: "wallet is required",
+      });
+    }
+    
+    const mint = process.env.LUNA_TOKEN_MINT || "CbB4ivri6wLfqx4NwrWY3ArD7mXv1e91HeYeq3KBpump";
+    const mintPublicKey = new PublicKey(mint);
+    const escrowPublicKey = new PublicKey(DEPOSIT_ESCROW_WALLET);
+    
+    // Get associated token account for escrow wallet
+    const escrowTokenAccount = getAssociatedTokenAddressSync(mintPublicKey, escrowPublicKey);
+    
+    // Check balance from blockchain
+    const rpcUrl = process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com";
+    const connection = new Connection(rpcUrl, "confirmed");
+    
+    try {
+      const tokenAccountInfo = await connection.getParsedAccountInfo(escrowTokenAccount);
+      
+      if (!tokenAccountInfo.value) {
+        return res.json({
+          ok: true,
+          verified: false,
+          actualBalance: 0,
+          message: "Escrow token account not found or empty",
+        });
+      }
+      
+      const parsedInfo = tokenAccountInfo.value.data?.parsed?.info;
+      const actualBalance = parsedInfo?.tokenAmount?.uiAmount || 0;
+      
+      // Get database deposit amount for comparison
+      const deposit = await getActiveDeposit(wallet);
+      const dbAmount = deposit ? deposit.deposit_amount : 0;
+      
+      return res.json({
+        ok: true,
+        verified: true,
+        actualBalance: actualBalance,
+        dbAmount: dbAmount,
+        escrowWallet: DEPOSIT_ESCROW_WALLET,
+        escrowTokenAccount: escrowTokenAccount.toString(),
+        match: Math.abs(actualBalance - dbAmount) < 0.01, // Allow small rounding differences
+      });
+    } catch (rpcError) {
+      console.error("[deposit] RPC error checking escrow balance:", rpcError);
+      return res.status(500).json({
+        ok: false,
+        error: rpcError.message,
+        message: "Failed to verify deposit from blockchain",
+      });
+    }
+  } catch (e) {
+    console.error("[deposit] Verify deposit error:", e);
+    res.status(500).json({
+      ok: false,
+      error: e.message,
+      message: "Failed to verify deposit",
+    });
+  }
+});
+
+/**
+ * Get deposit status (with real-time verification)
  * GET /luna/deposit/status?wallet=wallet_address
  */
 app.get("/luna/deposit/status", async (req, res) => {
@@ -5316,6 +5450,29 @@ app.get("/luna/deposit/status", async (req, res) => {
       });
     }
     
+    // Verify actual balance from blockchain
+    let actualBalance = null;
+    let verified = false;
+    try {
+      const mint = process.env.LUNA_TOKEN_MINT || "CbB4ivri6wLfqx4NwrWY3ArD7mXv1e91HeYeq3KBpump";
+      const mintPublicKey = new PublicKey(mint);
+      const escrowPublicKey = new PublicKey(DEPOSIT_ESCROW_WALLET);
+      const escrowTokenAccount = getAssociatedTokenAddressSync(mintPublicKey, escrowPublicKey);
+      
+      const rpcUrl = process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com";
+      const connection = new Connection(rpcUrl, "confirmed");
+      const tokenAccountInfo = await connection.getParsedAccountInfo(escrowTokenAccount);
+      
+      if (tokenAccountInfo.value) {
+        const parsedInfo = tokenAccountInfo.value.data?.parsed?.info;
+        actualBalance = parsedInfo?.tokenAmount?.uiAmount || 0;
+        verified = true;
+      }
+    } catch (verifyError) {
+      console.warn("[deposit] Could not verify balance from blockchain:", verifyError.message);
+      // Continue with DB amount if verification fails
+    }
+    
     const now = Date.now();
     const depositDate = deposit.deposit_date;
     const daysSinceDeposit = (now - depositDate) / (1000 * 60 * 60 * 24);
@@ -5326,6 +5483,8 @@ app.get("/luna/deposit/status", async (req, res) => {
       hasDeposit: true,
       deposit: {
         amount: deposit.deposit_amount,
+        actualBalance: actualBalance, // Real balance from blockchain
+        verified: verified,
         depositDate: depositDate,
         daysSinceDeposit: Math.floor(daysSinceDeposit * 100) / 100,
         feePercentage: feePercentage,

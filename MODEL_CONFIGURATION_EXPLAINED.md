@@ -78,3 +78,4 @@ FALLBACK_MODEL=openai/gpt-4o-mini
 - `FALLBACK_MODEL` ควรเป็น model ที่ถูกกว่าและเร็วกว่า (ใช้เมื่อ model หลักล้มเหลว)
 
 
+

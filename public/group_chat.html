@@ -378,8 +378,11 @@
       box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
     }
 
-    .btn.hidden {
-      display: none;
+    .btn.hidden,
+    .hidden {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
     }
 
     .group-chat-container {
@@ -746,10 +749,53 @@
       display: none !important;
     }
 
-    /* Neon Toggle Button */
-    #neonToggle {
+    /* Wallet Connect Button (Fixed Position - Top Right) */
+    #walletConnectFixed {
       position: fixed;
       top: 40px;
+      right: 20px;
+      z-index: 99999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: flex-end;
+    }
+
+    #walletConnectFixed .wallet-btn {
+      background: rgba(0, 0, 0, 0.9);
+      border: 2px solid #00ffff;
+      color: #00ffff;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      transition: all 0.3s;
+      backdrop-filter: blur(5px);
+      white-space: nowrap;
+    }
+
+    #walletConnectFixed .wallet-btn:hover {
+      background: rgba(0, 255, 255, 0.2);
+      box-shadow: 0 0 10px #00ffff;
+    }
+
+    #walletConnectFixed .wallet-info {
+      background: rgba(0, 0, 0, 0.9);
+      border: 1px solid #00ffff;
+      color: #00ffff;
+      padding: 8px 15px;
+      border-radius: 8px;
+      font-size: 0.85em;
+      backdrop-filter: blur(5px);
+      max-width: 250px;
+      word-break: break-all;
+    }
+
+    /* Neon Toggle Button (Bottom Right - Replaces Chat) */
+    #neonToggle {
+      position: fixed;
+      bottom: 20px;
       right: 20px;
       z-index: 99999;
       background: rgba(0, 0, 0, 0.9);
@@ -822,6 +868,14 @@
     <a href="/rps_history.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">📜 Match History</a>
   </div>
 
+  <!-- Fixed Wallet Connect (Top Right) -->
+  <div id="walletConnectFixed">
+    <button id="connectWalletBtnFixed" class="wallet-btn">🔗 Connect Phantom Wallet</button>
+    <button id="disconnectWalletBtnFixed" class="wallet-btn disconnect-btn hidden">🔌 Disconnect / Change Wallet</button>
+    <div id="walletInfoFixed" class="wallet-info hidden"></div>
+  </div>
+
+  <!-- Neon Toggle Button (Below Wallet) -->
   <button id="neonToggle" title="Toggle Neon Effects">💡 Neon: ON</button>
 
   <div class="container">
@@ -832,14 +886,14 @@
       <p>Chat with Luna Community members</p>
     </div>
 
-    <div class="balance-requirement" id="balanceRequirement">
+    <div class="balance-requirement" id="balanceRequirement" style="display: none;">
       <h3>⚠️ Minimum Balance Required: 100,000 Luna</h3>
       <p>You need at least 100,000 Luna to send messages in Group Chat</p>
       <div style="margin-top: 15px;">
         <button id="connectWalletBtn" class="btn" style="padding: 12px 24px; background: rgba(0, 255, 255, 0.1); border: 2px solid #00ffff; border-radius: 8px; color: #00ffff; cursor: pointer; font-family: 'Courier New', monospace; font-size: 1rem;">🔗 Connect Phantom Wallet</button>
         <button id="disconnectWalletBtn" class="btn hidden" style="padding: 12px 24px; background: rgba(255, 0, 0, 0.1); border: 2px solid #ff6b6b; border-radius: 8px; color: #ff6b6b; cursor: pointer; font-family: 'Courier New', monospace; font-size: 1rem; margin-left: 10px;">🔌 Disconnect</button>
       </div>
-      <div class="balance-info" id="balanceInfo">Please connect Wallet to check balance</div>
+      <div class="balance-info" id="balanceInfo" style="display: none;"></div>
     </div>
 
     <div class="group-chat-container">
@@ -923,12 +977,13 @@
       referralManager.createUI = function() {}; // Disable referral
     }
 
-    // Initialize
-    document.addEventListener('DOMContentLoaded', () => {
+    // Initialize function
+    function initializePage() {
+      console.log('[Group Chat] Initializing page...');
       initWalletButtons();
+      initNeonToggle();
       connectWebSocket();
       loadMessages();
-      initNeonToggle();
       
       // Remove any existing notification/chat/referral elements
       const notificationBtn = document.getElementById('notification-btn');
@@ -950,14 +1005,27 @@
           }
         });
       }
-    });
+    }
+    
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initializePage);
+    } else {
+      // DOM is already ready
+      initializePage();
+    }
 
     // Initialize Neon Toggle
     function initNeonToggle() {
       const neonToggle = document.getElementById('neonToggle');
       const body = document.body;
       
-      if (!neonToggle) return;
+      if (!neonToggle) {
+        console.error('[Group Chat] Neon toggle button not found');
+        return;
+      }
+      
+      console.log('[Group Chat] Initializing neon toggle');
       
       // Load saved preference
       const neonEnabled = localStorage.getItem('neonEnabled') !== 'false';
@@ -970,47 +1038,92 @@
         neonToggle.textContent = '💡 Neon: ON';
       }
       
-      neonToggle.addEventListener('click', () => {
+      // Remove any existing event listeners by cloning the element
+      const newNeonToggle = neonToggle.cloneNode(true);
+      neonToggle.parentNode.replaceChild(newNeonToggle, neonToggle);
+      
+      // Add click event listener
+      newNeonToggle.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('[Group Chat] Neon toggle clicked');
         const isOff = body.classList.contains('neon-off');
         
         if (isOff) {
           body.classList.remove('neon-off');
-          neonToggle.textContent = '💡 Neon: ON';
+          newNeonToggle.textContent = '💡 Neon: ON';
           localStorage.setItem('neonEnabled', 'true');
         } else {
           body.classList.add('neon-off');
-          neonToggle.textContent = '💡 Neon: OFF';
+          newNeonToggle.textContent = '💡 Neon: OFF';
           localStorage.setItem('neonEnabled', 'false');
         }
       });
+      
+      console.log('[Group Chat] Neon toggle initialized');
     }
 
     // Initialize wallet connection buttons
     function initWalletButtons() {
+      // Ensure disconnect button and wallet info are hidden on page load
+      const disconnectWalletBtnFixed = document.getElementById('disconnectWalletBtnFixed');
+      const walletInfoFixed = document.getElementById('walletInfoFixed');
+      if (disconnectWalletBtnFixed) {
+        disconnectWalletBtnFixed.classList.add('hidden');
+        disconnectWalletBtnFixed.style.display = 'none';
+        disconnectWalletBtnFixed.style.visibility = 'hidden';
+        disconnectWalletBtnFixed.style.opacity = '0';
+      }
+      if (walletInfoFixed) {
+        walletInfoFixed.classList.add('hidden');
+        walletInfoFixed.style.display = 'none';
+        walletInfoFixed.style.visibility = 'hidden';
+        walletInfoFixed.style.opacity = '0';
+      }
+      
       const connectBtn = document.getElementById('connectWalletBtn');
       const disconnectBtn = document.getElementById('disconnectWalletBtn');
+      const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
       
-      if (!connectBtn) return;
-      
-      // Check if Phantom wallet is available
-      if (typeof window.solana === 'undefined' || !window.solana.isPhantom) {
-        connectBtn.textContent = '⚠️ Phantom Wallet Not Found';
-        connectBtn.disabled = true;
-        connectBtn.style.cursor = 'not-allowed';
-        connectBtn.onclick = () => {
-          alert('Please install Phantom wallet extension!\n\nDownload: https://phantom.app/');
-        };
-        showWalletRequired();
+      // Check if at least one connect button exists
+      if (!connectBtn && !connectBtnFixed) {
+        console.error('[Group Chat] No connect button found');
         return;
       }
       
-      // Check if already connected
-      if (window.solana.isConnected) {
-        window.solana.publicKey && handleWalletConnected(window.solana.publicKey.toString());
+      // Check if Phantom wallet is available
+      if (typeof window.solana === 'undefined' || !window.solana.isPhantom) {
+        const noWalletMessage = '⚠️ Phantom Wallet Not Found';
+        if (connectBtn) {
+          connectBtn.textContent = noWalletMessage;
+          connectBtn.disabled = true;
+          connectBtn.style.cursor = 'not-allowed';
+          connectBtn.onclick = () => {
+            alert('Please install Phantom wallet extension!\n\nDownload: https://phantom.app/');
+          };
+        }
+        if (connectBtnFixed) {
+          connectBtnFixed.textContent = noWalletMessage;
+          connectBtnFixed.disabled = true;
+          connectBtnFixed.style.cursor = 'not-allowed';
+          connectBtnFixed.onclick = () => {
+            alert('Please install Phantom wallet extension!\n\nDownload: https://phantom.app/');
+          };
+        }
+        // Hide balance requirement box if wallet not found
+        const balanceRequirement = document.getElementById('balanceRequirement');
+        if (balanceRequirement) {
+          balanceRequirement.style.display = 'none';
+        }
+        return;
       }
       
-      // Connect button
-      connectBtn.onclick = async () => {
+      // Don't auto-show disconnect button even if wallet is already connected
+      // User must click Connect button first to show Disconnect button
+      // This ensures Disconnect only appears after explicit Connect action
+      
+      // Connect button handler
+      const connectHandler = async () => {
         try {
           const response = await window.solana.connect();
           handleWalletConnected(response.publicKey.toString());
@@ -1020,16 +1133,30 @@
         }
       };
       
-      // Disconnect button
+      // Set up event listeners for both buttons
+      if (connectBtn) {
+        connectBtn.onclick = connectHandler;
+      }
+      if (connectBtnFixed) {
+        connectBtnFixed.onclick = connectHandler;
+      }
+      
+      // Disconnect button (both fixed and container)
+      const disconnectHandler = async () => {
+        try {
+          await window.solana.disconnect();
+          handleWalletDisconnected();
+        } catch (error) {
+          console.error('Wallet disconnect error:', error);
+        }
+      };
+      
       if (disconnectBtn) {
-        disconnectBtn.onclick = async () => {
-          try {
-            await window.solana.disconnect();
-            handleWalletDisconnected();
-          } catch (error) {
-            console.error('Wallet disconnect error:', error);
-          }
-        };
+        disconnectBtn.onclick = disconnectHandler;
+      }
+      // Use the disconnectWalletBtnFixed that was already declared at the top of the function
+      if (disconnectWalletBtnFixed) {
+        disconnectWalletBtnFixed.onclick = disconnectHandler;
       }
       
       // Listen for wallet disconnect
@@ -1040,12 +1167,18 @@
 
     // Handle wallet connected
     function handleWalletConnected(publicKey) {
+      console.log('[Group Chat] Wallet connected:', publicKey);
       walletPublicKey = publicKey;
       walletConnected = true;
       username = walletPublicKey.substring(0, 8) + '...';
       
+      // Update both fixed and container buttons
       const connectBtn = document.getElementById('connectWalletBtn');
       const disconnectBtn = document.getElementById('disconnectWalletBtn');
+      const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
+      const disconnectWalletBtnFixed = document.getElementById('disconnectWalletBtnFixed');
+      const walletInfoFixed = document.getElementById('walletInfoFixed');
+      const balanceRequirement = document.getElementById('balanceRequirement');
       
       if (connectBtn) {
         connectBtn.classList.add('hidden');
@@ -1053,8 +1186,38 @@
       if (disconnectBtn) {
         disconnectBtn.classList.remove('hidden');
       }
+      if (connectBtnFixed) {
+        connectBtnFixed.classList.add('hidden');
+      }
+      if (disconnectWalletBtnFixed) {
+        disconnectWalletBtnFixed.classList.remove('hidden');
+        disconnectWalletBtnFixed.style.display = '';
+        disconnectWalletBtnFixed.style.visibility = '';
+        disconnectWalletBtnFixed.style.opacity = '';
+      }
       
-      // Check balance
+      // Hide balance requirement box
+      if (balanceRequirement) {
+        balanceRequirement.style.display = 'none';
+      }
+      
+      // Show wallet info in fixed position (like image 2)
+      if (walletInfoFixed) {
+        const shortWallet = walletPublicKey.length > 16 
+          ? `${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}`
+          : walletPublicKey;
+        walletInfoFixed.innerHTML = `
+          <div><strong>Connected:</strong> ${shortWallet}</div>
+          <div><strong>Balance:</strong> <span id="walletBalanceFixed">Checking...</span> Luna</div>
+        `;
+        walletInfoFixed.classList.remove('hidden');
+        walletInfoFixed.style.display = '';
+        walletInfoFixed.style.visibility = '';
+        walletInfoFixed.style.opacity = '';
+      }
+      
+      // Check balance (this will update the wallet balance display)
+      console.log('[Group Chat] Calling checkBalance()...');
       checkBalance();
     }
 
@@ -1065,8 +1228,12 @@
       username = null;
       currentBalance = 0;
       
+      // Update both fixed and container buttons
       const connectBtn = document.getElementById('connectWalletBtn');
       const disconnectBtn = document.getElementById('disconnectWalletBtn');
+      const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
+      const disconnectWalletBtnFixed = document.getElementById('disconnectWalletBtnFixed');
+      const walletInfoFixed = document.getElementById('walletInfoFixed');
       
       if (connectBtn) {
         connectBtn.classList.remove('hidden');
@@ -1074,53 +1241,93 @@
       if (disconnectBtn) {
         disconnectBtn.classList.add('hidden');
       }
+      if (connectBtnFixed) {
+        connectBtnFixed.classList.remove('hidden');
+      }
+      if (disconnectWalletBtnFixed) {
+        disconnectWalletBtnFixed.classList.add('hidden');
+      }
+      if (walletInfoFixed) {
+        walletInfoFixed.classList.add('hidden');
+      }
       
       showWalletRequired();
     }
 
     // Check Luna balance
     async function checkBalance() {
+      console.log('[Group Chat] checkBalance() called');
       const balanceRequirement = document.getElementById('balanceRequirement');
       const balanceInfo = document.getElementById('balanceInfo');
       const input = document.getElementById('groupChatInput');
       const sendBtn = document.getElementById('group-chat-send-btn');
 
       if (!walletConnected || !walletPublicKey) {
-        balanceInfo.textContent = 'Please connect Wallet';
+        console.log('[Group Chat] Wallet not connected, returning');
+        // Hide balance requirement box if wallet not connected
+        if (balanceRequirement) {
+          balanceRequirement.style.display = 'none';
+        }
         return;
       }
 
+      console.log('[Group Chat] Checking balance for wallet:', walletPublicKey);
+      
+      // Hide balance requirement box (we show wallet info instead)
+      if (balanceRequirement) {
+        balanceRequirement.style.display = 'none';
+      }
+
       try {
+        console.log('[Group Chat] Fetching balance from:', `${API_BASE}/luna/rps/balance?wallet=${walletPublicKey}`);
         const response = await fetch(`${API_BASE}/luna/rps/balance?wallet=${walletPublicKey}`);
         const data = await response.json();
+        
+        console.log('[Group Chat] Balance response:', data);
         
         if (!data.ok) {
           throw new Error(data.error || 'Failed to check balance');
         }
         
         currentBalance = data.balance || 0;
+        console.log('[Group Chat] Current balance:', currentBalance);
+        
+        // Update wallet balance in fixed wallet info (like image 2)
+        const walletBalanceFixed = document.getElementById('walletBalanceFixed');
+        if (walletBalanceFixed) {
+          walletBalanceFixed.textContent = formatNumber(currentBalance);
+        }
+        
+        // Hide balance requirement box (show wallet info instead)
+        if (balanceRequirement) {
+          balanceRequirement.style.display = 'none';
+        }
         
         if (currentBalance >= MIN_BALANCE_REQUIRED) {
-          balanceRequirement.classList.add('success');
-          balanceRequirement.querySelector('h3').textContent = '✅ Balance Sufficient';
-          balanceRequirement.querySelector('p').textContent = 'You can now send messages in Group Chat';
-          balanceInfo.textContent = `Current balance: ${formatNumber(currentBalance)} Luna`;
+          console.log('[Group Chat] Balance sufficient, enabling chat');
           
-          if (input) input.disabled = false;
+          if (input) {
+            input.disabled = false;
+            input.placeholder = 'Type a message... (or use /help for commands)';
+          }
           if (sendBtn) sendBtn.disabled = false;
-          if (input) input.placeholder = 'Type a message... (or use /help for commands)';
         } else {
-          balanceRequirement.classList.remove('success');
-          balanceRequirement.querySelector('h3').textContent = '⚠️ Insufficient Balance';
-          balanceRequirement.querySelector('p').textContent = `You need at least ${formatNumber(MIN_BALANCE_REQUIRED)} Luna to send messages`;
-          balanceInfo.textContent = `Current balance: ${formatNumber(currentBalance)} Luna (Required: ${formatNumber(MIN_BALANCE_REQUIRED)} Luna)`;
+          console.log('[Group Chat] Balance insufficient');
           
           if (input) input.disabled = true;
           if (sendBtn) sendBtn.disabled = true;
         }
       } catch (error) {
-        console.error('Balance check error:', error);
-        balanceInfo.textContent = `❌ Error: ${error.message}`;
+        console.error('[Group Chat] Balance check error:', error);
+        // Hide balance requirement box on error too
+        if (balanceRequirement) {
+          balanceRequirement.style.display = 'none';
+        }
+        // Update wallet info with error
+        const walletBalanceFixed = document.getElementById('walletBalanceFixed');
+        if (walletBalanceFixed) {
+          walletBalanceFixed.textContent = 'Error';
+        }
         if (input) input.disabled = true;
         if (sendBtn) sendBtn.disabled = true;
       }
@@ -1132,12 +1339,10 @@
       const input = document.getElementById('groupChatInput');
       const sendBtn = document.getElementById('group-chat-send-btn');
 
-      balanceRequirement.classList.remove('success');
-      const h3 = balanceRequirement.querySelector('h3');
-      const p = balanceRequirement.querySelector('p');
-      if (h3) h3.textContent = '⚠️ Wallet Connection Required';
-      if (p) p.textContent = 'Please connect Phantom Wallet to use Group Chat';
-      if (balanceInfo) balanceInfo.textContent = 'Wallet not connected';
+      // Hide balance requirement box instead of showing error messages
+      if (balanceRequirement) {
+        balanceRequirement.style.display = 'none';
+      }
       
       if (input) {
         input.disabled = true;

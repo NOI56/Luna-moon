@@ -4,9 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Luna Rock Paper Scissors - Betting Mode</title>
-  <link rel="stylesheet" href="/css/notifications.css">
-  <link rel="stylesheet" href="/css/referral.css">
-  <link rel="stylesheet" href="/css/chat.css">
   <style>
     * {
       margin: 0;
@@ -1104,14 +1101,6 @@
           if (typeof notificationManager !== 'undefined') {
             notificationManager.init(walletPublicKey);
           }
-          if (typeof referralManager !== 'undefined') {
-            referralManager.init(walletPublicKey);
-            referralManager.createUI();
-          }
-          if (typeof chatManager !== 'undefined') {
-            chatManager.init(walletPublicKey);
-            chatManager.createUI('betting_lobby', 'lobby');
-          }
         } catch (err) {
           console.error('[Betting] Wallet connection error:', err);
           alert('Failed to connect wallet: ' + err.message);
@@ -1731,10 +1720,6 @@
           const feeInSol = calculateFee(betAmount);
           alert(`Joined room! Game starting...\n\nFee collected: ${formatSol(feeInSol)} SOL (1% of ${formatSol(lunaToSol(betAmount))} SOL)`);
           
-          // Initialize chat for this room
-          if (typeof chatManager !== 'undefined' && walletPublicKey) {
-            chatManager.createUI(`betting_room_${roomId}`, 'betting');
-          }
           
           startGame();
         } else {
@@ -1816,10 +1801,6 @@
           document.getElementById('feeDisplay').style.display = 'none';
           await loadRooms();
           
-          // Initialize chat for this room
-          if (typeof chatManager !== 'undefined' && walletPublicKey) {
-            chatManager.createUI(`betting_room_${data.roomId}`, 'betting');
-          }
         } else {
           alert('Failed to create room: ' + (data.message || 'Unknown error'));
         }
@@ -2577,9 +2558,6 @@
     }
 
   </script>
-  <script src="/js/notifications.js"></script>
-  <script src="/js/referral.js"></script>
-  <script src="/js/chat.js"></script>
   <script>
     // Initialize UI components when wallet connects
     function initializeUIComponents() {
@@ -2589,18 +2567,6 @@
           notificationManager.init(walletPublicKey);
         }
         
-        // Initialize Referral System
-        if (typeof referralManager !== 'undefined') {
-          referralManager.init(walletPublicKey);
-          referralManager.createUI();
-        }
-        
-        // Initialize Chat System for betting room
-        if (typeof chatManager !== 'undefined') {
-          chatManager.init(walletPublicKey);
-          // Create chat for betting lobby
-          chatManager.createUI('betting_lobby', 'lobby');
-        }
       }
     }
     
@@ -2614,43 +2580,27 @@
       return result;
     };
     
-    // Initialize UI components immediately (will work with or without wallet)
-    document.addEventListener('DOMContentLoaded', () => {
-      // Initialize Notification System (show button even without wallet)
-      if (typeof notificationManager !== 'undefined') {
-        notificationManager.createUI();
-        if (walletPublicKey) {
-          notificationManager.init(walletPublicKey);
-        }
-      }
-      
-      // Initialize Referral System (show UI even without wallet)
-      if (typeof referralManager !== 'undefined') {
-        referralManager.createUI();
-        if (walletPublicKey) {
-          referralManager.init(walletPublicKey);
-        }
-      }
-      
-      // Initialize Chat System (show chat even without wallet)
-      if (typeof chatManager !== 'undefined') {
-        chatManager.init(walletPublicKey || null);
-        chatManager.createUI('betting_lobby', 'lobby');
-      }
-    });
-    
-    // Also initialize if wallet already connected
-    if (walletPublicKey) {
-      setTimeout(() => {
-        initializeUIComponents();
-      }, 1000);
+    // Disable Notifications and Chat +
+    if (typeof notificationManager !== 'undefined') {
+      notificationManager.createUI = function() {}; // Disable notifications
+    }
+    if (typeof chatManager !== 'undefined') {
+      chatManager.createUI = function() {}; // Disable chat +
     }
     
-    // Initialize chat for specific betting room when room is created/joined
+    // Remove any existing notification/chat elements
+    document.addEventListener('DOMContentLoaded', () => {
+      const notificationBtn = document.getElementById('notification-btn');
+      const notificationPanel = document.getElementById('notification-panel');
+      const chatContainer = document.getElementById('chat-container');
+      if (notificationBtn) notificationBtn.remove();
+      if (notificationPanel) notificationPanel.remove();
+      if (chatContainer) chatContainer.remove();
+    });
+    
+    // Disable initializeRoomChat function
     window.initializeRoomChat = function(roomId) {
-      if (typeof chatManager !== 'undefined') {
-        chatManager.createUI(`betting_room_${roomId}`, 'betting');
-      }
+      // Disabled
     };
   </script>
 </body>

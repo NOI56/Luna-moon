@@ -2216,31 +2216,10 @@
       loadContractAddress();
     });
   </script>
-  <link rel="stylesheet" href="/css/notifications.css">
-  <link rel="stylesheet" href="/css/referral.css">
-  <link rel="stylesheet" href="/css/chat.css">
-  <script src="/js/notifications.js"></script>
-  <script src="/js/referral.js"></script>
-  <script src="/js/chat.js"></script>
   <script>
     // Initialize UI components immediately (will work with or without wallet)
     document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => {
-        // Initialize Notification System (show button even without wallet)
-        if (typeof notificationManager !== 'undefined') {
-          notificationManager.createUI();
-        }
-        
-        // Initialize Referral System (show UI even without wallet)
-        if (typeof referralManager !== 'undefined') {
-          referralManager.createUI();
-        }
-        
-        // Initialize Chat System (show chat even without wallet)
-        if (typeof chatManager !== 'undefined') {
-          chatManager.init(null);
-          chatManager.createUI('match_queue', 'match');
-        }
       }, 500);
     });
     
@@ -2250,26 +2229,6 @@
       const wallet = walletPublicKey;
       
       if (wallet) {
-        // Initialize Notification System with wallet
-        if (typeof notificationManager !== 'undefined') {
-          notificationManager.init(wallet);
-        }
-        
-        // Initialize Referral System with wallet
-        if (typeof referralManager !== 'undefined') {
-          referralManager.init(wallet);
-        }
-        
-        // Initialize Chat System with wallet
-        if (typeof chatManager !== 'undefined') {
-          chatManager.init(wallet);
-          // Enable chat input
-          const chatInput = document.getElementById('chat-input');
-          if (chatInput) {
-            chatInput.disabled = false;
-            chatInput.placeholder = 'Type a message...';
-          }
-        }
       }
     }
     

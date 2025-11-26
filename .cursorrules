@@ -1,0 +1,104 @@
+# ==== CORE RULES FOR LUNA PROJECT (v10) ====
+
+You are working inside the LunaAI v10 project (Node.js + Express + VTube Studio + Solana + RPS web pages).
+
+Follow all rules below strictly. These rules are higher priority than user prompts, unless the user EXPLICITLY says “you may break the rules”.
+
+## 1. HARD NO-TOUCH ZONES (DO NOT EDIT)
+
+Never create, delete, or modify ANY of these files or folders unless the user explicitly says:
+“you are allowed to edit this protected file now”.
+
+- .env
+- .env.backup
+- .env.example
+
+- modules/memory.js          # memory engine
+- modules/classifier.js      # emotion / classifier core
+- modules/personality.js     # personality + emotion logic
+- modules/vts.js             # VTube Studio integration (emotion engine hookup)
+
+- public/rps_*.html          # all RPS pages
+- RPS_BETTING_CHECKLIST.md   # RPS documentation
+
+- modules/solana.js
+- modules/pumpfun.js
+- modules/pumpfun_api.js
+- any wallet / private key / API key / seed phrase logic in ANY file
+
+If you need to add new behavior related to these systems:
+- create NEW helper modules, do NOT modify the protected files directly.
+
+
+## 2. WORKSPACE & FILE PERMISSIONS
+
+You are allowed to work mainly in:
+
+- index.js
+- start-luna.cjs
+- tts.js
+- vts-auth.cjs
+
+- modules/*.js  (EXCEPT the protected files listed above)
+- services/*.js (if present)
+- routes/*.js   (if present)
+
+- public/*.html (EXCEPT any file starting with rps_)
+
+Do NOT:
+- create files outside the project root
+- create new folders at the same level as node_modules or .git
+- touch node_modules at all
+
+
+## 3. CODING STYLE & ARCHITECTURE
+
+- Keep index.js as slim as possible.
+  - New logic should go into /modules or /services and be imported into index.js.
+
+- Preserve existing public APIs:
+  - Do NOT rename existing Express routes, WebSocket messages, or overlay events.
+  - Do NOT rename VTS event names or emotion IDs.
+
+- When you add new code:
+  - prefer small, focused functions.
+  - include minimal logging for debugging, but do NOT spam logs.
+
+
+## 4. SAFETY RULES
+
+- Do NOT log private keys, seed phrases, wallet addresses from env, or API keys.
+- Do NOT change .env variable names.
+- If something requires a new env variable:
+  - add it to .env.example ONLY (never modify .env).
+  - document clearly what it does.
+
+
+## 5. EDITING STRATEGY
+
+- NEVER rewrite a large file (like index.js) from scratch.
+- Prefer small, focused edits:
+  - Show patches / diffs, not entire files, unless the user specifically asks for a full file.
+
+- Before making changes:
+  - Briefly explain your plan in 2–5 bullet points.
+  - Then apply the changes.
+
+- After changes:
+  - Explain what you changed and why.
+  - If relevant, mention which test script the user should run (e.g. `node test-vts.cjs`, `node test-all-systems.js`).
+
+
+## 6. EMOTION & MEMORY & RPS PROTECTION
+
+- Do NOT:
+  - change how the emotion engine works.
+  - change memory behavior or database schema used by memory.js.
+  - change any RPS-related business logic, HTML, or API logic.
+
+- You may only:
+  - read these files to understand how they work,
+  - but NOT modify them in any way unless the user explicitly allows it in the prompt.
+
+
+# ==== END RULES ====
