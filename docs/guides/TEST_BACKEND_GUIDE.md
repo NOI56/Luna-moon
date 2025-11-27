@@ -29,7 +29,7 @@ npm run test:backend
 หรือ
 
 ```bash
-node test-backend-systems.js
+node tests/test-backend-systems.js
 ```
 
 ## สิ่งที่ทดสอบ
@@ -88,7 +88,7 @@ node test-backend-systems.js
 ถ้า server รันที่ port อื่น หรือ URL อื่น สามารถตั้งค่าได้:
 
 ```bash
-API_BASE=http://localhost:3000 node test-backend-systems.js
+API_BASE=http://localhost:3000 node tests/test-backend-systems.js
 ```
 
 ## Troubleshooting

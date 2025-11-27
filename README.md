@@ -121,7 +121,7 @@ cp env.example .env
 **สรุป:**
 - เปิด VTube Studio → Settings → API → Enable API
 - สร้าง Hotkeys 11 ตัว (ดูรายชื่อใน `VTS_SETUP_GUIDE.md`)
-- ขอ Authentication Token: `node vts-auth.cjs`
+- ขอ Authentication Token: `node scripts/vts/vts-auth.cjs`
 - ใส่ Token ใน `.env` ที่ `VTS_AUTH_TOKEN=...`
 
 ### 4. รัน Server
@@ -284,7 +284,7 @@ Server จะรันที่ `http://localhost:8787` (หรือ port ท�
 
 1. ตรวจสอบว่า VTube Studio เปิดอยู่
 2. ตรวจสอบว่า API เปิดอยู่ (Port 8001)
-3. รัน `node vts-auth.cjs` เพื่อขอ token ใหม่
+3. รัน `node scripts/vts/vts-auth.cjs` เพื่อขอ token ใหม่
 4. ใส่ token ใน `.env` ที่ `VTS_AUTH_TOKEN=...`
 5. Restart server
 
@@ -338,15 +338,32 @@ LunaAI_v10_Project/
 ### Testing
 
 ```bash
+# Run all unit tests
+npm test
+
+# Run unit tests only
+npm run test:unit
+
+# Run backend system tests
+npm run test:backend
+
+# Run all system tests
+npm run test:all
+
+# Run specific test file
+node --test tests/unit/classifier.test.js
+
 # Test VTS connection
-node test-vts.cjs
+node tests/test-vts.cjs
 
 # Test environment variables
-node test-env.cjs
+node tests/test-env.cjs
 
 # Get VTS auth token
-node vts-auth.cjs
+node scripts/vts/vts-auth.cjs
 ```
+
+**ดูคู่มือการทดสอบ:** `tests/README.md`
 
 ### Deployment
 
@@ -354,7 +371,7 @@ node vts-auth.cjs
 
 **PM2:**
 ```bash
-pm2 start ecosystem.config.cjs
+pm2 start configs/ecosystem.config.cjs
 pm2 save
 ```
 

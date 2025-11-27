@@ -32,7 +32,7 @@ AEyVVcA6eCfDoDPRcDDzLbUJ8gyXNxC6bp99dyyYFhbK
 
 1. **รันคำสั่ง:**
    ```bash
-   node generate-reward-wallet.js
+   node scripts/wallet/generate-reward-wallet.js
    ```
 
 2. **จะได้ Wallet ใหม่:**

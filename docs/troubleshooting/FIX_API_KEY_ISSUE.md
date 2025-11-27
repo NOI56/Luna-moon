@@ -47,7 +47,7 @@ Error: 401 {"error":{"message":"User not found.","code":401}}
 หลังจากอัปเดต API key แล้ว รัน:
 
 ```bash
-node test-api-connection.js
+node tests/test-api-connection.js
 ```
 
 ควรเห็น:

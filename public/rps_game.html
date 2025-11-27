@@ -645,10 +645,53 @@
       transform: scale(0.98) !important;
     }
 
-    /* Neon Toggle Button */
-    #neonToggle {
+    /* Wallet Connect Button (Fixed Position - Top Right) */
+    #walletConnectFixed {
       position: fixed;
       top: 40px;
+      right: 20px;
+      z-index: 99999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: flex-end;
+    }
+
+    #walletConnectFixed .wallet-btn {
+      background: rgba(0, 0, 0, 0.9);
+      border: 2px solid #00ffff;
+      color: #00ffff;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      transition: all 0.3s;
+      backdrop-filter: blur(5px);
+      white-space: nowrap;
+    }
+
+    #walletConnectFixed .wallet-btn:hover {
+      background: rgba(0, 255, 255, 0.2);
+      box-shadow: 0 0 10px #00ffff;
+    }
+
+    #walletConnectFixed .wallet-info {
+      background: rgba(0, 0, 0, 0.9);
+      border: 1px solid #00ffff;
+      color: #00ffff;
+      padding: 8px 15px;
+      border-radius: 8px;
+      font-size: 0.85em;
+      backdrop-filter: blur(5px);
+      max-width: 250px;
+      word-break: break-all;
+    }
+
+    /* Neon Toggle Button (Bottom Right) */
+    #neonToggle {
+      position: fixed;
+      bottom: 20px;
       right: 20px;
       z-index: 99999;
       background: rgba(0, 0, 0, 0.9);
@@ -854,6 +897,14 @@
       <a href="/rps_history.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">📜 Match History</a>
     </div>
 
+    <!-- Fixed Wallet Connect (Top Right) -->
+    <div id="walletConnectFixed">
+      <button id="connectWalletBtnFixed" class="wallet-btn">🔗 Connect Phantom Wallet</button>
+      <button id="disconnectWalletBtnFixed" class="wallet-btn disconnect-btn hidden">🔌 Disconnect / Change Wallet</button>
+      <div id="walletInfoFixed" class="wallet-info hidden"></div>
+    </div>
+
+    <!-- Neon Toggle Button (Bottom Right) -->
     <button id="neonToggle" title="Toggle Neon Effects">💡 Neon: ON</button>
 
     <div class="game-container">
@@ -886,7 +937,7 @@
       </a>
     </div>
 
-    <div id="walletConnect" class="wallet-connect">
+    <div id="walletConnect" class="wallet-connect" style="display: none;">
       <button id="connectWalletBtn" class="wallet-btn">🔗 Connect Phantom Wallet</button>
       <button id="disconnectWalletBtn" class="wallet-btn disconnect-btn hidden">🔌 Disconnect / Change Wallet</button>
       <div id="walletInfo" class="wallet-info hidden"></div>
@@ -1066,6 +1117,199 @@
       setupEventListeners();
       setupMatchSystem();
       initializeHands();
+      
+      // Check if wallet already connected OR has valid signature (like pump.fun)
+      const storedSignature = localStorage.getItem('walletSignature');
+      
+      if (window.solana && window.solana.isPhantom) {
+        // Case 1: Wallet is already connected
+        if (window.solana.isConnected && window.solana.publicKey) {
+          const currentWallet = window.solana.publicKey.toString();
+          
+          if (storedSignature) {
+            try {
+              const sigData = JSON.parse(storedSignature);
+              
+              // Verify signature is for current wallet
+              if (sigData.publicKey === currentWallet) {
+                console.log('[Game] ✅ Persistent connection found - using existing authenticated connection');
+              } else {
+                console.log('[Game] Signature wallet mismatch - clearing signature');
+                localStorage.removeItem('walletSignature');
+              }
+            } catch (err) {
+              console.error('[Game] Error checking signature:', err);
+              localStorage.removeItem('walletSignature');
+            }
+          }
+          
+          // Update UI if needed
+          const connectBtn = document.getElementById('connectWalletBtn');
+          const disconnectBtn = document.getElementById('disconnectWalletBtn');
+          const walletInfo = document.getElementById('walletInfo');
+          const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
+          const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
+          const walletInfoFixed = document.getElementById('walletInfoFixed');
+          
+          walletPublicKey = currentWallet;
+          walletConnected = true;
+          
+          if (connectBtn) connectBtn.classList.add('hidden');
+          if (disconnectBtn) disconnectBtn.classList.remove('hidden');
+          if (walletInfo) {
+            walletInfo.textContent = `Wallet: ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}`;
+            walletInfo.classList.remove('hidden');
+          }
+          
+          if (connectBtnFixed) connectBtnFixed.classList.add('hidden');
+          if (disconnectBtnFixed) {
+            disconnectBtnFixed.classList.remove('hidden');
+            disconnectBtnFixed.style.display = '';
+            disconnectBtnFixed.style.visibility = '';
+            disconnectBtnFixed.style.opacity = '';
+          }
+          if (walletInfoFixed) {
+            walletInfoFixed.innerHTML = `
+              <div><strong>Connected:</strong> ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}</div>
+              <div><strong>Balance:</strong> <span id="balanceDisplayFixed">Checking...</span> Luna</div>
+            `;
+            walletInfoFixed.classList.remove('hidden');
+            walletInfoFixed.style.display = '';
+            walletInfoFixed.style.visibility = '';
+            walletInfoFixed.style.opacity = '';
+          }
+          
+          await checkLunaBalance();
+          startBalanceUpdate();
+          
+          // Update fixed balance display
+          const balanceDisplayFixed = document.getElementById('balanceDisplayFixed');
+          if (balanceDisplayFixed) {
+            balanceDisplayFixed.textContent = formatNumber(playerBalance);
+          }
+        }
+        // Case 2: Wallet not connected but has valid signature - reconnect automatically (like pump.fun)
+        else if (storedSignature && !window.solana.isConnected) {
+          try {
+            const sigData = JSON.parse(storedSignature);
+            console.log('[Game] ✅ Valid signature found - reconnecting automatically (like pump.fun)...');
+            
+            // Try to reconnect silently first
+            let response;
+            try {
+              response = await window.solana.connect({ onlyIfTrusted: true });
+            } catch (silentErr) {
+              // If silent connect fails, try normal connect (may show popup)
+              console.log('[Game] Silent connect failed, trying normal connect...');
+              response = await window.solana.connect({ onlyIfTrusted: false });
+            }
+            
+            if (response && response.publicKey) {
+              const currentWallet = response.publicKey.toString();
+              
+              // Verify signature is for reconnected wallet
+              if (sigData.publicKey === currentWallet) {
+                console.log('[Game] ✅ Auto-reconnected with valid signature');
+                walletPublicKey = currentWallet;
+                walletConnected = true;
+                
+                // Update UI
+                const connectBtn = document.getElementById('connectWalletBtn');
+                const disconnectBtn = document.getElementById('disconnectWalletBtn');
+                const walletInfo = document.getElementById('walletInfo');
+                const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
+                const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
+                const walletInfoFixed = document.getElementById('walletInfoFixed');
+                
+                if (connectBtn) connectBtn.classList.add('hidden');
+                if (disconnectBtn) disconnectBtn.classList.remove('hidden');
+                if (walletInfo) {
+                  walletInfo.textContent = `Wallet: ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}`;
+                  walletInfo.classList.remove('hidden');
+                }
+                
+                if (connectBtnFixed) connectBtnFixed.classList.add('hidden');
+                if (disconnectBtnFixed) {
+                  disconnectBtnFixed.classList.remove('hidden');
+                  disconnectBtnFixed.style.display = '';
+                  disconnectBtnFixed.style.visibility = '';
+                  disconnectBtnFixed.style.opacity = '';
+                }
+                if (walletInfoFixed) {
+                  walletInfoFixed.innerHTML = `
+                    <div><strong>Connected:</strong> ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}</div>
+                    <div><strong>Balance:</strong> <span id="balanceDisplayFixed">Checking...</span> Luna</div>
+                  `;
+                  walletInfoFixed.classList.remove('hidden');
+                  walletInfoFixed.style.display = '';
+                  walletInfoFixed.style.visibility = '';
+                  walletInfoFixed.style.opacity = '';
+                }
+                
+                await checkLunaBalance();
+                startBalanceUpdate();
+                
+                // Update fixed balance display
+                const balanceDisplayFixed = document.getElementById('balanceDisplayFixed');
+                if (balanceDisplayFixed) {
+                  balanceDisplayFixed.textContent = formatNumber(playerBalance);
+                }
+              } else {
+                console.log('[Game] Signature wallet mismatch after reconnect - clearing signature');
+                localStorage.removeItem('walletSignature');
+                // Still connect but without signature
+                walletPublicKey = currentWallet;
+                walletConnected = true;
+                
+                // Update UI
+                const connectBtn = document.getElementById('connectWalletBtn');
+                const disconnectBtn = document.getElementById('disconnectWalletBtn');
+                const walletInfo = document.getElementById('walletInfo');
+                const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
+                const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
+                const walletInfoFixed = document.getElementById('walletInfoFixed');
+                
+                if (connectBtn) connectBtn.classList.add('hidden');
+                if (disconnectBtn) disconnectBtn.classList.remove('hidden');
+                if (walletInfo) {
+                  walletInfo.textContent = `Wallet: ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}`;
+                  walletInfo.classList.remove('hidden');
+                }
+                
+                if (connectBtnFixed) connectBtnFixed.classList.add('hidden');
+                if (disconnectBtnFixed) {
+                  disconnectBtnFixed.classList.remove('hidden');
+                  disconnectBtnFixed.style.display = '';
+                  disconnectBtnFixed.style.visibility = '';
+                  disconnectBtnFixed.style.opacity = '';
+                }
+                if (walletInfoFixed) {
+                  walletInfoFixed.innerHTML = `
+                    <div><strong>Connected:</strong> ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}</div>
+                    <div><strong>Balance:</strong> <span id="balanceDisplayFixed">Checking...</span> Luna</div>
+                  `;
+                  walletInfoFixed.classList.remove('hidden');
+                  walletInfoFixed.style.display = '';
+                  walletInfoFixed.style.visibility = '';
+                  walletInfoFixed.style.opacity = '';
+                }
+                
+                await checkLunaBalance();
+                startBalanceUpdate();
+                
+                // Update fixed balance display
+                const balanceDisplayFixed = document.getElementById('balanceDisplayFixed');
+                if (balanceDisplayFixed) {
+                  balanceDisplayFixed.textContent = formatNumber(playerBalance);
+                }
+              }
+            }
+          } catch (err) {
+            console.warn('[Game] Auto-reconnect failed:', err);
+            // Don't clear signature - user might want to connect manually
+          }
+        }
+      }
     });
 
     // WebSocket connection for real-time updates
@@ -1660,8 +1904,14 @@
       const scissorsBtn = document.getElementById('scissorsBtn');
       
       // Set default hands (use fist)
-      playerHand.appendChild(getHandDisplay('rock'));
-      lunaHand.appendChild(getHandDisplay('rock'));
+      if (playerHand) {
+        playerHand.innerHTML = ''; // Clear existing content
+        playerHand.appendChild(getHandDisplay('rock'));
+      }
+      if (lunaHand) {
+        lunaHand.innerHTML = ''; // Clear existing content
+        lunaHand.appendChild(getHandDisplay('rock'));
+      }
       
       // Set button images (use hand images)
       if (rockBtn) {
@@ -1710,36 +1960,195 @@
       connectBtn.style.cursor = 'pointer';
       
       // Connect button
-      connectBtn.addEventListener('click', async () => {
+      const connectHandler = async () => {
         try {
+          console.log('[Game] Connect button clicked');
+          
           // Check if Phantom is installed
           if (!window.solana || !window.solana.isPhantom) {
-            alert('Please install Phantom wallet extension!\n\nDownload: https://phantom.app/');
+            alert('⚠️ Phantom wallet not found!\n\nPlease install Phantom wallet extension:\nhttps://phantom.app/\n\nAfter installing, refresh this page.');
             return;
           }
-
-          // Connect to Phantom
-          const response = await window.solana.connect();
+          
+          // Additional check: verify Phantom is ready
+          if (typeof window.solana.connect !== 'function') {
+            alert('⚠️ Phantom wallet extension is not ready!\n\nPlease:\n1. Make sure Phantom wallet is unlocked\n2. Refresh this page\n3. Try again');
+            return;
+          }
+          
+          // ALWAYS disconnect first to force popup (even if not connected)
+          console.log('[Game] Disconnecting wallet first to force popup...');
+          try {
+            if (window.solana.isConnected) {
+              await window.solana.disconnect();
+              console.log('[Game] Wallet disconnected');
+            }
+            // Wait briefly to ensure disconnect is complete (reduced from 2000ms to 300ms for faster popup)
+            console.log('[Game] Waiting 300ms to clear cached connection...');
+            await new Promise(resolve => setTimeout(resolve, 300));
+          } catch (disconnectErr) {
+            console.warn('[Game] Error during disconnect (may not be connected):', disconnectErr);
+            // Still wait even if disconnect fails
+            await new Promise(resolve => setTimeout(resolve, 300));
+          }
+          
+          console.log('[Game] Connecting to Phantom wallet...');
+          console.log('[Game] ⚠️ POPUP SHOULD APPEAR NOW! ⚠️');
+          console.log('[Game] If popup does NOT appear:');
+          console.log('[Game] 1. Phantom wallet may have auto-connect enabled');
+          console.log('[Game] 2. Go to Phantom wallet settings → Trusted Apps → Remove this site');
+          console.log('[Game] 3. Or click Phantom wallet icon in browser toolbar manually');
+          console.log('[Game] 4. Check browser popup blocker settings');
+          
+          // Step 1: Connect wallet (like pump.fun) - no confirm dialog needed
+          let response;
+          try {
+            console.log('[Game] Step 1: Connecting wallet...');
+            response = await window.solana.connect({ onlyIfTrusted: false });
+            console.log('[Game] Wallet connected');
+          } catch (connectErr) {
+            console.error('[Game] Connect failed:', connectErr);
+            throw new Error('Failed to connect: ' + connectErr.message);
+          }
+          
+          // Check response
+          if (!response || !response.publicKey) {
+            throw new Error('Connection failed: No public key returned');
+          }
+          
           walletPublicKey = response.publicKey.toString();
+          console.log('[Game] ✅ Step 1 complete: Wallet connected:', walletPublicKey);
+          
+          // Step 2: Sign message to authenticate (like pump.fun)
+          try {
+            console.log('[Game] Step 2: Requesting message signature for authentication...');
+            console.log('[Game] ⚠️ SIGN MESSAGE POPUP SHOULD APPEAR NOW! ⚠️');
+            
+            // Create authentication message (like pump.fun)
+            const timestamp = Date.now();
+            const message = `Sign in to ${window.location.hostname}: ${timestamp}`;
+            const messageBytes = new TextEncoder().encode(message);
+            
+            // Request signature using request() method (Phantom wallet API)
+            let signResponse;
+            if (typeof window.solana.request === 'function') {
+              // Use request() method (recommended)
+              signResponse = await window.solana.request({
+                method: 'signMessage',
+                params: {
+                  message: messageBytes,
+                  display: 'utf8'
+                }
+              });
+            } else if (typeof window.solana.signMessage === 'function') {
+              // Fallback to signMessage() method
+              signResponse = await window.solana.signMessage(messageBytes, 'utf8');
+            } else {
+              throw new Error('signMessage method not available');
+            }
+            
+            if (!signResponse || !signResponse.signature) {
+              throw new Error('Message signature failed');
+            }
+            
+            console.log('[Game] ✅ Step 2 complete: Message signed successfully');
+            
+            // Handle different response formats
+            const signature = signResponse.signature || signResponse;
+            const signatureArray = signature instanceof Uint8Array 
+              ? Array.from(signature) 
+              : (Array.isArray(signature) ? signature : []);
+            
+            console.log('[Game] Signature received (length):', signatureArray.length);
+            
+            // Store signature in localStorage for session
+            localStorage.setItem('walletSignature', JSON.stringify({
+              signature: signatureArray,
+              publicKey: walletPublicKey,
+              timestamp: timestamp,
+              message: message
+            }));
+            
+            console.log('[Game] ✅ Authentication signature stored in localStorage');
+            
+          } catch (signErr) {
+            console.error('[Game] Sign message failed:', signErr);
+            // Disconnect if sign fails
+            try {
+              await window.solana.disconnect();
+            } catch (disconnectErr) {
+              console.warn('[Game] Error disconnecting after sign failure:', disconnectErr);
+            }
+            throw new Error('Authentication failed: Please sign the message to continue. ' + signErr.message);
+          }
+          
           walletConnected = true;
+          console.log('[Game] ✅ Authentication complete! Wallet is now authenticated.');
+          
+          console.log('[Game] ✅ Phantom wallet connected!');
+          console.log('[Game] Wallet connected:', walletPublicKey);
+          
+          // Show info message after successful connection
+          console.log('[Game] ========================================');
+          console.log('[Game] If you did NOT see a popup, it means:');
+          console.log('[Game] - Phantom wallet was already connected');
+          console.log('[Game] - Or popup was blocked by browser');
+          console.log('[Game] To see popup next time, disconnect first');
+          console.log('[Game] ========================================');
 
-          // Update UI
+          // Update container UI
           connectBtn.classList.add('hidden');
           disconnectBtn.classList.remove('hidden');
           walletInfo.textContent = `Wallet: ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}`;
           walletInfo.classList.remove('hidden');
 
+          // Update fixed buttons
+          const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
+          const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
+          const walletInfoFixed = document.getElementById('walletInfoFixed');
+          if (connectBtnFixed) connectBtnFixed.classList.add('hidden');
+          if (disconnectBtnFixed) {
+            disconnectBtnFixed.classList.remove('hidden');
+            disconnectBtnFixed.style.display = '';
+            disconnectBtnFixed.style.visibility = '';
+            disconnectBtnFixed.style.opacity = '';
+          }
+          if (walletInfoFixed) {
+            walletInfoFixed.innerHTML = `
+              <div><strong>Connected:</strong> ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}</div>
+              <div><strong>Balance:</strong> <span id="balanceDisplayFixed">Checking...</span> Luna</div>
+            `;
+            walletInfoFixed.classList.remove('hidden');
+            walletInfoFixed.style.display = '';
+            walletInfoFixed.style.visibility = '';
+            walletInfoFixed.style.opacity = '';
+          }
+
           // Check balance
           await checkLunaBalance();
           startBalanceUpdate(); // Start real-time balance updates
+          
+          // Update fixed balance display
+          const balanceDisplayFixed = document.getElementById('balanceDisplayFixed');
+          if (balanceDisplayFixed) {
+            balanceDisplayFixed.textContent = formatNumber(playerBalance);
+          }
         } catch (error) {
           console.error('Wallet connection error:', error);
           alert('Failed to connect wallet: ' + error.message);
         }
-      });
+      };
+      
+      connectBtn.addEventListener('click', connectHandler);
+      
+      // Also set up fixed connect button
+      const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
+      if (connectBtnFixed) {
+        connectBtnFixed.addEventListener('click', connectHandler);
+      }
 
       // Disconnect button
-      disconnectBtn.addEventListener('click', async () => {
+      const disconnectHandler = async () => {
         try {
           // Disconnect from Phantom
           if (window.solana && window.solana.isConnected) {
@@ -1752,10 +2161,32 @@
           walletConnected = false;
           playerBalance = 0;
           gameActive = false;
+          
+          // Clear signature when disconnected (like pump.fun - must sign again on reconnect)
+          localStorage.removeItem('walletSignature');
+          console.log('[Game] Wallet disconnected - signature cleared. Must sign again on next connect.');
 
-          // Update UI
+          // Update container UI
           connectBtn.classList.remove('hidden');
           disconnectBtn.classList.add('hidden');
+          
+          // Update fixed buttons
+          const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
+          const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
+          const walletInfoFixed = document.getElementById('walletInfoFixed');
+          if (connectBtnFixed) connectBtnFixed.classList.remove('hidden');
+          if (disconnectBtnFixed) {
+            disconnectBtnFixed.classList.add('hidden');
+            disconnectBtnFixed.style.display = 'none';
+            disconnectBtnFixed.style.visibility = 'hidden';
+            disconnectBtnFixed.style.opacity = '0';
+          }
+          if (walletInfoFixed) {
+            walletInfoFixed.classList.add('hidden');
+            walletInfoFixed.style.display = 'none';
+            walletInfoFixed.style.visibility = 'hidden';
+            walletInfoFixed.style.opacity = '0';
+          }
           walletInfo.classList.add('hidden');
           
           const balanceCheck = document.getElementById('balanceCheck');
@@ -1775,9 +2206,17 @@
           walletInfo.classList.add('hidden');
           disableGame();
         }
-      });
+      };
+      
+      disconnectBtn.addEventListener('click', disconnectHandler);
+      
+      // Also set up fixed disconnect button
+      const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
+      if (disconnectBtnFixed) {
+        disconnectBtnFixed.addEventListener('click', disconnectHandler);
+      }
 
-      // Check if already connected
+      // Set up wallet event listeners
       if (window.solana && window.solana.isPhantom) {
         window.solana.on('connect', async () => {
           walletPublicKey = window.solana.publicKey.toString();
@@ -1795,22 +2234,16 @@
           walletPublicKey = null;
           walletConnected = false;
           playerBalance = 0;
+          
+          // Clear signature when disconnected (like pump.fun - must sign again on reconnect)
+          localStorage.removeItem('walletSignature');
+          console.log('[Game] Wallet disconnected - signature cleared. Must sign again on next connect.');
+          
           connectBtn.classList.remove('hidden');
           disconnectBtn.classList.add('hidden');
           walletInfo.classList.add('hidden');
           disableGame();
         });
-
-        if (window.solana.isConnected) {
-          walletPublicKey = window.solana.publicKey.toString();
-          walletConnected = true;
-          connectBtn.classList.add('hidden');
-          disconnectBtn.classList.remove('hidden');
-          walletInfo.textContent = `Wallet: ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}`;
-          walletInfo.classList.remove('hidden');
-          checkLunaBalance();
-          startBalanceUpdate(); // Start real-time balance updates
-        }
       }
     }
 
@@ -1846,6 +2279,12 @@
         }
         
         playerBalance = data.balance || 0;
+
+        // Update fixed balance display
+        const balanceDisplayFixed = document.getElementById('balanceDisplayFixed');
+        if (balanceDisplayFixed) {
+          balanceDisplayFixed.textContent = formatNumber(playerBalance);
+        }
 
         if (playerBalance >= RPS_MIN_BALANCE) {
           balanceCheck.className = 'balance-check success';

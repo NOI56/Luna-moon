@@ -1,0 +1,1584 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Luna AI API",
+    "version": "1.0.0",
+    "description": "API Documentation for Luna AI Streamer - AI-powered streamer with VTube Studio integration, emotion system, and Rock Paper Scissors game",
+    "contact": {
+      "name": "Luna AI Support"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8787",
+      "description": "Local development server"
+    },
+    {
+      "url": "https://your-domain.com",
+      "description": "Production server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Health",
+      "description": "Health check and system status endpoints"
+    },
+    {
+      "name": "Chat",
+      "description": "Chat with Luna AI"
+    },
+    {
+      "name": "VTS",
+      "description": "VTube Studio integration endpoints"
+    },
+    {
+      "name": "RPS",
+      "description": "Rock Paper Scissors game endpoints"
+    },
+    {
+      "name": "Notifications",
+      "description": "Notification system endpoints"
+    },
+    {
+      "name": "Referral",
+      "description": "Referral system endpoints"
+    },
+    {
+      "name": "Chat Room",
+      "description": "Group chat room endpoints"
+    },
+    {
+      "name": "Admin",
+      "description": "Admin-only endpoints (requires ADMIN_SECRET)"
+    },
+    {
+      "name": "Purchase",
+      "description": "Purchase webhook endpoint"
+    }
+  ],
+  "paths": {
+    "/_health": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "Basic health check",
+        "description": "Simple health check endpoint",
+        "responses": {
+          "200": {
+            "description": "Server is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "time": {
+                      "type": "string",
+                      "format": "date-time",
+                      "example": "2024-01-01T00:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/luna/status": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "Get Luna system status",
+        "description": "Get detailed status of all Luna systems (VTS, TTS, AI, etc.)",
+        "responses": {
+          "200": {
+            "description": "System status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "vts": {
+                      "type": "object",
+                      "properties": {
+                        "status": {
+                          "type": "string"
+                        },
+                        "authenticated": {
+                          "type": "boolean"
+                        }
+                      }
+                    },
+                    "tts": {
+                      "type": "object",
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean"
+                        }
+                      }
+                    },
+                    "ai": {
+                      "type": "object",
+                      "properties": {
+                        "hasKey": {
+                          "type": "boolean"
+                        }
+                      }
+                    },
+                    "sleepy": {
+                      "type": "object",
+                      "properties": {
+                        "mode": {
+                          "type": "boolean"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/luna/health": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "Detailed health check",
+        "description": "Comprehensive health check with system resources, uptime, and issues",
+        "responses": {
+          "200": {
+            "description": "Detailed health status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": ["healthy", "degraded", "unhealthy"]
+                    },
+                    "uptime": {
+                      "type": "number",
+                      "description": "Uptime in seconds"
+                    },
+                    "checks": {
+                      "type": "object"
+                    },
+                    "resources": {
+                      "type": "object",
+                      "properties": {
+                        "memory": {
+                          "type": "object"
+                        },
+                        "websocket": {
+                          "type": "object"
+                        }
+                      }
+                    },
+                    "issues": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/luna/stats": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "Get system statistics",
+        "description": "Get usage statistics, performance metrics, and system information",
+        "responses": {
+          "200": {
+            "description": "System statistics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "messages": {
+                      "type": "object"
+                    },
+                    "performance": {
+                      "type": "object"
+                    },
+                    "system": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/luna/message": {
+      "post": {
+        "tags": ["Chat"],
+        "summary": "Send message to Luna",
+        "description": "Send a message to Luna and get AI response with emotion detection",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["text"],
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "description": "Message text (max 1000 characters)",
+                    "example": "Hello Luna! How are you?"
+                  },
+                  "user": {
+                    "type": "string",
+                    "description": "Username (optional, max 100 characters)",
+                    "example": "username123"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "reply": {
+                      "type": "string",
+                      "example": "Hello! I'm doing great, thanks for asking! 😊"
+                    },
+                    "emotion": {
+                      "type": "string",
+                      "enum": ["angry", "sad", "sleepy", "hype", "soft", "neutral"],
+                      "example": "soft"
+                    },
+                    "ttsUrl": {
+                      "type": "string",
+                      "nullable": true,
+                      "example": "/public/tts/abc123.mp3"
+                    },
+                    "voiceMode": {
+                      "type": "string",
+                      "example": "normal"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/luna/wake": {
+      "get": {
+        "tags": ["Chat"],
+        "summary": "Wake Luna",
+        "description": "Force Luna to wake up (temporarily disable sleepy mode)",
+        "responses": {
+          "200": {
+            "description": "Luna awakened",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/luna/allow-sleep": {
+      "get": {
+        "tags": ["Chat"],
+        "summary": "Allow sleep mode",
+        "description": "Re-enable sleepy mode",
+        "responses": {
+          "200": {
+            "description": "Sleep mode re-enabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/luna/expression": {
+      "get": {
+        "tags": ["VTS"],
+        "summary": "Test emotion expression",
+        "description": "Trigger an emotion expression in VTube Studio",
+        "parameters": [
+          {
+            "name": "emo",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": ["angry", "sad", "sleepy", "hype", "soft", "clear"]
+            },
+            "description": "Emotion to trigger"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Expression triggered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "emotion": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/luna/vts/parameters": {
+      "get": {
+        "tags": ["VTS"],
+        "summary": "Get VTS parameters",
+        "description": "Get all available VTube Studio parameters",
+        "responses": {
+          "200": {
+            "description": "VTS parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "allParameters": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/luna/rps/balance": {
+      "get": {
+        "tags": ["RPS"],
+        "summary": "Get RPS token balance",
+        "description": "Get Luna token balance for a wallet",
+        "parameters": [
+          {
+            "name": "wallet",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Wallet address"
+          },
+          {
+            "name": "mint",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Token mint address (optional)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Balance retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "balance": {
+                      "type": "number",
+                      "description": "Balance in token units"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/luna/rps/contract-address": {
+      "get": {
+        "tags": ["RPS"],
+        "summary": "Get contract address",
+        "description": "Get the Luna token contract address",
+        "responses": {
+          "200": {
+            "description": "Contract address",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "contractAddress": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/luna/rps/leaderboard": {
+      "get": {
+        "tags": ["RPS"],
+        "summary": "Get RPS leaderboard",
+        "description": "Get Rock Paper Scissors game leaderboard",
+        "responses": {
+          "200": {
+            "description": "Leaderboard data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "leaderboard": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/luna/rps/queue": {
+      "post": {
+        "tags": ["RPS"],
+        "summary": "Queue for PvP match",
+        "description": "Join the matchmaking queue for PvP game",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["wallet"],
+                "properties": {
+                  "wallet": {
+                    "type": "string",
+                    "description": "Wallet address"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Queued successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/luna/rps/match": {
+      "get": {
+        "tags": ["RPS"],
+        "summary": "Get match status",
+        "description": "Check if a match has been found",
+        "parameters": [
+          {
+            "name": "wallet",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Wallet address"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Match status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "matched": {
+                      "type": "boolean"
+                    },
+                    "matchId": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/luna/rps/submit": {
+      "post": {
+        "tags": ["RPS"],
+        "summary": "Submit RPS choice",
+        "description": "Submit Rock Paper Scissors choice for a match",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["wallet", "matchId", "choice"],
+                "properties": {
+                  "wallet": {
+                    "type": "string"
+                  },
+                  "matchId": {
+                    "type": "string"
+                  },
+                  "choice": {
+                    "type": "string",
+                    "enum": ["rock", "paper", "scissors"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Choice submitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "submitted": {
+                      "type": "boolean"
+                    },
+                    "bothSubmitted": {
+                      "type": "boolean"
+                    },
+                    "result": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/luna/rps/betting/create": {
+      "post": {
+        "tags": ["RPS"],
+        "summary": "Create betting room",
+        "description": "Create a new betting room",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["wallet", "betAmount"],
+                "properties": {
+                  "wallet": {
+                    "type": "string"
+                  },
+                  "betAmount": {
+                    "type": "number",
+                    "description": "Bet amount in Luna tokens"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Room created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "roomId": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/luna/rps/betting/rooms": {
+      "get": {
+        "tags": ["RPS"],
+        "summary": "Get betting rooms",
+        "description": "Get list of available betting rooms",
+        "responses": {
+          "200": {
+            "description": "List of rooms",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "rooms": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/luna/rps/betting/join": {
+      "post": {
+        "tags": ["RPS"],
+        "summary": "Join betting room",
+        "description": "Join an existing betting room",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["wallet", "roomId"],
+                "properties": {
+                  "wallet": {
+                    "type": "string"
+                  },
+                  "roomId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Joined room",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/luna/rps/betting/submit": {
+      "post": {
+        "tags": ["RPS"],
+        "summary": "Submit betting choice",
+        "description": "Submit choice in betting room",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["wallet", "roomId", "choice"],
+                "properties": {
+                  "wallet": {
+                    "type": "string"
+                  },
+                  "roomId": {
+                    "type": "string"
+                  },
+                  "choice": {
+                    "type": "string",
+                    "enum": ["rock", "paper", "scissors"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Choice submitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "result": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/luna/notifications": {
+      "get": {
+        "tags": ["Notifications"],
+        "summary": "Get notifications",
+        "description": "Get notifications for a wallet",
+        "parameters": [
+          {
+            "name": "wallet",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Wallet address"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notifications",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "notifications": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "unreadCount": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/luna/notifications/read": {
+      "post": {
+        "tags": ["Notifications"],
+        "summary": "Mark notification as read",
+        "description": "Mark a notification as read",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["wallet", "notificationId"],
+                "properties": {
+                  "wallet": {
+                    "type": "string"
+                  },
+                  "notificationId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Notification marked as read",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/luna/referral/link": {
+      "get": {
+        "tags": ["Referral"],
+        "summary": "Get referral link",
+        "description": "Get or generate referral link for a wallet",
+        "parameters": [
+          {
+            "name": "wallet",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Wallet address"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Referral link",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "referralLink": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/luna/referral/stats": {
+      "get": {
+        "tags": ["Referral"],
+        "summary": "Get referral stats",
+        "description": "Get referral statistics for a wallet",
+        "parameters": [
+          {
+            "name": "wallet",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Wallet address"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Referral statistics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "stats": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/luna/referral/register": {
+      "post": {
+        "tags": ["Referral"],
+        "summary": "Register referral",
+        "description": "Register a new referral relationship",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["wallet", "referrer"],
+                "properties": {
+                  "wallet": {
+                    "type": "string",
+                    "description": "New user wallet"
+                  },
+                  "referrer": {
+                    "type": "string",
+                    "description": "Referrer wallet address"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Referral registered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/luna/chat/send": {
+      "post": {
+        "tags": ["Chat Room"],
+        "summary": "Send chat message",
+        "description": "Send a message to a chat room",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["roomId", "wallet", "message"],
+                "properties": {
+                  "roomId": {
+                    "type": "string",
+                    "description": "Chat room ID"
+                  },
+                  "wallet": {
+                    "type": "string",
+                    "description": "Wallet address"
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "Message text"
+                  },
+                  "username": {
+                    "type": "string",
+                    "description": "Username (optional)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Message sent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/luna/chat/messages": {
+      "get": {
+        "tags": ["Chat Room"],
+        "summary": "Get chat messages",
+        "description": "Get messages from a chat room",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Chat room ID"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50
+            },
+            "description": "Maximum number of messages to return"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Chat messages",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "messages": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/purchase": {
+      "post": {
+        "tags": ["Purchase"],
+        "summary": "Purchase webhook",
+        "description": "Webhook endpoint for purchase notifications",
+        "security": [
+          {
+            "PurchaseSecret": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["buyer"],
+                "properties": {
+                  "buyer": {
+                    "type": "string",
+                    "description": "Buyer username"
+                  },
+                  "amount": {
+                    "type": "number",
+                    "description": "Purchase amount"
+                  },
+                  "currency": {
+                    "type": "string",
+                    "description": "Currency (e.g., SOL)",
+                    "example": "SOL"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Purchase processed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "line": {
+                      "type": "string"
+                    },
+                    "big": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/luna/admin/clear-memory": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "Clear user memory",
+        "description": "Clear memory for a specific user or all users (Admin only)",
+        "security": [
+          {
+            "AdminSecret": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Username (optional, clears all if not provided)"
+          },
+          {
+            "name": "secret",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Admin secret (alternative to header)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Memory cleared",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/luna/admin/reset-personality": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "Reset personality",
+        "description": "Reset Luna's personality to default (Admin only)",
+        "security": [
+          {
+            "AdminSecret": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Personality reset",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/luna/admin/clear-cache": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "Clear response cache",
+        "description": "Clear all cached responses (Admin only)",
+        "security": [
+          {
+            "AdminSecret": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cache cleared",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/luna/admin/errors": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "Get error logs",
+        "description": "Get recent error logs (Admin only)",
+        "security": [
+          {
+            "AdminSecret": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50
+            },
+            "description": "Maximum number of errors to return"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Error logs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/luna/admin/reset-stats": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "Reset statistics",
+        "description": "Reset all system statistics (Admin only)",
+        "security": [
+          {
+            "AdminSecret": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Statistics reset",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/csrf-token": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "Get CSRF token",
+        "description": "Get CSRF token for POST/PUT/DELETE requests",
+        "responses": {
+          "200": {
+            "description": "CSRF token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string"
+                    },
+                    "expiresAt": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/luna/audio-level": {
+      "post": {
+        "tags": ["VTS"],
+        "summary": "Send audio level",
+        "description": "Send audio level for VTS reaction",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["level"],
+                "properties": {
+                  "level": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "Audio level (0.0 to 1.0)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Audio level processed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "level": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "example": false
+          },
+          "error": {
+            "type": "string",
+            "example": "Invalid request"
+          },
+          "message": {
+            "type": "string",
+            "example": "Error message"
+          }
+        }
+      },
+      "RateLimitError": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "example": false
+          },
+          "error": {
+            "type": "string",
+            "example": "Rate limit exceeded"
+          },
+          "message": {
+            "type": "string",
+            "example": "Whoa, slow down there! I need a moment to catch up~ 😅"
+          },
+          "resetAt": {
+            "type": "number",
+            "description": "Timestamp when rate limit resets"
+          },
+          "retryAfter": {
+            "type": "number",
+            "description": "Seconds to wait before retrying"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "AdminSecret": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-admin-secret",
+        "description": "Admin secret key (set ADMIN_SECRET in .env)"
+      },
+      "PurchaseSecret": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-purchase-secret",
+        "description": "Purchase webhook secret (set PURCHASE_SECRET in .env)"
+      }
+    }
+  }
+}
+

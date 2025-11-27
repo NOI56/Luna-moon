@@ -8,16 +8,16 @@
 1. เปิด Terminal/PowerShell ในโฟลเดอร์โปรเจค
 2. รันคำสั่ง:
    ```bash
-   node copy-vts-model.js
+   node scripts/setup/copy-vts-model.js
    ```
 3. Script จะหาโมเดลทั้งหมดใน VTube Studio
 4. เลือกโมเดลที่ต้องการ:
    ```bash
-   node copy-vts-model.js [ชื่อโมเดล]
+   node scripts/setup/copy-vts-model.js [ชื่อโมเดล]
    ```
    ตัวอย่าง:
    ```bash
-   node copy-vts-model.js Luna
+   node scripts/setup/copy-vts-model.js Luna
    ```
 
 ---

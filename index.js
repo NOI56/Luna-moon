@@ -43,6 +43,9 @@ import { generateTTS, speak, ambientMurmur } from "./modules/tts.js";
 // TTS enabled check
 const TTS_ENABLED = process.env.TTS_ENABLED !== "false";
 import { decayPersonality } from "./modules/personality.js";
+import { log } from "./modules/logger.js";
+import { validateEnvironment } from "./modules/env-validator.js";
+import { createBackup, listBackups, restoreBackup, getBackupStats, startAutoBackup } from "./modules/backup.js";
 
 dotenv.config();
 
@@ -75,41 +78,22 @@ function validateWalletAddress(address, fieldName = 'wallet') {
 }
 
 function validateConfig() {
-  const errors = [];
-  const warnings = [];
-
-  // Required for basic functionality
-  if (!process.env.OPENAI_KEY && !process.env.OPENROUTER_KEY) {
-    errors.push("Missing AI API key: OPENAI_KEY or OPENROUTER_KEY required");
-  }
-
-  // VTS configuration
-  if (process.env.VTS_ENABLED === "true") {
-    if (!process.env.VTS_AUTH_TOKEN) {
-      warnings.push("VTS_ENABLED=true but VTS_AUTH_TOKEN is missing. Run 'node vts-auth.cjs' to get token.");
-    }
-  }
-
-  // TTS configuration
-  if (process.env.TTS_ENABLED !== "false") {
-    if (!process.env.ELEVEN_KEY) {
-      warnings.push("TTS enabled but ELEVEN_KEY is missing. TTS will not work.");
-    }
-  }
+  // Use enhanced environment validator
+  const { errors, warnings } = validateEnvironment();
 
   // Log errors and warnings
   if (errors.length > 0) {
-    console.error("[config] ❌ Configuration errors:");
-    errors.forEach(err => console.error(`  - ${err}`));
-    console.error("[config] Please fix these errors before starting the server.");
+    log.error("[config] ❌ Configuration errors:");
+    errors.forEach(err => log.error(`  - ${err}`));
+    log.error("[config] Please fix these errors before starting the server.");
     process.exit(1);
   }
 
   if (warnings.length > 0) {
-    console.warn("[config] ⚠️  Configuration warnings:");
-    warnings.forEach(warn => console.warn(`  - ${warn}`));
+    log.warn("[config] ⚠️  Configuration warnings:");
+    warnings.forEach(warn => log.warn(`  - ${warn}`));
   } else {
-    console.log("[config] ✅ Configuration validated");
+    log.info("[config] ✅ Configuration validated");
   }
 }
 
@@ -379,13 +363,13 @@ function initializeCompetition() {
     // Reset leaderboard for new competition
     rpsLeaderboard.clear();
     rewardPool = 0;
-    console.log(`[rps-competition] New weekly competition started. Ends at: ${new Date(competitionEndTime).toISOString()} (Next Monday 00:00:00 UTC)`);
+    log.info(`[rps-competition] New weekly competition started. Ends at: ${new Date(competitionEndTime).toISOString()} (Next Monday 00:00:00 UTC)`);
   } else {
     // Competition still active, just update end time if needed (in case server restarted)
     const calculatedEndTime = getNextMonday();
     if (competitionEndTime !== calculatedEndTime) {
       competitionEndTime = calculatedEndTime;
-      console.log(`[rps-competition] Competition end time updated to: ${new Date(competitionEndTime).toISOString()} (Next Monday 00:00:00 UTC)`);
+      log.info(`[rps-competition] Competition end time updated to: ${new Date(competitionEndTime).toISOString()} (Next Monday 00:00:00 UTC)`);
     }
   }
 }
@@ -395,20 +379,20 @@ setInterval(async () => {
   const now = Date.now();
   if (now >= competitionEndTime) {
     // Competition ended, distribute rewards and start new one
-    console.log(`[rps-competition] Weekly competition ended. Distributing rewards automatically...`);
+    log.info(`[rps-competition] Weekly competition ended. Distributing rewards automatically...`);
     
     // Auto-distribute rewards (if private key is set)
     const privateKey = process.env.REWARD_SENDER_PRIVATE_KEY;
     if (privateKey && privateKey !== "your_private_key_here") {
-      console.log(`[rps-competition] REWARD_SENDER_PRIVATE_KEY is set, attempting auto-distribution...`);
+      log.info(`[rps-competition] REWARD_SENDER_PRIVATE_KEY is set, attempting auto-distribution...`);
       const result = await distributeRewards();
       if (result.ok) {
-        console.log(`[rps-competition] ✓ Auto-distribution successful. Distributed ${result.totalDistributed.toFixed(6)} SOL`);
+        log.info(`[rps-competition] ✓ Auto-distribution successful. Distributed ${result.totalDistributed.toFixed(6)} SOL`);
       } else {
-        console.error(`[rps-competition] ✗ Auto-distribution failed: ${result.message || result.error}`);
+        log.error(`[rps-competition] ✗ Auto-distribution failed: ${result.message || result.error}`);
       }
     } else {
-      console.warn(`[rps-competition] REWARD_SENDER_PRIVATE_KEY not set, skipping auto-distribution. Please call POST /luna/rps/rewards/distribute manually.`);
+      log.warn(`[rps-competition] REWARD_SENDER_PRIVATE_KEY not set, skipping auto-distribution. Please call POST /luna/rps/rewards/distribute manually.`);
     }
     
     // Start new competition
@@ -454,7 +438,7 @@ function logSuspiciousActivity(type, wallet1, wallet2, ip, reason) {
     suspiciousActivityLog.shift();
   }
   
-  console.warn(`[anti-abuse] ⚠️ Suspicious activity detected: ${type} - ${reason}`, {
+  log.warn(`[anti-abuse] ⚠️ Suspicious activity detected: ${type} - ${reason}`, {
     wallet1: wallet1?.substring(0, 8) + '...',
     wallet2: wallet2?.substring(0, 8) + '...',
     ip: ip
@@ -632,7 +616,7 @@ function recordWalletPairMatch(wallet1, wallet2) {
       logSuspiciousActivity('ip_self_play_reward_ban', wallet1, wallet2, wallet1Ip, 
         `IP ${wallet1Ip} has ${ipData.totalSelfPlayCount} self-play matches (threshold: ${IP_SELF_PLAY_THRESHOLD}). All wallets from this IP are banned from rewards.`);
       
-      console.warn(`[anti-abuse] ⚠️ IP ${wallet1Ip} detected self-play ${ipData.totalSelfPlayCount} times. All wallets from this IP are now banned from receiving rewards.`);
+      log.warn(`[anti-abuse] ⚠️ IP ${wallet1Ip} detected self-play ${ipData.totalSelfPlayCount} times. All wallets from this IP are now banned from receiving rewards.`);
     }
   }
   
@@ -807,17 +791,17 @@ const SOL_MINT = "So11111111111111111111111111111111111111112"; // Native SOL mi
  */
 async function fetchLunaPriceInSol() {
   if (!LUNA_TOKEN_MINT) {
-    console.warn("[rps-betting-fee] LUNA_TOKEN_MINT not set in .env, cannot fetch price");
+    log.warn("[rps-betting-fee] LUNA_TOKEN_MINT not set in .env, cannot fetch price");
     return null;
   }
 
   // Validate mint address format
   if (LUNA_TOKEN_MINT.length < 32 || LUNA_TOKEN_MINT === "your_token_mint_address_from_pumpfun_here") {
-    console.warn(`[rps-betting-fee] Invalid LUNA_TOKEN_MINT: ${LUNA_TOKEN_MINT}, using fallback rate`);
+    log.warn(`[rps-betting-fee] Invalid LUNA_TOKEN_MINT: ${LUNA_TOKEN_MINT}, using fallback rate`);
     return null;
   }
 
-    console.log(`[rps-betting-fee] Fetching price for Luna token: ${LUNA_TOKEN_MINT}`);
+    log.debug(`[rps-betting-fee] Fetching price for Luna token: ${LUNA_TOKEN_MINT}`);
 
   try {
     // Check cache first
@@ -2001,6 +1985,15 @@ app.get("/", (req, res) => {
 // About page
 app.get("/about.html", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "about.html"));
+});
+
+// API Documentation
+app.get("/api-docs.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "api-docs.html"));
+});
+
+app.get("/api-docs.json", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "api-docs.json"));
 });
 
 // Serve JS and CSS files directly from public folder (MUST be before /public static)
@@ -6712,6 +6705,104 @@ app.get("/luna/admin/anti-abuse/reward-banned", requireAdminSecret, (req, res) =
 });
 
 /**
+ * Create backup (Admin only)
+ * POST /luna/admin/backup/create
+ */
+app.post("/luna/admin/backup/create", requireAdminSecret, async (req, res) => {
+  try {
+    const result = await createBackup();
+    if (result.success) {
+      return res.json({
+        ok: true,
+        message: "Backup created successfully",
+        backupPath: result.backupPath,
+        backedUpFiles: result.backedUpFiles,
+        errors: result.errors
+      });
+    } else {
+      return res.status(500).json({
+        ok: false,
+        error: result.error || "Failed to create backup"
+      });
+    }
+  } catch (e) {
+    logError(e, { endpoint: "/luna/admin/backup/create" });
+    return res.status(500).json({ ok: false, error: "Failed to create backup" });
+  }
+});
+
+/**
+ * List backups (Admin only)
+ * GET /luna/admin/backup/list
+ */
+app.get("/luna/admin/backup/list", requireAdminSecret, (req, res) => {
+  try {
+    const backups = listBackups();
+    return res.json({
+      ok: true,
+      backups,
+      count: backups.length
+    });
+  } catch (e) {
+    logError(e, { endpoint: "/luna/admin/backup/list" });
+    return res.status(500).json({ ok: false, error: "Failed to list backups" });
+  }
+});
+
+/**
+ * Get backup statistics (Admin only)
+ * GET /luna/admin/backup/stats
+ */
+app.get("/luna/admin/backup/stats", requireAdminSecret, (req, res) => {
+  try {
+    const stats = getBackupStats();
+    return res.json({
+      ok: true,
+      stats
+    });
+  } catch (e) {
+    logError(e, { endpoint: "/luna/admin/backup/stats" });
+    return res.status(500).json({ ok: false, error: "Failed to get backup stats" });
+  }
+});
+
+/**
+ * Restore from backup (Admin only)
+ * POST /luna/admin/backup/restore
+ * Body: { backupName: "backup-2024-01-01T12-00-00" }
+ */
+app.post("/luna/admin/backup/restore", requireAdminSecret, async (req, res) => {
+  try {
+    const { backupName } = req.body;
+    
+    if (!backupName) {
+      return res.status(400).json({
+        ok: false,
+        error: "backupName is required"
+      });
+    }
+    
+    const result = await restoreBackup(backupName);
+    if (result.success) {
+      return res.json({
+        ok: true,
+        message: "Backup restored successfully",
+        restoredFiles: result.restoredFiles,
+        errors: result.errors
+      });
+    } else {
+      return res.status(500).json({
+        ok: false,
+        error: result.error || "Failed to restore backup"
+      });
+    }
+  } catch (e) {
+    logError(e, { endpoint: "/luna/admin/backup/restore" });
+    return res.status(500).json({ ok: false, error: "Failed to restore backup" });
+  }
+});
+
+/**
  * Unban wallet from rewards (Admin only)
  * POST /luna/admin/anti-abuse/unban-reward
  * Body: { wallet: "wallet_address" } or { ip: "ip_address" }
@@ -7483,10 +7574,10 @@ app.use((req, res) => {
 
 server.listen(PORT, '0.0.0.0', async () => {
   const host = process.env.HOST || '0.0.0.0';
-  console.log(`Luna v10 server listening on http://${host}:${PORT}`);
-  console.log(`🌐 Server is accessible from other devices on your network!`);
-  console.log(`   Local: http://localhost:${PORT}`);
-  console.log(`   Network: http://[YOUR_IP]:${PORT}`);
+  log.info(`Luna v10 server listening on http://${host}:${PORT}`);
+  log.info(`🌐 Server is accessible from other devices on your network!`);
+  log.info(`   Local: http://localhost:${PORT}`);
+  log.info(`   Network: http://[YOUR_IP]:${PORT}`);
   await initDB();
   
   // Load group chat messages from database
@@ -7495,25 +7586,28 @@ server.listen(PORT, '0.0.0.0', async () => {
     if (groupChatMessages.length > 0) {
       const room = getOrCreateChatRoom('group_chat');
       room.messages = groupChatMessages;
-      console.log(`[chat] Loaded ${groupChatMessages.length} messages from database for group_chat`);
+      log.info(`[chat] Loaded ${groupChatMessages.length} messages from database for group_chat`);
     }
   } catch (dbError) {
-    console.error('[chat] Failed to load messages from database on startup:', dbError);
+    log.error('[chat] Failed to load messages from database on startup:', dbError);
   }
   
   startSolanaWatcher();
   startPumpFunWatcher();
   
   if (process.env.VTS_ENABLED === "true") {
-    console.log("[vts] VTube Studio integration enabled, connecting...");
+    log.info("[vts] VTube Studio integration enabled, connecting...");
     startVTS();
   } else {
-    console.log("[vts] VTube Studio integration disabled (VTS_ENABLED=false)");
+    log.info("[vts] VTube Studio integration disabled (VTS_ENABLED=false)");
   }
   
   startBreathingLoop();
   startIdleLoop();
   idleLoop();
+  
+  // Start auto-backup
+  startAutoBackup();
 });
 
 // ----------------------

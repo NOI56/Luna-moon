@@ -7,7 +7,7 @@
    node index.js
 
 For PM2:
-   pm2 start ecosystem.config.cjs
+   pm2 start ../configs/ecosystem.config.cjs
    pm2 save
 
 For systemd:

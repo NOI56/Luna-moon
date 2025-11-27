@@ -978,10 +978,87 @@
     }
 
     // Initialize function
-    function initializePage() {
+    async function initializePage() {
       console.log('[Group Chat] Initializing page...');
       initWalletButtons();
       initNeonToggle();
+      
+      // Check if wallet already connected OR has valid signature (like pump.fun)
+      const storedSignature = localStorage.getItem('walletSignature');
+      
+      if (window.solana && window.solana.isPhantom) {
+        // Case 1: Wallet is already connected
+        if (window.solana.isConnected && window.solana.publicKey) {
+          const currentWallet = window.solana.publicKey.toString();
+          
+          if (storedSignature) {
+            try {
+              const sigData = JSON.parse(storedSignature);
+              
+              // Verify signature is for current wallet
+              if (sigData.publicKey === currentWallet) {
+                console.log('[Group Chat] ✅ Persistent connection found - using existing authenticated connection');
+                handleWalletConnected(currentWallet);
+                return; // Exit early
+              } else {
+                console.log('[Group Chat] Signature wallet mismatch - clearing signature');
+                localStorage.removeItem('walletSignature');
+                handleWalletConnected(currentWallet);
+                return; // Exit early
+              }
+            } catch (err) {
+              console.error('[Group Chat] Error checking signature:', err);
+              localStorage.removeItem('walletSignature');
+              handleWalletConnected(currentWallet);
+              return; // Exit early
+            }
+          } else {
+            // Connected but no signature - use existing connection silently
+            console.log('[Group Chat] ✅ Wallet already connected (no signature) - using existing connection');
+            handleWalletConnected(currentWallet);
+            return; // Exit early
+          }
+        }
+        
+        // Case 2: Wallet not connected but has valid signature - reconnect automatically (like pump.fun)
+        if (storedSignature && !window.solana.isConnected) {
+          try {
+            const sigData = JSON.parse(storedSignature);
+            console.log('[Group Chat] ✅ Valid signature found - reconnecting automatically (like pump.fun)...');
+            
+            // Try to reconnect silently first
+            let response;
+            try {
+              response = await window.solana.connect({ onlyIfTrusted: true });
+            } catch (silentErr) {
+              // If silent connect fails, try normal connect (may show popup)
+              console.log('[Group Chat] Silent connect failed, trying normal connect...');
+              response = await window.solana.connect({ onlyIfTrusted: false });
+            }
+            
+            if (response && response.publicKey) {
+              const currentWallet = response.publicKey.toString();
+              
+              // Verify signature is for reconnected wallet
+              if (sigData.publicKey === currentWallet) {
+                console.log('[Group Chat] ✅ Auto-reconnected with valid signature');
+                handleWalletConnected(currentWallet);
+                return; // Exit early
+              } else {
+                console.log('[Group Chat] Signature wallet mismatch after reconnect - clearing signature');
+                localStorage.removeItem('walletSignature');
+                // Still connect but without signature
+                handleWalletConnected(currentWallet);
+                return; // Exit early
+              }
+            }
+          } catch (err) {
+            console.warn('[Group Chat] Auto-reconnect failed:', err);
+            // Don't clear signature - user might want to connect manually
+          }
+        }
+      }
+      
       connectWebSocket();
       loadMessages();
       
@@ -1125,10 +1202,110 @@
       // Connect button handler
       const connectHandler = async () => {
         try {
-          const response = await window.solana.connect();
-          handleWalletConnected(response.publicKey.toString());
+          console.log('[Group Chat] Connect button clicked');
+          
+          if (!window.solana || !window.solana.isPhantom) {
+            alert('⚠️ Phantom wallet not found!\n\nPlease install Phantom wallet extension:\nhttps://phantom.app/\n\nAfter installing, refresh this page.');
+            return;
+          }
+          
+          // Additional check: verify Phantom is ready
+          if (typeof window.solana.connect !== 'function') {
+            alert('⚠️ Phantom wallet extension is not ready!\n\nPlease:\n1. Make sure Phantom wallet is unlocked\n2. Refresh this page\n3. Try again');
+            return;
+          }
+          
+          // ALWAYS disconnect first to force popup (like pump.fun)
+          console.log('[Group Chat] Disconnecting wallet first to force popup...');
+          try {
+            if (window.solana.isConnected) {
+              await window.solana.disconnect();
+              console.log('[Group Chat] Wallet disconnected');
+            }
+            // Wait briefly to ensure disconnect is complete
+            console.log('[Group Chat] Waiting 300ms to clear cached connection...');
+            await new Promise(resolve => setTimeout(resolve, 300));
+          } catch (disconnectErr) {
+            console.warn('[Group Chat] Error during disconnect (may not be connected):', disconnectErr);
+            // Still wait even if disconnect fails
+            await new Promise(resolve => setTimeout(resolve, 300));
+          }
+          
+          // System like pump.fun: Always require sign message for authentication
+          console.log('[Group Chat] Connecting wallet (pump.fun style - requires sign message)...');
+          
+          // Step 1: Connect wallet
+          console.log('[Group Chat] Step 1: Connecting wallet...');
+          console.log('[Group Chat] ⚠️ CONNECT POPUP SHOULD APPEAR NOW! ⚠️');
+          
+          const response = await window.solana.connect({ onlyIfTrusted: false });
+          
+          if (!response || !response.publicKey) {
+            throw new Error('Connection failed: No public key returned');
+          }
+          
+          const walletPublicKey = response.publicKey.toString();
+          console.log('[Group Chat] ✅ Step 1 complete: Wallet connected:', walletPublicKey);
+          
+          // Step 2: Sign message to authenticate (like pump.fun - ALWAYS required)
+          try {
+            console.log('[Group Chat] Step 2: Requesting message signature for authentication...');
+            console.log('[Group Chat] ⚠️ SIGN MESSAGE POPUP SHOULD APPEAR NOW! ⚠️');
+            
+            // Create authentication message (like pump.fun)
+            const timestamp = Date.now();
+            const message = `Sign in to ${window.location.hostname}: ${timestamp}`;
+            const messageBytes = new TextEncoder().encode(message);
+            
+            // Request signature using request() method (Phantom wallet API)
+            let signResponse;
+            if (typeof window.solana.request === 'function') {
+              signResponse = await window.solana.request({
+                method: 'signMessage',
+                params: {
+                  message: messageBytes,
+                  display: 'utf8'
+                }
+              });
+            } else if (typeof window.solana.signMessage === 'function') {
+              signResponse = await window.solana.signMessage(messageBytes, 'utf8');
+            } else {
+              throw new Error('signMessage method not available');
+            }
+            
+            // Handle different response formats
+            const signature = signResponse.signature || signResponse;
+            const signatureArray = signature instanceof Uint8Array 
+              ? Array.from(signature) 
+              : (Array.isArray(signature) ? signature : []);
+            
+            console.log('[Group Chat] ✅ Step 2 complete: Message signed successfully');
+            
+            // Store signature in localStorage for persistent connection (like pump.fun)
+            localStorage.setItem('walletSignature', JSON.stringify({
+              signature: signatureArray,
+              publicKey: walletPublicKey,
+              timestamp: timestamp,
+              message: message
+            }));
+            
+            console.log('[Group Chat] ✅ Authentication signature stored - connection is now persistent');
+            
+          } catch (signErr) {
+            console.error('[Group Chat] Sign message failed:', signErr);
+            // Disconnect if sign fails
+            try {
+              await window.solana.disconnect();
+            } catch (disconnectErr) {
+              console.warn('[Group Chat] Error disconnecting after sign failure:', disconnectErr);
+            }
+            throw new Error('Authentication failed: Please sign the message to continue. ' + signErr.message);
+          }
+          
+          console.log('[Group Chat] ✅ Authentication complete! Wallet is now authenticated and persistent.');
+          handleWalletConnected(walletPublicKey);
         } catch (error) {
-          console.error('Wallet connection error:', error);
+          console.error('[Group Chat] Wallet connection error:', error);
           alert('Failed to connect Wallet: ' + error.message);
         }
       };
@@ -1145,6 +1322,11 @@
       const disconnectHandler = async () => {
         try {
           await window.solana.disconnect();
+          
+          // Clear signature when disconnected (like pump.fun - must sign again on reconnect)
+          localStorage.removeItem('walletSignature');
+          console.log('[Group Chat] Wallet disconnected - signature cleared. Must sign again on next connect.');
+          
           handleWalletDisconnected();
         } catch (error) {
           console.error('Wallet disconnect error:', error);
@@ -1161,6 +1343,9 @@
       
       // Listen for wallet disconnect
       window.solana.on('disconnect', () => {
+        // Clear signature when disconnected (like pump.fun - must sign again on reconnect)
+        localStorage.removeItem('walletSignature');
+        console.log('[Group Chat] Wallet disconnected - signature cleared. Must sign again on next connect.');
         handleWalletDisconnected();
       });
     }

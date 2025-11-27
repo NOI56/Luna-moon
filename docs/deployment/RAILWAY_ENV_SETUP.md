@@ -43,7 +43,7 @@
 - **Value:** `true` หรือ `false`
 
 - **Key:** `VTS_AUTH_TOKEN`
-- **Value:** (token จาก `node vts-auth.cjs`)
+- **Value:** (token จาก `node scripts/vts/vts-auth.cjs`)
 
 #### สำหรับ TTS (ถ้าใช้):
 - **Key:** `TTS_ENABLED`

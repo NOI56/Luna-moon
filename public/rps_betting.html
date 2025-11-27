@@ -167,10 +167,53 @@
       transform: scale(0.98) !important;
     }
 
-    /* Neon Toggle Button */
-    #neonToggle {
+    /* Wallet Connect Button (Fixed Position - Top Right) */
+    #walletConnectFixed {
       position: fixed;
       top: 40px;
+      right: 20px;
+      z-index: 99999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: flex-end;
+    }
+
+    #walletConnectFixed .wallet-btn {
+      background: rgba(0, 0, 0, 0.9);
+      border: 2px solid #00ffff;
+      color: #00ffff;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      transition: all 0.3s;
+      backdrop-filter: blur(5px);
+      white-space: nowrap;
+    }
+
+    #walletConnectFixed .wallet-btn:hover {
+      background: rgba(0, 255, 255, 0.2);
+      box-shadow: 0 0 10px #00ffff;
+    }
+
+    #walletConnectFixed .wallet-info {
+      background: rgba(0, 0, 0, 0.9);
+      border: 1px solid #00ffff;
+      color: #00ffff;
+      padding: 8px 15px;
+      border-radius: 8px;
+      font-size: 0.85em;
+      backdrop-filter: blur(5px);
+      max-width: 250px;
+      word-break: break-all;
+    }
+
+    /* Neon Toggle Button (Bottom Right) */
+    #neonToggle {
+      position: fixed;
+      bottom: 20px;
       right: 20px;
       z-index: 99999;
       background: rgba(0, 0, 0, 0.9);
@@ -762,6 +805,14 @@
     <!-- Notification button will be added here by JavaScript -->
   </div>
 
+  <!-- Fixed Wallet Connect (Top Right) -->
+  <div id="walletConnectFixed">
+    <button id="connectWalletBtnFixed" class="wallet-btn">🔗 Connect Phantom Wallet</button>
+    <button id="disconnectWalletBtnFixed" class="wallet-btn disconnect-btn hidden">🔌 Disconnect / Change Wallet</button>
+    <div id="walletInfoFixed" class="wallet-info hidden"></div>
+  </div>
+
+  <!-- Neon Toggle Button (Bottom Right) -->
   <button id="neonToggle" title="Toggle Neon Effects">💡 Neon: ON</button>
 
   <div class="game-container">
@@ -809,7 +860,7 @@
       </div>
     </div>
 
-    <div id="walletConnect" class="wallet-connect">
+    <div id="walletConnect" class="wallet-connect" style="display: none;">
       <button id="connectWalletBtn" class="wallet-btn">🔗 Connect Phantom Wallet</button>
       <button id="disconnectWalletBtn" class="wallet-btn disconnect-btn hidden">🔌 Disconnect / Change Wallet</button>
       <div id="walletInfo" class="wallet-info hidden"></div>
@@ -1064,17 +1115,118 @@
       connectBtn.disabled = false;
       connectBtn.style.cursor = 'pointer';
       
-      connectBtn.addEventListener('click', async () => {
+      const connectHandler = async () => {
         try {
+          console.log('[Betting] Connect button clicked');
+          
           if (!window.solana || !window.solana.isPhantom) {
-            alert('Please install Phantom wallet extension!\n\nDownload: https://phantom.app/');
+            alert('⚠️ Phantom wallet not found!\n\nPlease install Phantom wallet extension:\nhttps://phantom.app/\n\nAfter installing, refresh this page.');
             return;
           }
-
-          const resp = await window.solana.connect();
-          walletPublicKey = resp.publicKey.toString();
-          walletConnected = true;
           
+          // Additional check: verify Phantom is ready
+          if (typeof window.solana.connect !== 'function') {
+            alert('⚠️ Phantom wallet extension is not ready!\n\nPlease:\n1. Make sure Phantom wallet is unlocked\n2. Refresh this page\n3. Try again');
+            return;
+          }
+          
+          // ALWAYS disconnect first to force popup (like pump.fun)
+          console.log('[Betting] Disconnecting wallet first to force popup...');
+          try {
+            if (window.solana.isConnected) {
+              await window.solana.disconnect();
+              console.log('[Betting] Wallet disconnected');
+            }
+            // Wait briefly to ensure disconnect is complete (reduced from 2000ms to 300ms for faster popup)
+            console.log('[Betting] Waiting 300ms to clear cached connection...');
+            await new Promise(resolve => setTimeout(resolve, 300));
+          } catch (disconnectErr) {
+            console.warn('[Betting] Error during disconnect:', disconnectErr);
+            await new Promise(resolve => setTimeout(resolve, 300));
+          }
+          
+          // Step 1: Connect wallet (like pump.fun)
+          console.log('[Betting] Step 1: Connecting wallet...');
+          console.log('[Betting] ⚠️ CONNECT POPUP SHOULD APPEAR NOW! ⚠️');
+          console.log('[Betting] If popup does NOT appear:');
+          console.log('[Betting] 1. Phantom wallet has this site in Trusted Apps');
+          console.log('[Betting] 2. Go to Phantom wallet → Settings → Trusted Apps');
+          console.log('[Betting] 3. Remove "localhost:8787" from trusted apps');
+          console.log('[Betting] 4. Refresh page and try again');
+          
+          const resp = await window.solana.connect({ onlyIfTrusted: false });
+          
+          if (!resp || !resp.publicKey) {
+            throw new Error('Connection failed: No public key returned');
+          }
+          
+          walletPublicKey = resp.publicKey.toString();
+          console.log('[Betting] ✅ Step 1 complete: Wallet connected:', walletPublicKey);
+          
+          // Step 2: Sign message to authenticate (like pump.fun)
+          try {
+            console.log('[Betting] Step 2: Requesting message signature for authentication...');
+            console.log('[Betting] ⚠️ SIGN MESSAGE POPUP SHOULD APPEAR NOW! ⚠️');
+            console.log('[Betting] This is the authentication popup (like pump.fun)');
+            console.log('[Betting] If this popup does NOT appear, Phantom wallet may have auto-approve enabled');
+            
+            // Create authentication message (like pump.fun)
+            const timestamp = Date.now();
+            const message = `Sign in to ${window.location.hostname}: ${timestamp}`;
+            const messageBytes = new TextEncoder().encode(message);
+            
+            // Request signature using request() method (Phantom wallet API)
+            let signResponse;
+            if (typeof window.solana.request === 'function') {
+              // Use request() method (recommended)
+              signResponse = await window.solana.request({
+                method: 'signMessage',
+                params: {
+                  message: messageBytes,
+                  display: 'utf8'
+                }
+              });
+            } else if (typeof window.solana.signMessage === 'function') {
+              // Fallback to signMessage() method
+              signResponse = await window.solana.signMessage(messageBytes, 'utf8');
+            } else {
+              throw new Error('signMessage method not available');
+            }
+            
+            // Handle different response formats
+            const signature = signResponse.signature || signResponse;
+            const signatureArray = signature instanceof Uint8Array 
+              ? Array.from(signature) 
+              : (Array.isArray(signature) ? signature : []);
+            
+            console.log('[Betting] ✅ Step 2 complete: Message signed successfully');
+            console.log('[Betting] Signature received (length):', signatureArray.length);
+            
+            // Store signature in localStorage for session
+            localStorage.setItem('walletSignature', JSON.stringify({
+              signature: signatureArray,
+              publicKey: walletPublicKey,
+              timestamp: timestamp,
+              message: message
+            }));
+            
+            console.log('[Betting] ✅ Authentication signature stored in localStorage');
+            
+          } catch (signErr) {
+            console.error('[Betting] Sign message failed:', signErr);
+            // Disconnect if sign fails
+            try {
+              await window.solana.disconnect();
+            } catch (disconnectErr) {
+              console.warn('[Betting] Error disconnecting after sign failure:', disconnectErr);
+            }
+            throw new Error('Authentication failed: Please sign the message to continue. ' + signErr.message);
+          }
+          
+          walletConnected = true;
+          console.log('[Betting] ✅ Authentication complete! Wallet is now authenticated.');
+          
+          // Update container buttons
           connectBtn.classList.add('hidden');
           if (disconnectBtn) disconnectBtn.classList.remove('hidden');
           if (walletInfo) {
@@ -1089,6 +1241,32 @@
             `;
           }
           
+          // Update fixed buttons
+          const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
+          const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
+          const walletInfoFixed = document.getElementById('walletInfoFixed');
+          if (connectBtnFixed) connectBtnFixed.classList.add('hidden');
+          if (disconnectBtnFixed) {
+            disconnectBtnFixed.classList.remove('hidden');
+            disconnectBtnFixed.style.display = '';
+            disconnectBtnFixed.style.visibility = '';
+            disconnectBtnFixed.style.opacity = '';
+          }
+          if (walletInfoFixed) {
+            const sanitizedWallet = sanitizeWalletAddress(walletPublicKey);
+            const shortWallet = sanitizedWallet.length > 16 
+              ? `${sanitizedWallet.substring(0, 8)}...${sanitizedWallet.substring(sanitizedWallet.length - 8)}`
+              : sanitizedWallet;
+            walletInfoFixed.innerHTML = `
+              <div><strong>Connected:</strong> ${escapeHtml(shortWallet)}</div>
+              <div><strong>Balance:</strong> <span id="balanceDisplayFixed">Checking...</span> Luna</div>
+            `;
+            walletInfoFixed.classList.remove('hidden');
+            walletInfoFixed.style.display = '';
+            walletInfoFixed.style.visibility = '';
+            walletInfoFixed.style.opacity = '';
+          }
+          
           await checkLunaBalance();
           await checkSolBalance();
           await loadRooms();
@@ -1096,6 +1274,12 @@
           startSolBalanceUpdate(); // Start real-time SOL balance updates
           setupDepositSystem(); // Setup deposit/withdraw system
           await checkDepositStatus(); // Check deposit status
+          
+          // Update fixed balance display
+          const balanceDisplayFixed = document.getElementById('balanceDisplayFixed');
+          if (balanceDisplayFixed) {
+            balanceDisplayFixed.textContent = formatNumber(playerBalance);
+          }
           
           // Initialize UI components
           if (typeof notificationManager !== 'undefined') {
@@ -1105,29 +1289,69 @@
           console.error('[Betting] Wallet connection error:', err);
           alert('Failed to connect wallet: ' + err.message);
         }
-      });
+      };
+      
+      connectBtn.addEventListener('click', connectHandler);
+      
+      // Also set up fixed connect button
+      const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
+      if (connectBtnFixed) {
+        connectBtnFixed.addEventListener('click', connectHandler);
+      }
 
-      if (disconnectBtn) {
-        disconnectBtn.addEventListener('click', () => {
-          try {
-            if (window.solana && window.solana.isConnected) {
-              window.solana.disconnect();
-            }
-            stopBalanceUpdate(); // Stop real-time balance updates
-            stopSolBalanceUpdate(); // Stop real-time SOL balance updates
-            walletConnected = false;
-            walletPublicKey = null;
-            playerBalance = 0;
-            connectBtn.classList.remove('hidden');
-            disconnectBtn.classList.add('hidden');
-            if (walletInfo) walletInfo.classList.add('hidden');
-            const createBtn = document.getElementById('createRoomBtn');
-            if (createBtn) createBtn.disabled = true;
-            currentRoomId = null;
-          } catch (err) {
-            console.error('[Betting] Wallet disconnect error:', err);
+      const disconnectHandler = () => {
+        try {
+          if (window.solana && window.solana.isConnected) {
+            window.solana.disconnect();
           }
-        });
+          stopBalanceUpdate(); // Stop real-time balance updates
+          stopSolBalanceUpdate(); // Stop real-time SOL balance updates
+          walletConnected = false;
+          walletPublicKey = null;
+          playerBalance = 0;
+          
+          // Clear signature when disconnected (like pump.fun - must sign again on reconnect)
+          localStorage.removeItem('walletSignature');
+          console.log('[Betting] Wallet disconnected - signature cleared. Must sign again on next connect.');
+          
+          // Update container buttons
+          connectBtn.classList.remove('hidden');
+          if (disconnectBtn) disconnectBtn.classList.add('hidden');
+          if (walletInfo) walletInfo.classList.add('hidden');
+          const createBtn = document.getElementById('createRoomBtn');
+          if (createBtn) createBtn.disabled = true;
+          currentRoomId = null;
+          
+          // Update fixed buttons
+          const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
+          const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
+          const walletInfoFixed = document.getElementById('walletInfoFixed');
+          if (connectBtnFixed) connectBtnFixed.classList.remove('hidden');
+          if (disconnectBtnFixed) {
+            disconnectBtnFixed.classList.add('hidden');
+            disconnectBtnFixed.style.display = 'none';
+            disconnectBtnFixed.style.visibility = 'hidden';
+            disconnectBtnFixed.style.opacity = '0';
+          }
+          if (walletInfoFixed) {
+            walletInfoFixed.classList.add('hidden');
+            walletInfoFixed.style.display = 'none';
+            walletInfoFixed.style.visibility = 'hidden';
+            walletInfoFixed.style.opacity = '0';
+          }
+        } catch (err) {
+          console.error('[Betting] Wallet disconnect error:', err);
+        }
+      };
+      
+      if (disconnectBtn) {
+        disconnectBtn.addEventListener('click', disconnectHandler);
+      }
+      
+      // Also set up fixed disconnect button
+      const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
+      if (disconnectBtnFixed) {
+        disconnectBtnFixed.addEventListener('click', disconnectHandler);
       }
     }
 
@@ -1157,6 +1381,13 @@
         if (balanceDisplay) {
           balanceDisplay.textContent = formatNumber(playerBalance) + ' Luna';
         }
+        
+        // Also update fixed balance display
+        const balanceDisplayFixed = document.getElementById('balanceDisplayFixed');
+        if (balanceDisplayFixed) {
+          balanceDisplayFixed.textContent = formatNumber(playerBalance);
+        }
+        
         if (document.getElementById('createRoomBtn')) {
           document.getElementById('createRoomBtn').disabled = playerBalance < 1;
         }
@@ -2458,11 +2689,134 @@
       // Setup deposit system on page load
       setupDepositSystem();
       
-      // Check if wallet already connected
-      if (window.solana && window.solana.isPhantom && window.solana.isConnected) {
-        walletPublicKey = window.solana.publicKey.toString();
-        walletConnected = true;
-        await checkDepositStatus();
+      // Check if wallet already connected OR has valid signature (like pump.fun)
+      const storedSignature = localStorage.getItem('walletSignature');
+      
+      if (window.solana && window.solana.isPhantom) {
+        // Case 1: Wallet is already connected
+        if (window.solana.isConnected && window.solana.publicKey) {
+          const currentWallet = window.solana.publicKey.toString();
+          
+          if (storedSignature) {
+            try {
+              const sigData = JSON.parse(storedSignature);
+              
+              // Verify signature is for current wallet
+              if (sigData.publicKey === currentWallet) {
+                console.log('[Betting] ✅ Persistent connection found - using existing authenticated connection');
+              } else {
+                console.log('[Betting] Signature wallet mismatch - clearing signature');
+                localStorage.removeItem('walletSignature');
+              }
+            } catch (err) {
+              console.error('[Betting] Error checking signature:', err);
+              localStorage.removeItem('walletSignature');
+            }
+          }
+          
+          walletPublicKey = currentWallet;
+          walletConnected = true;
+          await checkDepositStatus();
+        }
+        // Case 2: Wallet not connected but has valid signature - reconnect automatically (like pump.fun)
+        else if (storedSignature && !window.solana.isConnected) {
+          try {
+            const sigData = JSON.parse(storedSignature);
+            console.log('[Betting] ✅ Valid signature found - reconnecting automatically (like pump.fun)...');
+            
+            // Try to reconnect silently first
+            let response;
+            try {
+              response = await window.solana.connect({ onlyIfTrusted: true });
+            } catch (silentErr) {
+              // If silent connect fails, try normal connect (may show popup)
+              console.log('[Betting] Silent connect failed, trying normal connect...');
+              response = await window.solana.connect({ onlyIfTrusted: false });
+            }
+            
+            if (response && response.publicKey) {
+              const currentWallet = response.publicKey.toString();
+              
+              // Verify signature is for reconnected wallet
+              if (sigData.publicKey === currentWallet) {
+                console.log('[Betting] ✅ Auto-reconnected with valid signature');
+                walletPublicKey = currentWallet;
+                walletConnected = true;
+                
+                // Update UI
+                const connectBtn = document.getElementById('connectWalletBtn');
+                const disconnectBtn = document.getElementById('disconnectWalletBtn');
+                const walletInfo = document.getElementById('walletInfo');
+                const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
+                const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
+                const walletInfoFixed = document.getElementById('walletInfoFixed');
+                
+                if (connectBtn) connectBtn.classList.add('hidden');
+                if (disconnectBtn) disconnectBtn.classList.remove('hidden');
+                if (walletInfo) {
+                  walletInfo.textContent = `Wallet: ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}`;
+                  walletInfo.classList.remove('hidden');
+                }
+                if (connectBtnFixed) connectBtnFixed.classList.add('hidden');
+                if (disconnectBtnFixed) {
+                  disconnectBtnFixed.classList.remove('hidden');
+                  disconnectBtnFixed.style.display = '';
+                }
+                if (walletInfoFixed) {
+                  walletInfoFixed.innerHTML = `
+                    <div><strong>Connected:</strong> ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}</div>
+                    <div><strong>Balance:</strong> <span id="balanceDisplayFixed">Checking...</span> Luna</div>
+                  `;
+                  walletInfoFixed.classList.remove('hidden');
+                }
+                
+                await checkDepositStatus();
+                await checkLunaBalance();
+                startBalanceUpdate();
+              } else {
+                console.log('[Betting] Signature wallet mismatch after reconnect - clearing signature');
+                localStorage.removeItem('walletSignature');
+                // Still connect but without signature
+                walletPublicKey = currentWallet;
+                walletConnected = true;
+                
+                // Update UI
+                const connectBtn = document.getElementById('connectWalletBtn');
+                const disconnectBtn = document.getElementById('disconnectWalletBtn');
+                const walletInfo = document.getElementById('walletInfo');
+                const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
+                const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
+                const walletInfoFixed = document.getElementById('walletInfoFixed');
+                
+                if (connectBtn) connectBtn.classList.add('hidden');
+                if (disconnectBtn) disconnectBtn.classList.remove('hidden');
+                if (walletInfo) {
+                  walletInfo.textContent = `Wallet: ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}`;
+                  walletInfo.classList.remove('hidden');
+                }
+                if (connectBtnFixed) connectBtnFixed.classList.add('hidden');
+                if (disconnectBtnFixed) {
+                  disconnectBtnFixed.classList.remove('hidden');
+                  disconnectBtnFixed.style.display = '';
+                }
+                if (walletInfoFixed) {
+                  walletInfoFixed.innerHTML = `
+                    <div><strong>Connected:</strong> ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}</div>
+                    <div><strong>Balance:</strong> <span id="balanceDisplayFixed">Checking...</span> Luna</div>
+                  `;
+                  walletInfoFixed.classList.remove('hidden');
+                }
+                
+                await checkDepositStatus();
+                await checkLunaBalance();
+                startBalanceUpdate();
+              }
+            }
+          } catch (err) {
+            console.warn('[Betting] Auto-reconnect failed:', err);
+            // Don't clear signature - user might want to connect manually
+          }
+        }
       }
     });
     

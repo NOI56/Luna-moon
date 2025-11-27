@@ -5,6 +5,190 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Luna Deposit - Reduce Betting Fee</title>
   <link rel="stylesheet" href="/css/notifications.css">
+  <script>
+    // Declare handleConnectWalletClick early in head so it's available when button is rendered
+    window.handleConnectWalletClick = async function(event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      console.log('[Deposit] handleConnectWalletClick called from head');
+      
+      try {
+        if (!window.solana || !window.solana.isPhantom) {
+          alert('⚠️ Phantom wallet not found!\n\nPlease install Phantom wallet extension:\nhttps://phantom.app/\n\nAfter installing, refresh this page.');
+          return;
+        }
+        
+        // Additional check: verify Phantom is ready
+        if (typeof window.solana.connect !== 'function') {
+          alert('⚠️ Phantom wallet extension is not ready!\n\nPlease:\n1. Make sure Phantom wallet is unlocked\n2. Refresh this page\n3. Try again');
+          return;
+        }
+
+        // Record connect time
+        const connectTimestamp = Date.now();
+        const connectTime = new Date(connectTimestamp);
+        console.log('[Deposit] Connect button clicked at:', connectTime.toLocaleString('th-TH'));
+        
+        // Store in localStorage
+        localStorage.setItem('phantomConnectTime', connectTimestamp.toString());
+        localStorage.setItem('phantomConnectTimeFormatted', connectTime.toLocaleString('th-TH'));
+        
+        // System like pump.fun: Always require sign message for authentication
+        console.log('[Deposit] Connecting wallet (pump.fun style - requires sign message)...');
+        
+        // Step 1: Connect wallet
+        console.log('[Deposit] Step 1: Connecting wallet...');
+        console.log('[Deposit] ⚠️ CONNECT POPUP SHOULD APPEAR NOW! ⚠️');
+        
+        const resp = await window.solana.connect({ onlyIfTrusted: false });
+        
+        if (!resp || !resp.publicKey) {
+          throw new Error('Connection failed: No public key returned');
+        }
+        
+        const walletPublicKey = resp.publicKey.toString();
+        console.log('[Deposit] ✅ Step 1 complete: Wallet connected:', walletPublicKey);
+        
+        // Step 2: Sign message to authenticate (like pump.fun - ALWAYS required)
+        try {
+          console.log('[Deposit] Step 2: Requesting message signature for authentication...');
+          console.log('[Deposit] ⚠️ SIGN MESSAGE POPUP SHOULD APPEAR NOW! ⚠️');
+          
+          // Create authentication message (like pump.fun)
+          const timestamp = Date.now();
+          const message = `Sign in to ${window.location.hostname}: ${timestamp}`;
+          const messageBytes = new TextEncoder().encode(message);
+          
+          // Request signature using request() method (Phantom wallet API)
+          let signResponse;
+          if (typeof window.solana.request === 'function') {
+            signResponse = await window.solana.request({
+              method: 'signMessage',
+              params: {
+                message: messageBytes,
+                display: 'utf8'
+              }
+            });
+          } else if (typeof window.solana.signMessage === 'function') {
+            signResponse = await window.solana.signMessage(messageBytes, 'utf8');
+          } else {
+            throw new Error('signMessage method not available');
+          }
+          
+          // Handle different response formats
+          const signature = signResponse.signature || signResponse;
+          const signatureArray = signature instanceof Uint8Array 
+            ? Array.from(signature) 
+            : (Array.isArray(signature) ? signature : []);
+          
+          console.log('[Deposit] ✅ Step 2 complete: Message signed successfully');
+          
+          // Store signature in localStorage for persistent connection (like pump.fun)
+          localStorage.setItem('walletSignature', JSON.stringify({
+            signature: signatureArray,
+            publicKey: walletPublicKey,
+            timestamp: timestamp,
+            message: message
+          }));
+          
+          console.log('[Deposit] ✅ Authentication signature stored - connection is now persistent');
+          
+        } catch (signErr) {
+          console.error('[Deposit] Sign message failed:', signErr);
+          // Disconnect if sign fails
+          try {
+            await window.solana.disconnect();
+          } catch (disconnectErr) {
+            console.warn('[Deposit] Error disconnecting after sign failure:', disconnectErr);
+          }
+          throw new Error('Authentication failed: Please sign the message to continue. ' + signErr.message);
+        }
+        
+        window.walletPublicKey = walletPublicKey;
+        window.walletConnected = true;
+        
+        console.log('[Deposit] ✅ Authentication complete! Wallet is now authenticated and persistent.');
+        
+        // Store wallet address with connect time
+        localStorage.setItem('phantomWalletAddress', walletPublicKey);
+        localStorage.setItem('phantomLastConnect', connectTimestamp.toString());
+        
+        console.log('[Deposit] Wallet connected:', walletPublicKey);
+        console.log('[Deposit] Connected at:', connectTime.toLocaleString('th-TH'));
+        
+        // Update UI
+        const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
+        const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
+        const walletInfoFixed = document.getElementById('walletInfoFixed');
+        
+        if (connectBtnFixed) connectBtnFixed.classList.add('hidden');
+        if (disconnectBtnFixed) {
+          disconnectBtnFixed.classList.remove('hidden');
+          disconnectBtnFixed.style.display = '';
+          disconnectBtnFixed.style.visibility = '';
+          disconnectBtnFixed.style.opacity = '';
+        }
+        if (walletInfoFixed) {
+          // Use sanitize function if available, otherwise use basic sanitization
+          const sanitizeWalletAddress = typeof window.sanitizeWalletAddress === 'function' 
+            ? window.sanitizeWalletAddress 
+            : (addr) => addr ? addr.replace(/[^A-Za-z0-9]/g, '').substring(0, 44) : '';
+          const escapeHtml = typeof window.escapeHtml === 'function'
+            ? window.escapeHtml
+            : (text) => {
+                if (text == null) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+              };
+          
+          const sanitizedWallet = sanitizeWalletAddress(walletPublicKey);
+          const shortWallet = sanitizedWallet.length > 16 
+            ? `${sanitizedWallet.substring(0, 8)}...${sanitizedWallet.substring(sanitizedWallet.length - 8)}`
+            : sanitizedWallet;
+          
+          // Get connect time from localStorage or current time
+          const storedConnectTime = localStorage.getItem('phantomConnectTimeFormatted');
+          const connectTimeDisplay = storedConnectTime || connectTime.toLocaleString('th-TH');
+          
+          walletInfoFixed.innerHTML = `
+            <div><strong>Connected:</strong> ${escapeHtml(shortWallet)}</div>
+            <div><strong>Balance:</strong> <span id="balanceDisplayFixed">Checking...</span> Luna</div>
+            <div style="font-size: 0.75em; opacity: 0.8; margin-top: 5px;"><strong>Connected at:</strong> ${escapeHtml(connectTimeDisplay)}</div>
+          `;
+          walletInfoFixed.classList.remove('hidden');
+          walletInfoFixed.style.display = '';
+          walletInfoFixed.style.visibility = '';
+          walletInfoFixed.style.opacity = '';
+        }
+        
+        // Hide wallet required message and show deposit section
+        const walletRequiredMessage = document.getElementById('walletRequiredMessage');
+        const infoBox = document.getElementById('infoBox');
+        if (walletRequiredMessage) walletRequiredMessage.classList.add('hidden');
+        if (infoBox) infoBox.classList.remove('hidden');
+        
+        // Initialize all systems without reloading
+        if (typeof checkLunaBalance === 'function') {
+          await checkLunaBalance();
+        }
+        if (typeof startBalanceUpdate === 'function') {
+          startBalanceUpdate();
+        }
+        if (typeof setupDepositSystem === 'function') {
+          setupDepositSystem();
+        }
+        if (typeof checkDepositStatus === 'function') {
+          await checkDepositStatus();
+        }
+      } catch (err) {
+        console.error('[Deposit] Wallet connection error:', err);
+        alert('Failed to connect wallet: ' + err.message);
+      }
+    };
+  </script>
   <style>
     * {
       margin: 0;
@@ -144,10 +328,58 @@
       background: rgba(0, 0, 0, 0.95) !important;
     }
 
-    /* Neon Toggle Button */
-    #neonToggle {
+    /* Wallet Connect Button (Fixed Position - Top Right) */
+    #walletConnectFixed {
       position: fixed;
       top: 40px;
+      right: 20px;
+      z-index: 99999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: flex-end;
+      pointer-events: auto;
+    }
+    
+    #walletConnectFixed * {
+      pointer-events: auto;
+    }
+
+    #walletConnectFixed .wallet-btn {
+      background: rgba(0, 0, 0, 0.9);
+      border: 2px solid #00ffff;
+      color: #00ffff;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      transition: all 0.3s;
+      backdrop-filter: blur(5px);
+      white-space: nowrap;
+    }
+
+    #walletConnectFixed .wallet-btn:hover {
+      background: rgba(0, 255, 255, 0.2);
+      box-shadow: 0 0 10px #00ffff;
+    }
+
+    #walletConnectFixed .wallet-info {
+      background: rgba(0, 0, 0, 0.9);
+      border: 1px solid #00ffff;
+      color: #00ffff;
+      padding: 8px 15px;
+      border-radius: 8px;
+      font-size: 0.85em;
+      backdrop-filter: blur(5px);
+      max-width: 250px;
+      word-break: break-all;
+    }
+
+    /* Neon Toggle Button (Bottom Right) */
+    #neonToggle {
+      position: fixed;
+      bottom: 20px;
       right: 20px;
       z-index: 99999;
       background: rgba(0, 0, 0, 0.9);
@@ -298,13 +530,21 @@
     <a href="/rps_history.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">📜 Match History</a>
   </div>
 
+  <!-- Fixed Wallet Connect (Top Right) -->
+  <div id="walletConnectFixed">
+    <button id="connectWalletBtnFixed" class="wallet-btn">🔗 Connect Phantom Wallet</button>
+    <button id="disconnectWalletBtnFixed" class="wallet-btn disconnect-btn hidden">🔌 Disconnect / Change Wallet</button>
+    <div id="walletInfoFixed" class="wallet-info hidden"></div>
+  </div>
+
+  <!-- Neon Toggle Button (Bottom Right) -->
   <button id="neonToggle" title="Toggle Neon Effects">💡 Neon: ON</button>
 
   <div class="game-container">
     <h1>💰 Deposit Luna</h1>
     <div class="subtitle">Reduce Betting Mode Fee by Holding Luna</div>
     
-    <div id="walletConnect" class="wallet-connect">
+    <div id="walletConnect" class="wallet-connect" style="display: none;">
       <button id="connectWalletBtn" class="wallet-btn">🔗 Connect Phantom Wallet</button>
       <button id="disconnectWalletBtn" class="wallet-btn disconnect-btn hidden">🔌 Disconnect / Change Wallet</button>
       <div id="walletInfo" class="wallet-info hidden"></div>
@@ -314,8 +554,19 @@
       <span class="loading"></span> Checking balance...
     </div>
 
+    <!-- Wallet Connection Required Message -->
+    <div id="walletRequiredMessage" class="info-box" style="text-align: center; padding: 40px;">
+      <h4 style="color: #00ffff; margin-bottom: 20px; font-size: 1.5em;">🔗 Connect Phantom Wallet</h4>
+      <p style="color: #00ffff; font-size: 1.1em; margin-bottom: 30px;">
+        Please connect your Phantom Wallet to access the deposit system.
+      </p>
+      <p style="color: #00ffff; opacity: 0.8; font-size: 0.9em;">
+        Click the "🔗 Connect Phantom Wallet" button at the top right corner to get started.
+      </p>
+    </div>
+
     <!-- Info Box -->
-    <div class="info-box">
+    <div id="infoBox" class="info-box hidden">
       <h4>📋 How It Works</h4>
       <ul>
         <li>Hold at least 150,000 Luna tokens to deposit</li>
@@ -361,41 +612,61 @@
   <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
   <script>
     // Load SPL Token library with multiple fallbacks
+    // Note: Only use IIFE (Immediately Invoked Function Expression) versions, not ES modules
     (function() {
       const cdnUrls = [
-        'https://unpkg.com/@solana/spl-token@0.4.0/lib/index.iife.js',
-        'https://cdn.jsdelivr.net/npm/@solana/spl-token@0.4.0/lib/index.iife.js',
-        'https://unpkg.com/@solana/spl-token@latest/lib/index.iife.js'
+        'https://unpkg.com/@solana/spl-token@0.3.9/lib/index.iife.js',
+        'https://cdn.jsdelivr.net/npm/@solana/spl-token@0.3.9/lib/index.iife.js',
+        'https://unpkg.com/@solana/spl-token@0.3.8/lib/index.iife.js',
+        'https://cdn.jsdelivr.net/npm/@solana/spl-token@0.3.8/lib/index.iife.js',
+        'https://unpkg.com/@solana/spl-token@0.3.7/lib/index.iife.js'
       ];
       
       let currentIndex = 0;
+      let loaded = false;
       
       function tryLoadLibrary() {
         if (currentIndex >= cdnUrls.length) {
-          console.error('[Deposit] Failed to load SPL Token library from all CDNs');
-          console.warn('[Deposit] You can still send Luna manually through Phantom wallet');
+          if (!loaded) {
+            console.error('[Deposit] Failed to load SPL Token library from all CDNs');
+            console.warn('[Deposit] You can still send Luna manually through Phantom wallet');
+            console.warn('[Deposit] The system will use manual transaction creation (fallback mode)');
+          }
           return;
         }
         
         const script = document.createElement('script');
         script.src = cdnUrls[currentIndex];
+        script.crossOrigin = 'anonymous';
         script.onload = function() {
-          console.log(`[Deposit] SPL Token library loaded from: ${cdnUrls[currentIndex]}`);
-          // Check what global variable it creates
+          if (loaded) return; // Prevent duplicate loading
+          
+          // Wait a bit for the library to initialize
           setTimeout(() => {
             const possibleNames = ['splToken', 'spl', 'SPLToken', 'SPL', 'spl_token', 'Token'];
+            let found = false;
             for (const name of possibleNames) {
               if (typeof window[name] !== 'undefined') {
+                console.log(`[Deposit] ✅ SPL Token library loaded from: ${cdnUrls[currentIndex]}`);
                 console.log(`[Deposit] Found SPL Token library as window.${name}`);
+                loaded = true;
+                found = true;
                 break;
               }
             }
-          }, 500);
+            
+            if (!found) {
+              // Library loaded but didn't expose expected global, try next
+              console.warn(`[Deposit] ⚠️ Library loaded but didn't expose expected global variable, trying next...`);
+              currentIndex++;
+              tryLoadLibrary();
+            }
+          }, 1000);
         };
         script.onerror = function() {
-          console.warn(`[Deposit] Failed to load from ${cdnUrls[currentIndex]}, trying next...`);
+          console.warn(`[Deposit] ⚠️ Failed to load from ${cdnUrls[currentIndex]}, trying next...`);
           currentIndex++;
-          tryLoadLibrary();
+          setTimeout(tryLoadLibrary, 500); // Add delay between attempts
         };
         document.head.appendChild(script);
       }
@@ -430,6 +701,8 @@
     const API_BASE = window.location.origin;
     let walletConnected = false;
     let walletPublicKey = null;
+    
+    // Note: handleConnectWalletClick is already declared in <head> section
     let playerBalance = 0;
     let balanceUpdateInterval = null;
     let lunaMintAddress = null;
@@ -864,15 +1137,125 @@
     };
 
     // Wallet Connection
+    // Note: handleConnectWalletClick is already declared in <head> section
+
     async function setupWalletConnection() {
       console.log('[Deposit] Setting up wallet connection...');
       const connectBtn = document.getElementById('connectWalletBtn');
       const disconnectBtn = document.getElementById('disconnectWalletBtn');
       const walletInfo = document.getElementById('walletInfo');
+      const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
 
-      if (!connectBtn) {
-        console.error('[Deposit] connectWalletBtn not found!');
+      // At least one connect button must exist (container or fixed)
+      if (!connectBtn && !connectBtnFixed) {
+        console.error('[Deposit] No connect button found!');
         return;
+      }
+      
+      // Set up fixed button FIRST with direct event listener (most reliable)
+      if (connectBtnFixed) {
+        console.log('[Deposit] Setting up fixed connect button...');
+        // Remove any existing listeners by cloning
+        const newConnectBtnFixed = connectBtnFixed.cloneNode(true);
+        connectBtnFixed.parentNode.replaceChild(newConnectBtnFixed, connectBtnFixed);
+        
+        // Use the global handler from head, or create inline handler
+        newConnectBtnFixed.addEventListener('click', async function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          console.log('[Deposit] Fixed button clicked via addEventListener');
+          
+          // Use the global handler if available, otherwise handle directly
+          if (typeof window.handleConnectWalletClick === 'function') {
+            await window.handleConnectWalletClick(e);
+          } else {
+            // Fallback: handle directly
+            console.warn('[Deposit] handleConnectWalletClick not found, using fallback');
+            try {
+              if (!window.solana || !window.solana.isPhantom) {
+                alert('⚠️ Phantom wallet not found!\n\nPlease install Phantom wallet extension:\nhttps://phantom.app/\n\nAfter installing, refresh this page.');
+                return;
+              }
+              
+              // Additional check: verify Phantom is ready
+              if (typeof window.solana.connect !== 'function') {
+                alert('⚠️ Phantom wallet extension is not ready!\n\nPlease:\n1. Make sure Phantom wallet is unlocked\n2. Refresh this page\n3. Try again');
+                return;
+              }
+              // Check if already connected - disconnect first to force popup
+              if (window.solana.isConnected) {
+                console.log('[Deposit] Wallet already connected, disconnecting first to show popup...');
+                try {
+                  await window.solana.disconnect();
+                  console.log('[Deposit] Disconnected, waiting 500ms before reconnecting...');
+                  await new Promise(resolve => setTimeout(resolve, 500));
+                } catch (disconnectErr) {
+                  console.warn('[Deposit] Error disconnecting:', disconnectErr);
+                }
+              }
+              
+              console.log('[Deposit] Connecting to Phantom wallet via fallback...');
+              console.log('[Deposit] This should show Phantom wallet popup...');
+              
+              // Connect with explicit parameters to ensure popup shows
+              const resp = await window.solana.connect({ onlyIfTrusted: false });
+              
+              if (!resp || !resp.publicKey) {
+                throw new Error('Connection failed: No public key returned');
+              }
+              
+              walletPublicKey = resp.publicKey.toString();
+              walletConnected = true;
+              
+              console.log('[Deposit] ✅ Phantom wallet popup confirmed, wallet connected via fallback!');
+              
+              // Update UI without reloading
+              const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
+              const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
+              const walletInfoFixed = document.getElementById('walletInfoFixed');
+              
+              if (connectBtnFixed) connectBtnFixed.classList.add('hidden');
+              if (disconnectBtnFixed) {
+                disconnectBtnFixed.classList.remove('hidden');
+                disconnectBtnFixed.style.display = '';
+                disconnectBtnFixed.style.visibility = '';
+                disconnectBtnFixed.style.opacity = '';
+              }
+              if (walletInfoFixed) {
+                const sanitizedWallet = sanitizeWalletAddress(walletPublicKey);
+                const shortWallet = sanitizedWallet.length > 16 
+                  ? `${sanitizedWallet.substring(0, 8)}...${sanitizedWallet.substring(sanitizedWallet.length - 8)}`
+                  : sanitizedWallet;
+                walletInfoFixed.innerHTML = `
+                  <div><strong>Connected:</strong> ${escapeHtml(shortWallet)}</div>
+                  <div><strong>Balance:</strong> <span id="balanceDisplayFixed">Checking...</span> Luna</div>
+                `;
+                walletInfoFixed.classList.remove('hidden');
+                walletInfoFixed.style.display = '';
+                walletInfoFixed.style.visibility = '';
+                walletInfoFixed.style.opacity = '';
+              }
+              
+              // Initialize systems
+              if (typeof checkLunaBalance === 'function') {
+                await checkLunaBalance();
+              }
+              if (typeof startBalanceUpdate === 'function') {
+                startBalanceUpdate();
+              }
+              if (typeof setupDepositSystem === 'function') {
+                setupDepositSystem();
+              }
+              if (typeof checkDepositStatus === 'function') {
+                await checkDepositStatus();
+              }
+            } catch (err) {
+              console.error('[Deposit] Connection error:', err);
+              alert('Failed to connect: ' + err.message);
+            }
+          }
+        });
+        console.log('[Deposit] Fixed button event listener attached');
       }
 
       try {
@@ -880,40 +1263,243 @@
         // Check if Phantom wallet is available
         if (typeof window.solana === 'undefined' || !window.solana.isPhantom) {
           console.warn('[Deposit] Phantom wallet not found');
-          connectBtn.textContent = '⚠️ Phantom Wallet not found!';
-          connectBtn.disabled = true;
-          connectBtn.style.cursor = 'not-allowed';
-          connectBtn.onclick = () => {
-            alert('Please install Phantom wallet extension!\n\nDownload: https://phantom.app/');
-          };
+          if (connectBtn) {
+            connectBtn.textContent = '⚠️ Phantom Wallet not found!';
+            connectBtn.disabled = true;
+            connectBtn.style.cursor = 'not-allowed';
+            connectBtn.onclick = () => {
+              alert('Please install Phantom wallet extension!\n\nDownload: https://phantom.app/');
+            };
+          }
+          
+          // Also disable fixed button
+          const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
+          if (connectBtnFixed) {
+            connectBtnFixed.textContent = '⚠️ Phantom Wallet not found!';
+            connectBtnFixed.disabled = true;
+            connectBtnFixed.style.cursor = 'not-allowed';
+            connectBtnFixed.onclick = () => {
+              alert('Please install Phantom wallet extension!\n\nDownload: https://phantom.app/');
+            };
+          }
           return;
         }
 
         console.log('[Deposit] Phantom wallet found, enabling connect button');
         // Enable button and add click handler
-        connectBtn.disabled = false;
-        connectBtn.style.cursor = 'pointer';
+        let newConnectBtn = null;
+        if (connectBtn) {
+          connectBtn.disabled = false;
+          connectBtn.style.cursor = 'pointer';
+          
+          // Remove any existing event listeners by cloning the button
+          newConnectBtn = connectBtn.cloneNode(true);
+          connectBtn.parentNode.replaceChild(newConnectBtn, connectBtn);
+        }
         
-        // Remove any existing event listeners by cloning the button
-        const newConnectBtn = connectBtn.cloneNode(true);
-        connectBtn.parentNode.replaceChild(newConnectBtn, connectBtn);
+        // Also enable fixed button (use the one found at the top)
+        if (connectBtnFixed) {
+          connectBtnFixed.disabled = false;
+          connectBtnFixed.style.cursor = 'pointer';
+          connectBtnFixed.textContent = '🔗 Connect Phantom Wallet';
+          console.log('[Deposit] Fixed connect button enabled');
+        } else {
+          console.warn('[Deposit] connectBtnFixed not found when enabling!');
+        }
         
-        newConnectBtn.addEventListener('click', async () => {
+        const connectHandler = async () => {
           try {
             console.log('[Deposit] Connect button clicked');
+            
             if (!window.solana || !window.solana.isPhantom) {
-              alert('Please install Phantom wallet extension!\n\nDownload: https://phantom.app/');
+              alert('⚠️ Phantom wallet not found!\n\nPlease install Phantom wallet extension:\nhttps://phantom.app/\n\nAfter installing, refresh this page.');
+              return;
+            }
+            
+            // Additional check: verify Phantom is ready
+            if (typeof window.solana.connect !== 'function') {
+              alert('⚠️ Phantom wallet extension is not ready!\n\nPlease:\n1. Make sure Phantom wallet is unlocked\n2. Refresh this page\n3. Try again');
               return;
             }
 
-            console.log('[Deposit] Connecting to Phantom wallet...');
-            const resp = await window.solana.connect();
+            // Check if wallet is already connected - use existing connection silently
+            if (window.solana.isConnected && window.solana.publicKey) {
+              console.log('[Deposit] ✅ Wallet already connected - using existing connection');
+              walletPublicKey = window.solana.publicKey.toString();
+              walletConnected = true;
+              
+              // Get existing connect time or set new one
+              let connectTimestamp = parseInt(localStorage.getItem('phantomConnectTime') || '0');
+              if (!connectTimestamp) {
+                connectTimestamp = Date.now();
+                localStorage.setItem('phantomConnectTime', connectTimestamp.toString());
+                localStorage.setItem('phantomConnectTimeFormatted', new Date(connectTimestamp).toLocaleString('th-TH'));
+              }
+              
+              // Store wallet address
+              localStorage.setItem('phantomWalletAddress', walletPublicKey);
+              localStorage.setItem('phantomLastConnect', connectTimestamp.toString());
+              
+              console.log('[Deposit] Using existing wallet connection:', walletPublicKey);
+              
+              // Update UI without popup
+              if (newConnectBtn) newConnectBtn.classList.add('hidden');
+              if (disconnectBtn) disconnectBtn.classList.remove('hidden');
+              if (walletInfo) {
+                walletInfo.classList.remove('hidden');
+                const sanitizedWallet = sanitizeWalletAddress(walletPublicKey);
+                const shortWallet = sanitizedWallet.length > 16 
+                  ? `${sanitizedWallet.substring(0, 8)}...${sanitizedWallet.substring(sanitizedWallet.length - 8)}`
+                  : sanitizedWallet;
+                
+                const storedConnectTime = localStorage.getItem('phantomConnectTimeFormatted');
+                const connectTimeDisplay = storedConnectTime || new Date(connectTimestamp).toLocaleString('th-TH');
+                
+                walletInfo.innerHTML = `
+                  <strong>Connected:</strong> ${escapeHtml(shortWallet)}<br>
+                  <strong>Balance:</strong> <span id="balanceDisplay">Checking...</span><br>
+                  <strong>Connected at:</strong> <span style="font-size: 0.9em;">${escapeHtml(connectTimeDisplay)}</span>
+                `;
+              }
+              
+              // Update fixed buttons
+              const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
+              const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
+              const walletInfoFixed = document.getElementById('walletInfoFixed');
+              if (connectBtnFixed) connectBtnFixed.classList.add('hidden');
+              if (disconnectBtnFixed) {
+                disconnectBtnFixed.classList.remove('hidden');
+                disconnectBtnFixed.style.display = '';
+              }
+              if (walletInfoFixed) {
+                const sanitizedWallet = sanitizeWalletAddress(walletPublicKey);
+                const shortWallet = sanitizedWallet.length > 16 
+                  ? `${sanitizedWallet.substring(0, 8)}...${sanitizedWallet.substring(sanitizedWallet.length - 8)}`
+                  : sanitizedWallet;
+                
+                const storedConnectTime = localStorage.getItem('phantomConnectTimeFormatted');
+                const connectTimeDisplay = storedConnectTime || new Date(connectTimestamp).toLocaleString('th-TH');
+                
+                walletInfoFixed.innerHTML = `
+                  <div><strong>Connected:</strong> ${escapeHtml(shortWallet)}</div>
+                  <div><strong>Balance:</strong> <span id="balanceDisplayFixed">Checking...</span> Luna</div>
+                  <div style="font-size: 0.75em; opacity: 0.8; margin-top: 5px;"><strong>Connected at:</strong> ${escapeHtml(connectTimeDisplay)}</div>
+                `;
+                walletInfoFixed.classList.remove('hidden');
+              }
+              
+              // Hide wallet required message and show deposit section
+              const walletRequiredMessage = document.getElementById('walletRequiredMessage');
+              const infoBox = document.getElementById('infoBox');
+              if (walletRequiredMessage) walletRequiredMessage.classList.add('hidden');
+              if (infoBox) infoBox.classList.remove('hidden');
+              
+              await checkLunaBalance();
+              startBalanceUpdate();
+              setupDepositSystem();
+              await checkDepositStatus();
+              
+              // Update fixed balance display
+              const balanceDisplayFixed = document.getElementById('balanceDisplayFixed');
+              if (balanceDisplayFixed) {
+                balanceDisplayFixed.textContent = formatNumber(playerBalance);
+              }
+              
+              return; // Exit early - no need to connect or sign
+            }
+            
+            // Record connect time
+            const connectTimestamp = Date.now();
+            const connectTime = new Date(connectTimestamp);
+            console.log('[Deposit] Connect button clicked at:', connectTime.toLocaleString('th-TH'));
+            
+            // Store in localStorage
+            localStorage.setItem('phantomConnectTime', connectTimestamp.toString());
+            localStorage.setItem('phantomConnectTimeFormatted', connectTime.toLocaleString('th-TH'));
+
+            // System like pump.fun: Always require sign message for authentication
+            console.log('[Deposit] Connecting wallet (pump.fun style - requires sign message)...');
+            
+            // Step 1: Connect wallet
+            console.log('[Deposit] Step 1: Connecting wallet...');
+            console.log('[Deposit] ⚠️ CONNECT POPUP SHOULD APPEAR NOW! ⚠️');
+            
+            const resp = await window.solana.connect({ onlyIfTrusted: false });
+            
+            if (!resp || !resp.publicKey) {
+              throw new Error('Connection failed: No public key returned');
+            }
+            
             walletPublicKey = resp.publicKey.toString();
+            console.log('[Deposit] ✅ Step 1 complete: Wallet connected:', walletPublicKey);
+            
+            // Step 2: Sign message to authenticate (like pump.fun - ALWAYS required)
+            try {
+              console.log('[Deposit] Step 2: Requesting message signature for authentication...');
+              console.log('[Deposit] ⚠️ SIGN MESSAGE POPUP SHOULD APPEAR NOW! ⚠️');
+              
+              // Create authentication message (like pump.fun)
+              const timestamp = Date.now();
+              const message = `Sign in to ${window.location.hostname}: ${timestamp}`;
+              const messageBytes = new TextEncoder().encode(message);
+              
+              // Request signature using request() method (Phantom wallet API)
+              let signResponse;
+              if (typeof window.solana.request === 'function') {
+                signResponse = await window.solana.request({
+                  method: 'signMessage',
+                  params: {
+                    message: messageBytes,
+                    display: 'utf8'
+                  }
+                });
+              } else if (typeof window.solana.signMessage === 'function') {
+                signResponse = await window.solana.signMessage(messageBytes, 'utf8');
+              } else {
+                throw new Error('signMessage method not available');
+              }
+              
+              // Handle different response formats
+              const signature = signResponse.signature || signResponse;
+              const signatureArray = signature instanceof Uint8Array 
+                ? Array.from(signature) 
+                : (Array.isArray(signature) ? signature : []);
+              
+              console.log('[Deposit] ✅ Step 2 complete: Message signed successfully');
+              
+              // Store signature in localStorage for persistent connection (like pump.fun)
+              localStorage.setItem('walletSignature', JSON.stringify({
+                signature: signatureArray,
+                publicKey: walletPublicKey,
+                timestamp: timestamp,
+                message: message
+              }));
+              
+              console.log('[Deposit] ✅ Authentication signature stored - connection is now persistent');
+              
+            } catch (signErr) {
+              console.error('[Deposit] Sign message failed:', signErr);
+              // Disconnect if sign fails
+              try {
+                await window.solana.disconnect();
+              } catch (disconnectErr) {
+                console.warn('[Deposit] Error disconnecting after sign failure:', disconnectErr);
+              }
+              throw new Error('Authentication failed: Please sign the message to continue. ' + signErr.message);
+            }
+            
             walletConnected = true;
+            console.log('[Deposit] ✅ Authentication complete! Wallet is now authenticated and persistent.');
+            
+            // Store wallet address with connect time
+            localStorage.setItem('phantomWalletAddress', walletPublicKey);
+            localStorage.setItem('phantomLastConnect', connectTimestamp.toString());
             
             console.log('[Deposit] Wallet connected:', walletPublicKey);
+            console.log('[Deposit] Connected at:', connectTime.toLocaleString('th-TH'));
             
-            newConnectBtn.classList.add('hidden');
+            // Update container buttons
+            if (newConnectBtn) newConnectBtn.classList.add('hidden');
             if (disconnectBtn) disconnectBtn.classList.remove('hidden');
             if (walletInfo) {
               walletInfo.classList.remove('hidden');
@@ -921,46 +1507,148 @@
               const shortWallet = sanitizedWallet.length > 16 
                 ? `${sanitizedWallet.substring(0, 8)}...${sanitizedWallet.substring(sanitizedWallet.length - 8)}`
                 : sanitizedWallet;
+              
+              // Get connect time from localStorage
+              const storedConnectTime = localStorage.getItem('phantomConnectTimeFormatted');
+              const connectTimeDisplay = storedConnectTime || connectTime.toLocaleString('th-TH');
+              
               walletInfo.innerHTML = `
                 <strong>Connected:</strong> ${escapeHtml(shortWallet)}<br>
-                <strong>Balance:</strong> <span id="balanceDisplay">Checking...</span>
+                <strong>Balance:</strong> <span id="balanceDisplay">Checking...</span><br>
+                <strong>Connected at:</strong> <span style="font-size: 0.9em;">${escapeHtml(connectTimeDisplay)}</span>
               `;
             }
+            
+            // Update fixed buttons
+            const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
+            const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
+            const walletInfoFixed = document.getElementById('walletInfoFixed');
+            if (connectBtnFixed) connectBtnFixed.classList.add('hidden');
+            if (disconnectBtnFixed) {
+              disconnectBtnFixed.classList.remove('hidden');
+              disconnectBtnFixed.style.display = '';
+              disconnectBtnFixed.style.visibility = '';
+              disconnectBtnFixed.style.opacity = '';
+            }
+            if (walletInfoFixed) {
+              const sanitizedWallet = sanitizeWalletAddress(walletPublicKey);
+              const shortWallet = sanitizedWallet.length > 16 
+                ? `${sanitizedWallet.substring(0, 8)}...${sanitizedWallet.substring(sanitizedWallet.length - 8)}`
+                : sanitizedWallet;
+              
+              // Get connect time from localStorage
+              const storedConnectTime = localStorage.getItem('phantomConnectTimeFormatted');
+              const connectTimeDisplay = storedConnectTime || connectTime.toLocaleString('th-TH');
+              
+              walletInfoFixed.innerHTML = `
+                <div><strong>Connected:</strong> ${escapeHtml(shortWallet)}</div>
+                <div><strong>Balance:</strong> <span id="balanceDisplayFixed">Checking...</span> Luna</div>
+                <div style="font-size: 0.75em; opacity: 0.8; margin-top: 5px;"><strong>Connected at:</strong> ${escapeHtml(connectTimeDisplay)}</div>
+              `;
+              walletInfoFixed.classList.remove('hidden');
+              walletInfoFixed.style.display = '';
+              walletInfoFixed.style.visibility = '';
+              walletInfoFixed.style.opacity = '';
+            }
+            
+            // Hide wallet required message and show deposit section
+            const walletRequiredMessage = document.getElementById('walletRequiredMessage');
+            const infoBox = document.getElementById('infoBox');
+            if (walletRequiredMessage) walletRequiredMessage.classList.add('hidden');
+            if (infoBox) infoBox.classList.remove('hidden');
             
             await checkLunaBalance();
             startBalanceUpdate();
             setupDepositSystem();
             await checkDepositStatus();
+            
+            // Update fixed balance display
+            const balanceDisplayFixed = document.getElementById('balanceDisplayFixed');
+            if (balanceDisplayFixed) {
+              balanceDisplayFixed.textContent = formatNumber(playerBalance);
+            }
           } catch (err) {
             console.error('[Deposit] Wallet connection error:', err);
             alert('Failed to connect wallet: ' + err.message);
           }
-        });
+        };
+        
+        if (newConnectBtn) {
+          newConnectBtn.addEventListener('click', connectHandler);
+        }
+        
+        // Fixed button is already set up at the beginning of setupWalletConnection()
+        // No need to set it up again here
+        
+        // Set up fixed disconnect button
+        const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
+        if (disconnectBtnFixed) {
+          disconnectBtnFixed.addEventListener('click', async () => {
+            try {
+              if (window.solana && window.solana.isConnected) {
+                await window.solana.disconnect();
+              }
+            } catch (error) {
+              console.error('[Deposit] Wallet disconnect error:', error);
+            }
+          });
+        }
       } catch (error) {
         console.error('[Deposit] Error in setupWalletConnection:', error);
       }
 
-      // Setup disconnect button
-      if (disconnectBtn) {
-        disconnectBtn.addEventListener('click', () => {
-          try {
-            if (window.solana && window.solana.isConnected) {
-              window.solana.disconnect();
-            }
-            stopBalanceUpdate();
-            walletConnected = false;
-            walletPublicKey = null;
-            playerBalance = 0;
-            const connectBtnAfter = document.getElementById('connectWalletBtn');
-            if (connectBtnAfter) connectBtnAfter.classList.remove('hidden');
-            disconnectBtn.classList.add('hidden');
-            if (walletInfo) walletInfo.classList.add('hidden');
-            const depositSection = document.getElementById('depositSection');
-            if (depositSection) depositSection.classList.add('hidden');
-          } catch (err) {
-            console.error('[Deposit] Wallet disconnect error:', err);
+      // Setup disconnect button (container)
+      const disconnectHandler = () => {
+        try {
+          if (window.solana && window.solana.isConnected) {
+            window.solana.disconnect();
           }
-        });
+          
+          // Clear signature when disconnected (like pump.fun - must sign again on reconnect)
+          localStorage.removeItem('walletSignature');
+          console.log('[Deposit] Wallet disconnected - signature cleared. Must sign again on next connect.');
+          
+          stopBalanceUpdate();
+          walletConnected = false;
+          walletPublicKey = null;
+          playerBalance = 0;
+          const connectBtnAfter = document.getElementById('connectWalletBtn');
+          if (connectBtnAfter) connectBtnAfter.classList.remove('hidden');
+          if (disconnectBtn) disconnectBtn.classList.add('hidden');
+          if (walletInfo) walletInfo.classList.add('hidden');
+          const depositSection = document.getElementById('depositSection');
+          if (depositSection) depositSection.classList.add('hidden');
+          
+          // Update fixed buttons
+          const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
+          const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
+          const walletInfoFixed = document.getElementById('walletInfoFixed');
+          if (connectBtnFixed) connectBtnFixed.classList.remove('hidden');
+          if (disconnectBtnFixed) {
+            disconnectBtnFixed.classList.add('hidden');
+            disconnectBtnFixed.style.display = 'none';
+            disconnectBtnFixed.style.visibility = 'hidden';
+            disconnectBtnFixed.style.opacity = '0';
+          }
+          if (walletInfoFixed) {
+            walletInfoFixed.classList.add('hidden');
+            walletInfoFixed.style.display = 'none';
+            walletInfoFixed.style.visibility = 'hidden';
+            walletInfoFixed.style.opacity = '0';
+          }
+        } catch (err) {
+          console.error('[Deposit] Wallet disconnect error:', err);
+        }
+      };
+      
+      if (disconnectBtn) {
+        disconnectBtn.addEventListener('click', disconnectHandler);
+      }
+      
+      // Also set up fixed disconnect button (if not already set up)
+      const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
+      if (disconnectBtnFixed && !disconnectBtnFixed.onclick) {
+        disconnectBtnFixed.addEventListener('click', disconnectHandler);
       }
 
       // Check if already connected
@@ -972,6 +1660,13 @@
           disconnectBtn.classList.remove('hidden');
           walletInfo.textContent = `Wallet: ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}`;
           walletInfo.classList.remove('hidden');
+          
+          // Hide wallet required message and show deposit section
+          const walletRequiredMessage = document.getElementById('walletRequiredMessage');
+          const infoBox = document.getElementById('infoBox');
+          if (walletRequiredMessage) walletRequiredMessage.classList.add('hidden');
+          if (infoBox) infoBox.classList.remove('hidden');
+          
           await checkLunaBalance();
           startBalanceUpdate();
           setupDepositSystem();
@@ -979,14 +1674,44 @@
         });
 
         window.solana.on('disconnect', () => {
+          // Clear signature when disconnected (like pump.fun - must sign again on reconnect)
+          localStorage.removeItem('walletSignature');
+          console.log('[Deposit] Wallet disconnected - signature cleared. Must sign again on next connect.');
+          
           stopBalanceUpdate();
           walletPublicKey = null;
           walletConnected = false;
           playerBalance = 0;
           connectBtn.classList.remove('hidden');
-          disconnectBtn.classList.add('hidden');
-          walletInfo.classList.add('hidden');
+          if (disconnectBtn) disconnectBtn.classList.add('hidden');
+          if (walletInfo) walletInfo.classList.add('hidden');
           const depositSection = document.getElementById('depositSection');
+          if (depositSection) depositSection.classList.add('hidden');
+          
+          // Update fixed buttons
+          const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
+          const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
+          const walletInfoFixed = document.getElementById('walletInfoFixed');
+          if (connectBtnFixed) connectBtnFixed.classList.remove('hidden');
+          if (disconnectBtnFixed) {
+            disconnectBtnFixed.classList.add('hidden');
+            disconnectBtnFixed.style.display = 'none';
+            disconnectBtnFixed.style.visibility = 'hidden';
+            disconnectBtnFixed.style.opacity = '0';
+          }
+          if (walletInfoFixed) {
+            walletInfoFixed.classList.add('hidden');
+            walletInfoFixed.style.display = 'none';
+            walletInfoFixed.style.visibility = 'hidden';
+            walletInfoFixed.style.opacity = '0';
+          }
+          
+          // Show wallet required message and hide deposit section
+          const walletRequiredMessage = document.getElementById('walletRequiredMessage');
+          const infoBox = document.getElementById('infoBox');
+          // depositSection already declared above, reuse it
+          if (walletRequiredMessage) walletRequiredMessage.classList.remove('hidden');
+          if (infoBox) infoBox.classList.add('hidden');
           if (depositSection) depositSection.classList.add('hidden');
         });
 
@@ -995,12 +1720,52 @@
           walletConnected = true;
           connectBtn.classList.add('hidden');
           disconnectBtn.classList.remove('hidden');
-          walletInfo.textContent = `Wallet: ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}`;
+          
+          // Get connect time from localStorage or use current time
+          const storedConnectTime = localStorage.getItem('phantomConnectTimeFormatted');
+          const connectTimeDisplay = storedConnectTime || new Date().toLocaleString('th-TH');
+          
+          const sanitizedWallet = sanitizeWalletAddress(walletPublicKey);
+          const shortWallet = sanitizedWallet.length > 16 
+            ? `${sanitizedWallet.substring(0, 8)}...${sanitizedWallet.substring(sanitizedWallet.length - 8)}`
+            : sanitizedWallet;
+          
+          walletInfo.innerHTML = `
+            <strong>Connected:</strong> ${escapeHtml(shortWallet)}<br>
+            <strong>Balance:</strong> <span id="balanceDisplay">Checking...</span><br>
+            <strong>Connected at:</strong> <span style="font-size: 0.9em;">${escapeHtml(connectTimeDisplay)}</span>
+          `;
           walletInfo.classList.remove('hidden');
+          
+          // Also update fixed wallet info
+          const walletInfoFixed = document.getElementById('walletInfoFixed');
+          if (walletInfoFixed) {
+            walletInfoFixed.innerHTML = `
+              <div><strong>Connected:</strong> ${escapeHtml(shortWallet)}</div>
+              <div><strong>Balance:</strong> <span id="balanceDisplayFixed">Checking...</span> Luna</div>
+              <div style="font-size: 0.75em; opacity: 0.8; margin-top: 5px;"><strong>Connected at:</strong> ${escapeHtml(connectTimeDisplay)}</div>
+            `;
+            walletInfoFixed.classList.remove('hidden');
+          }
+          
+          // Hide wallet required message and show deposit section
+          const walletRequiredMessage = document.getElementById('walletRequiredMessage');
+          const infoBox = document.getElementById('infoBox');
+          if (walletRequiredMessage) walletRequiredMessage.classList.add('hidden');
+          if (infoBox) infoBox.classList.remove('hidden');
+          
           checkLunaBalance();
           startBalanceUpdate();
           setupDepositSystem();
           checkDepositStatus();
+        } else {
+          // Show wallet required message if not connected
+          const walletRequiredMessage = document.getElementById('walletRequiredMessage');
+          const infoBox = document.getElementById('infoBox');
+          const depositSection = document.getElementById('depositSection');
+          if (walletRequiredMessage) walletRequiredMessage.classList.remove('hidden');
+          if (infoBox) infoBox.classList.add('hidden');
+          if (depositSection) depositSection.classList.add('hidden');
         }
       }
     }
@@ -1028,6 +1793,9 @@
         
         if (balanceDisplay) {
           balanceDisplay.textContent = formatNumber(playerBalance) + ' Luna';
+          // Also update fixed balance display
+          const balanceDisplayFixed = document.getElementById('balanceDisplayFixed');
+          if (balanceDisplayFixed) balanceDisplayFixed.textContent = formatNumber(playerBalance);
         }
         
         await checkDepositStatus();
@@ -1347,15 +2115,273 @@
 
     // Initialize
     document.addEventListener('DOMContentLoaded', async () => {
+      console.log('[Deposit] DOMContentLoaded - Initializing...');
       initNeonToggle();
-      setupWalletConnection();
+      
+      // Wait a bit to ensure all elements are ready
+      setTimeout(() => {
+        setupWalletConnection();
+      }, 100);
       await loadLunaMintAddress();
       
-      // Check if wallet already connected
-      if (window.solana && window.solana.isPhantom && window.solana.isConnected) {
-        walletPublicKey = window.solana.publicKey.toString();
+      // Check if wallet already connected OR has valid signature (like pump.fun)
+      const storedSignature = localStorage.getItem('walletSignature');
+      
+      if (window.solana && window.solana.isPhantom) {
+        // Case 1: Wallet is already connected
+        if (window.solana.isConnected && window.solana.publicKey) {
+          const currentWallet = window.solana.publicKey.toString();
+          
+          if (storedSignature) {
+            try {
+              const sigData = JSON.parse(storedSignature);
+              
+              // Verify signature is for current wallet
+              if (sigData.publicKey === currentWallet) {
+                console.log('[Deposit] ✅ Persistent connection found - using existing authenticated connection');
+                walletPublicKey = currentWallet;
+                walletConnected = true;
+                
+                // Update wallet info with connect time if available
+                const walletInfoFixed = document.getElementById('walletInfoFixed');
+                if (walletInfoFixed && walletPublicKey) {
+                  const storedConnectTime = localStorage.getItem('phantomConnectTimeFormatted');
+                  if (storedConnectTime) {
+                    const sanitizedWallet = sanitizeWalletAddress(walletPublicKey);
+                    const shortWallet = sanitizedWallet.length > 16 
+                      ? `${sanitizedWallet.substring(0, 8)}...${sanitizedWallet.substring(sanitizedWallet.length - 8)}`
+                      : sanitizedWallet;
+                    
+                    const balanceDisplayFixed = document.getElementById('balanceDisplayFixed');
+                    const currentBalance = balanceDisplayFixed ? balanceDisplayFixed.textContent : 'Checking...';
+                    
+                    walletInfoFixed.innerHTML = `
+                      <div><strong>Connected:</strong> ${escapeHtml(shortWallet)}</div>
+                      <div><strong>Balance:</strong> <span id="balanceDisplayFixed">${escapeHtml(currentBalance)}</span> Luna</div>
+                      <div style="font-size: 0.75em; opacity: 0.8; margin-top: 5px;"><strong>Connected at:</strong> ${escapeHtml(storedConnectTime)}</div>
+                    `;
+                    walletInfoFixed.classList.remove('hidden');
+                  }
+                }
+                
+                // Update UI to show connected state
+                const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
+                const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
+                if (connectBtnFixed) connectBtnFixed.classList.add('hidden');
+                if (disconnectBtnFixed) {
+                  disconnectBtnFixed.classList.remove('hidden');
+                  disconnectBtnFixed.style.display = '';
+                }
+                
+                await checkDepositStatus();
+                await checkLunaBalance();
+                startBalanceUpdate();
+                setupDepositSystem();
+                return; // Exit early
+              } else {
+                console.log('[Deposit] Signature wallet mismatch - clearing signature');
+                localStorage.removeItem('walletSignature');
+              }
+            } catch (err) {
+              console.error('[Deposit] Error checking signature:', err);
+              localStorage.removeItem('walletSignature');
+            }
+          }
+          
+          // Connected but no signature - use existing connection silently
+          console.log('[Deposit] ✅ Wallet already connected (no signature) - using existing connection');
+          walletPublicKey = currentWallet;
+          walletConnected = true;
+          
+          // Get existing connect time or set new one
+          let connectTimestamp = parseInt(localStorage.getItem('phantomConnectTime') || '0');
+          if (!connectTimestamp) {
+            connectTimestamp = Date.now();
+            localStorage.setItem('phantomConnectTime', connectTimestamp.toString());
+            localStorage.setItem('phantomConnectTimeFormatted', new Date(connectTimestamp).toLocaleString('th-TH'));
+          }
+          
+          // Store wallet address
+          localStorage.setItem('phantomWalletAddress', currentWallet);
+          localStorage.setItem('phantomLastConnect', connectTimestamp.toString());
+          
+          // Update UI to show connected state
+          const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
+          const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
+          const walletInfoFixed = document.getElementById('walletInfoFixed');
+          if (connectBtnFixed) connectBtnFixed.classList.add('hidden');
+          if (disconnectBtnFixed) {
+            disconnectBtnFixed.classList.remove('hidden');
+            disconnectBtnFixed.style.display = '';
+          }
+          if (walletInfoFixed) {
+            const sanitizedWallet = sanitizeWalletAddress(currentWallet);
+            const shortWallet = sanitizedWallet.length > 16 
+              ? `${sanitizedWallet.substring(0, 8)}...${sanitizedWallet.substring(sanitizedWallet.length - 8)}`
+              : sanitizedWallet;
+            
+            const storedConnectTime = localStorage.getItem('phantomConnectTimeFormatted');
+            const connectTimeDisplay = storedConnectTime || new Date(connectTimestamp).toLocaleString('th-TH');
+            
+            walletInfoFixed.innerHTML = `
+              <div><strong>Connected:</strong> ${escapeHtml(shortWallet)}</div>
+              <div><strong>Balance:</strong> <span id="balanceDisplayFixed">Checking...</span> Luna</div>
+              <div style="font-size: 0.75em; opacity: 0.8; margin-top: 5px;"><strong>Connected at:</strong> ${escapeHtml(connectTimeDisplay)}</div>
+            `;
+            walletInfoFixed.classList.remove('hidden');
+          }
+          
+          await checkDepositStatus();
+          await checkLunaBalance();
+          startBalanceUpdate();
+          setupDepositSystem();
+        }
+        // Case 2: Wallet not connected but has valid signature - reconnect automatically (like pump.fun)
+        else if (storedSignature && !window.solana.isConnected) {
+          try {
+            const sigData = JSON.parse(storedSignature);
+            console.log('[Deposit] ✅ Valid signature found - reconnecting automatically (like pump.fun)...');
+            
+            // Try to reconnect silently first
+            let response;
+            try {
+              response = await window.solana.connect({ onlyIfTrusted: true });
+            } catch (silentErr) {
+              // If silent connect fails, try normal connect (may show popup)
+              console.log('[Deposit] Silent connect failed, trying normal connect...');
+              response = await window.solana.connect({ onlyIfTrusted: false });
+            }
+            
+            if (response && response.publicKey) {
+              const currentWallet = response.publicKey.toString();
+              
+              // Verify signature is for reconnected wallet
+              if (sigData.publicKey === currentWallet) {
+                console.log('[Deposit] ✅ Auto-reconnected with valid signature');
+                walletPublicKey = currentWallet;
+                walletConnected = true;
+                
+                // Update wallet info with connect time if available
+                const walletInfoFixed = document.getElementById('walletInfoFixed');
+                if (walletInfoFixed && walletPublicKey) {
+                  const storedConnectTime = localStorage.getItem('phantomConnectTimeFormatted');
+                  if (storedConnectTime) {
+                    const sanitizedWallet = sanitizeWalletAddress(walletPublicKey);
+                    const shortWallet = sanitizedWallet.length > 16 
+                      ? `${sanitizedWallet.substring(0, 8)}...${sanitizedWallet.substring(sanitizedWallet.length - 8)}`
+                      : sanitizedWallet;
+                    
+                    walletInfoFixed.innerHTML = `
+                      <div><strong>Connected:</strong> ${escapeHtml(shortWallet)}</div>
+                      <div><strong>Balance:</strong> <span id="balanceDisplayFixed">Checking...</span> Luna</div>
+                      <div style="font-size: 0.75em; opacity: 0.8; margin-top: 5px;"><strong>Connected at:</strong> ${escapeHtml(storedConnectTime)}</div>
+                    `;
+                    walletInfoFixed.classList.remove('hidden');
+                  }
+                }
+                
+                // Update UI to show connected state
+                const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
+                const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
+                if (connectBtnFixed) connectBtnFixed.classList.add('hidden');
+                if (disconnectBtnFixed) {
+                  disconnectBtnFixed.classList.remove('hidden');
+                  disconnectBtnFixed.style.display = '';
+                }
+                
+                await checkDepositStatus();
+                await checkLunaBalance();
+                startBalanceUpdate();
+                setupDepositSystem();
+              } else {
+                console.log('[Deposit] Signature wallet mismatch after reconnect - clearing signature');
+                localStorage.removeItem('walletSignature');
+                // Still connect but without signature
+                walletPublicKey = currentWallet;
+                walletConnected = true;
+                
+                // Update UI
+                const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
+                const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
+                const walletInfoFixed = document.getElementById('walletInfoFixed');
+                if (connectBtnFixed) connectBtnFixed.classList.add('hidden');
+                if (disconnectBtnFixed) {
+                  disconnectBtnFixed.classList.remove('hidden');
+                  disconnectBtnFixed.style.display = '';
+                }
+                if (walletInfoFixed) {
+                  const sanitizedWallet = sanitizeWalletAddress(currentWallet);
+                  const shortWallet = sanitizedWallet.length > 16 
+                    ? `${sanitizedWallet.substring(0, 8)}...${sanitizedWallet.substring(sanitizedWallet.length - 8)}`
+                    : sanitizedWallet;
+                  
+                  walletInfoFixed.innerHTML = `
+                    <div><strong>Connected:</strong> ${escapeHtml(shortWallet)}</div>
+                    <div><strong>Balance:</strong> <span id="balanceDisplayFixed">Checking...</span> Luna</div>
+                  `;
+                  walletInfoFixed.classList.remove('hidden');
+                }
+                
+                await checkDepositStatus();
+                await checkLunaBalance();
+                startBalanceUpdate();
+                setupDepositSystem();
+              }
+            }
+          } catch (err) {
+            console.warn('[Deposit] Auto-reconnect failed:', err);
+            // Don't clear signature - user might want to connect manually
+          }
+        }
+      } else if (window.solana && window.solana.isPhantom && window.solana.isConnected && !storedSignature) {
+        // Connected but no signature - use existing connection silently
+        console.log('[Deposit] ✅ Wallet already connected (no signature) - using existing connection');
+        const currentWallet = window.solana.publicKey.toString();
+        walletPublicKey = currentWallet;
         walletConnected = true;
+        
+        // Get existing connect time or set new one
+        let connectTimestamp = parseInt(localStorage.getItem('phantomConnectTime') || '0');
+        if (!connectTimestamp) {
+          connectTimestamp = Date.now();
+          localStorage.setItem('phantomConnectTime', connectTimestamp.toString());
+          localStorage.setItem('phantomConnectTimeFormatted', new Date(connectTimestamp).toLocaleString('th-TH'));
+        }
+        
+        // Store wallet address
+        localStorage.setItem('phantomWalletAddress', currentWallet);
+        localStorage.setItem('phantomLastConnect', connectTimestamp.toString());
+        
+        // Update UI to show connected state
+        const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
+        const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
+        const walletInfoFixed = document.getElementById('walletInfoFixed');
+        if (connectBtnFixed) connectBtnFixed.classList.add('hidden');
+        if (disconnectBtnFixed) {
+          disconnectBtnFixed.classList.remove('hidden');
+          disconnectBtnFixed.style.display = '';
+        }
+        if (walletInfoFixed) {
+          const sanitizedWallet = sanitizeWalletAddress(currentWallet);
+          const shortWallet = sanitizedWallet.length > 16 
+            ? `${sanitizedWallet.substring(0, 8)}...${sanitizedWallet.substring(sanitizedWallet.length - 8)}`
+            : sanitizedWallet;
+          
+          const storedConnectTime = localStorage.getItem('phantomConnectTimeFormatted');
+          const connectTimeDisplay = storedConnectTime || new Date(connectTimestamp).toLocaleString('th-TH');
+          
+          walletInfoFixed.innerHTML = `
+            <div><strong>Connected:</strong> ${escapeHtml(shortWallet)}</div>
+            <div><strong>Balance:</strong> <span id="balanceDisplayFixed">Checking...</span> Luna</div>
+            <div style="font-size: 0.75em; opacity: 0.8; margin-top: 5px;"><strong>Connected at:</strong> ${escapeHtml(connectTimeDisplay)}</div>
+          `;
+          walletInfoFixed.classList.remove('hidden');
+        }
+        
         await checkDepositStatus();
+        await checkLunaBalance();
+        startBalanceUpdate();
+        setupDepositSystem();
       }
     });
   </script>

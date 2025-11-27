@@ -526,10 +526,57 @@
       transform: scale(0.98) !important;
     }
     
-    /* Neon Toggle Button */
-    #neonToggle {
+    /* Wallet Connect Button (Fixed Position - Top Right) */
+    #walletConnectFixed {
       position: fixed;
       top: 40px;
+      right: 20px;
+      z-index: 99999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: flex-end;
+    }
+
+    #walletConnectFixed .wallet-btn {
+      background: rgba(0, 0, 0, 0.9);
+      border: 2px solid #00ffff;
+      color: #00ffff;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      transition: all 0.3s;
+      backdrop-filter: blur(5px);
+      white-space: nowrap;
+    }
+
+    #walletConnectFixed .wallet-btn:hover {
+      background: rgba(0, 255, 255, 0.2);
+      box-shadow: 0 0 10px #00ffff;
+    }
+
+    #walletConnectFixed .wallet-info {
+      background: rgba(0, 0, 0, 0.9);
+      border: 1px solid #00ffff;
+      color: #00ffff;
+      padding: 8px 15px;
+      border-radius: 8px;
+      font-size: 0.85em;
+      backdrop-filter: blur(5px);
+      max-width: 250px;
+      word-break: break-all;
+    }
+    
+    #walletConnectFixed .wallet-info.hidden {
+      display: none !important;
+    }
+
+    /* Neon Toggle Button (Bottom Right) */
+    #neonToggle {
+      position: fixed;
+      bottom: 20px;
       right: 20px;
       z-index: 99999;
       background: rgba(0, 0, 0, 0.9);
@@ -570,6 +617,14 @@
   <div id="modeNavigation" style="position: fixed !important; top: 40px !important; left: 20px !important; display: flex !important; gap: 10px; z-index: 99999 !important; flex-wrap: wrap; pointer-events: auto !important; visibility: visible !important; opacity: 1 !important;">
     <a href="/rps_vs_luna.html" id="vsLunaLink" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">🎮 VS Luna</a>
   
+  <!-- Fixed Wallet Connect (Top Right) -->
+  <div id="walletConnectFixed">
+    <button id="connectWalletBtnFixed" class="wallet-btn">🔗 Connect Phantom Wallet</button>
+    <button id="disconnectWalletBtnFixed" class="wallet-btn disconnect-btn hidden">🔌 Disconnect / Change Wallet</button>
+    <div id="walletInfoFixed" class="wallet-info hidden"></div>
+  </div>
+
+  <!-- Neon Toggle Button (Bottom Right) -->
   <button id="neonToggle" title="Toggle Neon Effects">💡 Neon: ON</button>
     <a href="/rps_game.html" id="pvpLink" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">Play PvP! Find</a>
     <a href="/rps_betting.html" id="bettingLink" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">💰 Betting Mode</a>
@@ -583,7 +638,7 @@
   <div class="game-container">
     <h1>🎮 VS Luna</h1>
 
-    <div class="wallet-section">
+    <div class="wallet-section" style="display: none;">
       <button id="connectWalletBtn" class="wallet-btn">🔗 Connect Phantom Wallet</button>
       <button id="disconnectWalletBtn" class="wallet-btn hidden">🔌 Disconnect / Change Wallet</button>
       <div id="walletInfo" class="wallet-info hidden"></div>
@@ -810,6 +865,12 @@
         
         playerBalance = data.balance || 0;
 
+        // Update fixed balance display
+        const balanceDisplayFixed = document.getElementById('balanceDisplayFixed');
+        if (balanceDisplayFixed) {
+          balanceDisplayFixed.textContent = formatNumber(playerBalance);
+        }
+
         if (playerBalance >= RPS_MIN_BALANCE) {
           balanceCheck.className = 'balance-check success';
           balanceCheck.textContent = `✅ Balance: ${formatNumber(playerBalance)} Luna (Ready to play!)`;
@@ -950,34 +1011,165 @@
       connectBtn.disabled = false;
       connectBtn.style.cursor = 'pointer';
       
-      connectBtn.addEventListener('click', async () => {
+      const connectHandler = async () => {
         try {
+          console.log('[VS Luna] Connect button clicked');
+          
           if (!window.solana || !window.solana.isPhantom) {
-            alert('Please install Phantom wallet extension!\n\nDownload: https://phantom.app/');
+            alert('⚠️ Phantom wallet not found!\n\nPlease install Phantom wallet extension:\nhttps://phantom.app/\n\nAfter installing, refresh this page.');
             return;
           }
-
-          const response = await window.solana.connect();
+          
+          // Additional check: verify Phantom is ready
+          if (typeof window.solana.connect !== 'function') {
+            alert('⚠️ Phantom wallet extension is not ready!\n\nPlease:\n1. Make sure Phantom wallet is unlocked\n2. Refresh this page\n3. Try again');
+            return;
+          }
+          
+          // ALWAYS disconnect first to force popup (like pump.fun)
+          console.log('[VS Luna] Disconnecting wallet first to force popup...');
+          try {
+            if (window.solana.isConnected) {
+              await window.solana.disconnect();
+              console.log('[VS Luna] Wallet disconnected');
+            }
+            // Wait briefly to ensure disconnect is complete
+            console.log('[VS Luna] Waiting 300ms to clear cached connection...');
+            await new Promise(resolve => setTimeout(resolve, 300));
+          } catch (disconnectErr) {
+            console.warn('[VS Luna] Error during disconnect (may not be connected):', disconnectErr);
+            // Still wait even if disconnect fails
+            await new Promise(resolve => setTimeout(resolve, 300));
+          }
+          
+          // System like pump.fun: Always require sign message for authentication
+          console.log('[VS Luna] Connecting wallet (pump.fun style - requires sign message)...');
+          
+          // Step 1: Connect wallet
+          console.log('[VS Luna] Step 1: Connecting wallet...');
+          console.log('[VS Luna] ⚠️ CONNECT POPUP SHOULD APPEAR NOW! ⚠️');
+          
+          const response = await window.solana.connect({ onlyIfTrusted: false });
+          
+          if (!response || !response.publicKey) {
+            throw new Error('Connection failed: No public key returned');
+          }
+          
           walletPublicKey = response.publicKey.toString();
+          console.log('[VS Luna] ✅ Step 1 complete: Wallet connected:', walletPublicKey);
+          
+          // Step 2: Sign message to authenticate (like pump.fun - ALWAYS required)
+          try {
+            console.log('[VS Luna] Step 2: Requesting message signature for authentication...');
+            console.log('[VS Luna] ⚠️ SIGN MESSAGE POPUP SHOULD APPEAR NOW! ⚠️');
+            
+            // Create authentication message (like pump.fun)
+            const timestamp = Date.now();
+            const message = `Sign in to ${window.location.hostname}: ${timestamp}`;
+            const messageBytes = new TextEncoder().encode(message);
+            
+            // Request signature using request() method (Phantom wallet API)
+            let signResponse;
+            if (typeof window.solana.request === 'function') {
+              signResponse = await window.solana.request({
+                method: 'signMessage',
+                params: {
+                  message: messageBytes,
+                  display: 'utf8'
+                }
+              });
+            } else if (typeof window.solana.signMessage === 'function') {
+              signResponse = await window.solana.signMessage(messageBytes, 'utf8');
+            } else {
+              throw new Error('signMessage method not available');
+            }
+            
+            // Handle different response formats
+            const signature = signResponse.signature || signResponse;
+            const signatureArray = signature instanceof Uint8Array 
+              ? Array.from(signature) 
+              : (Array.isArray(signature) ? signature : []);
+            
+            console.log('[VS Luna] ✅ Step 2 complete: Message signed successfully');
+            
+            // Store signature in localStorage for persistent connection (like pump.fun)
+            localStorage.setItem('walletSignature', JSON.stringify({
+              signature: signatureArray,
+              publicKey: walletPublicKey,
+              timestamp: timestamp,
+              message: message
+            }));
+            
+            console.log('[VS Luna] ✅ Authentication signature stored - connection is now persistent');
+            
+          } catch (signErr) {
+            console.error('[VS Luna] Sign message failed:', signErr);
+            // Disconnect if sign fails
+            try {
+              await window.solana.disconnect();
+            } catch (disconnectErr) {
+              console.warn('[VS Luna] Error disconnecting after sign failure:', disconnectErr);
+            }
+            throw new Error('Authentication failed: Please sign the message to continue. ' + signErr.message);
+          }
+          
           walletConnected = true;
+          console.log('[VS Luna] ✅ Authentication complete! Wallet is now authenticated and persistent.');
 
+          // Update container buttons
           connectBtn.classList.add('hidden');
           disconnectBtn.classList.remove('hidden');
           walletInfo.textContent = `Wallet: ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}`;
           walletInfo.classList.remove('hidden');
+
+          // Update fixed buttons
+          const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
+          const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
+          const walletInfoFixed = document.getElementById('walletInfoFixed');
+          if (connectBtnFixed) connectBtnFixed.classList.add('hidden');
+          if (disconnectBtnFixed) {
+            disconnectBtnFixed.classList.remove('hidden');
+            disconnectBtnFixed.style.display = '';
+            disconnectBtnFixed.style.visibility = '';
+            disconnectBtnFixed.style.opacity = '';
+          }
+          if (walletInfoFixed) {
+            walletInfoFixed.innerHTML = `
+              <div><strong>Connected:</strong> ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}</div>
+              <div><strong>Balance:</strong> <span id="balanceDisplayFixed">Checking...</span> Luna</div>
+            `;
+            walletInfoFixed.classList.remove('hidden');
+            walletInfoFixed.style.display = '';
+            walletInfoFixed.style.visibility = '';
+            walletInfoFixed.style.opacity = '';
+          }
 
           await checkLunaBalance();
           await checkSolBalance();
           await loadQuickStats(); // Load player stats
           startBalanceUpdate(); // Start real-time balance updates
           startSolBalanceUpdate(); // Start real-time SOL balance updates
+          
+          // Update fixed balance display
+          const balanceDisplayFixed = document.getElementById('balanceDisplayFixed');
+          if (balanceDisplayFixed) {
+            balanceDisplayFixed.textContent = formatNumber(playerBalance);
+          }
         } catch (error) {
           console.error('Wallet connection error:', error);
           alert('Failed to connect wallet: ' + error.message);
         }
-      });
+      };
+      
+      connectBtn.addEventListener('click', connectHandler);
+      
+      // Also set up fixed connect button
+      const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
+      if (connectBtnFixed) {
+        connectBtnFixed.addEventListener('click', connectHandler);
+      }
 
-      disconnectBtn.addEventListener('click', async () => {
+      const disconnectHandler = async () => {
         try {
           if (window.solana && window.solana.isConnected) {
             await window.solana.disconnect();
@@ -988,12 +1180,35 @@
           playerBalance = 0;
           gameActive = false;
 
+          // Clear signature when disconnected (like pump.fun - must sign again on reconnect)
+          localStorage.removeItem('walletSignature');
+          console.log('[VS Luna] Wallet disconnected - signature cleared. Must sign again on next connect.');
+
           stopBalanceUpdate(); // Stop real-time balance updates
           stopSolBalanceUpdate(); // Stop real-time SOL balance updates
 
+          // Update container buttons
           connectBtn.classList.remove('hidden');
           disconnectBtn.classList.add('hidden');
           walletInfo.classList.add('hidden');
+          
+          // Update fixed buttons
+          const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
+          const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
+          const walletInfoFixed = document.getElementById('walletInfoFixed');
+          if (connectBtnFixed) connectBtnFixed.classList.remove('hidden');
+          if (disconnectBtnFixed) {
+            disconnectBtnFixed.classList.add('hidden');
+            disconnectBtnFixed.style.display = 'none';
+            disconnectBtnFixed.style.visibility = 'hidden';
+            disconnectBtnFixed.style.opacity = '0';
+          }
+          if (walletInfoFixed) {
+            walletInfoFixed.classList.add('hidden');
+            walletInfoFixed.style.display = 'none';
+            walletInfoFixed.style.visibility = 'hidden';
+            walletInfoFixed.style.opacity = '0';
+          }
           
           const balanceCheck = document.getElementById('balanceCheck');
           if (balanceCheck) {
@@ -1011,7 +1226,15 @@
           walletInfo.classList.add('hidden');
           disableGame();
         }
-      });
+      };
+      
+      disconnectBtn.addEventListener('click', disconnectHandler);
+      
+      // Also set up fixed disconnect button
+      const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
+      if (disconnectBtnFixed) {
+        disconnectBtnFixed.addEventListener('click', disconnectHandler);
+      }
 
       if (window.solana && window.solana.isPhantom) {
         window.solana.on('connect', async () => {
@@ -1029,6 +1252,10 @@
         });
 
         window.solana.on('disconnect', () => {
+          // Clear signature when disconnected (like pump.fun - must sign again on reconnect)
+          localStorage.removeItem('walletSignature');
+          console.log('[VS Luna] Wallet disconnected - signature cleared. Must sign again on next connect.');
+          
           stopBalanceUpdate(); // Stop real-time balance updates
           stopSolBalanceUpdate(); // Stop real-time SOL balance updates
           walletPublicKey = null;
@@ -1104,8 +1331,14 @@
       const paperBtn = document.getElementById('paperBtn');
       const scissorsBtn = document.getElementById('scissorsBtn');
       
-      playerHand.appendChild(getHandDisplay('rock'));
-      lunaHand.appendChild(getHandDisplay('rock'));
+      if (playerHand) {
+        playerHand.innerHTML = ''; // Clear existing content
+        playerHand.appendChild(getHandDisplay('rock'));
+      }
+      if (lunaHand) {
+        lunaHand.innerHTML = ''; // Clear existing content
+        lunaHand.appendChild(getHandDisplay('rock'));
+      }
       
       if (rockBtn) {
         rockBtn.innerHTML = '';
@@ -1345,6 +1578,177 @@
     document.addEventListener('DOMContentLoaded', async () => {
       initNeonToggle();
       initNavigationSounds();
+      initializeHands(); // Initialize hand displays
+      
+      // Check if wallet already connected OR has valid signature (like pump.fun)
+      const storedSignature = localStorage.getItem('walletSignature');
+      
+      if (window.solana && window.solana.isPhantom) {
+        // Case 1: Wallet is already connected
+        if (window.solana.isConnected && window.solana.publicKey) {
+          const currentWallet = window.solana.publicKey.toString();
+          
+          if (storedSignature) {
+            try {
+              const sigData = JSON.parse(storedSignature);
+              
+              // Verify signature is for current wallet
+              if (sigData.publicKey === currentWallet) {
+                console.log('[VS Luna] ✅ Persistent connection found - using existing authenticated connection');
+              } else {
+                console.log('[VS Luna] Signature wallet mismatch - clearing signature');
+                localStorage.removeItem('walletSignature');
+              }
+            } catch (err) {
+              console.error('[VS Luna] Error checking signature:', err);
+              localStorage.removeItem('walletSignature');
+            }
+          } else {
+            console.log('[VS Luna] ✅ Wallet already connected (no signature) - using existing connection');
+          }
+          
+          // Use existing connection regardless of signature
+          walletPublicKey = currentWallet;
+          walletConnected = true;
+          
+          // Update UI to show connected state
+          const connectBtn = document.getElementById('connectWalletBtn');
+          const disconnectBtn = document.getElementById('disconnectWalletBtn');
+          const walletInfo = document.getElementById('walletInfo');
+          const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
+          const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
+          const walletInfoFixed = document.getElementById('walletInfoFixed');
+          
+          if (connectBtn) connectBtn.classList.add('hidden');
+          if (disconnectBtn) disconnectBtn.classList.remove('hidden');
+          if (walletInfo) {
+            walletInfo.textContent = `Wallet: ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}`;
+            walletInfo.classList.remove('hidden');
+          }
+          if (connectBtnFixed) connectBtnFixed.classList.add('hidden');
+          if (disconnectBtnFixed) {
+            disconnectBtnFixed.classList.remove('hidden');
+            disconnectBtnFixed.style.display = '';
+          }
+          if (walletInfoFixed) {
+            walletInfoFixed.innerHTML = `
+              <div><strong>Connected:</strong> ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}</div>
+              <div><strong>Balance:</strong> <span id="balanceDisplayFixed">Checking...</span> Luna</div>
+            `;
+            walletInfoFixed.classList.remove('hidden');
+          }
+          
+          await checkLunaBalance();
+          await checkSolBalance();
+          await loadQuickStats();
+          startBalanceUpdate();
+          startSolBalanceUpdate();
+        }
+        // Case 2: Wallet not connected but has valid signature - reconnect automatically (like pump.fun)
+        else if (storedSignature && !window.solana.isConnected) {
+          try {
+            const sigData = JSON.parse(storedSignature);
+            console.log('[VS Luna] ✅ Valid signature found - reconnecting automatically (like pump.fun)...');
+            
+            // Try to reconnect silently first
+            let response;
+            try {
+              response = await window.solana.connect({ onlyIfTrusted: true });
+            } catch (silentErr) {
+              // If silent connect fails, try normal connect (may show popup)
+              console.log('[VS Luna] Silent connect failed, trying normal connect...');
+              response = await window.solana.connect({ onlyIfTrusted: false });
+            }
+            
+            if (response && response.publicKey) {
+              const currentWallet = response.publicKey.toString();
+              
+              // Verify signature is for reconnected wallet
+              if (sigData.publicKey === currentWallet) {
+                console.log('[VS Luna] ✅ Auto-reconnected with valid signature');
+                walletPublicKey = currentWallet;
+                walletConnected = true;
+                
+                // Update UI to show connected state
+                const connectBtn = document.getElementById('connectWalletBtn');
+                const disconnectBtn = document.getElementById('disconnectWalletBtn');
+                const walletInfo = document.getElementById('walletInfo');
+                const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
+                const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
+                const walletInfoFixed = document.getElementById('walletInfoFixed');
+                
+                if (connectBtn) connectBtn.classList.add('hidden');
+                if (disconnectBtn) disconnectBtn.classList.remove('hidden');
+                if (walletInfo) {
+                  walletInfo.textContent = `Wallet: ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}`;
+                  walletInfo.classList.remove('hidden');
+                }
+                if (connectBtnFixed) connectBtnFixed.classList.add('hidden');
+                if (disconnectBtnFixed) {
+                  disconnectBtnFixed.classList.remove('hidden');
+                  disconnectBtnFixed.style.display = '';
+                }
+                if (walletInfoFixed) {
+                  walletInfoFixed.innerHTML = `
+                    <div><strong>Connected:</strong> ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}</div>
+                    <div><strong>Balance:</strong> <span id="balanceDisplayFixed">Checking...</span> Luna</div>
+                  `;
+                  walletInfoFixed.classList.remove('hidden');
+                }
+                
+                await checkLunaBalance();
+                await checkSolBalance();
+                await loadQuickStats();
+                startBalanceUpdate();
+                startSolBalanceUpdate();
+              } else {
+                console.log('[VS Luna] Signature wallet mismatch after reconnect - clearing signature');
+                localStorage.removeItem('walletSignature');
+                // Still connect but without signature
+                walletPublicKey = currentWallet;
+                walletConnected = true;
+                
+                // Update UI
+                const connectBtn = document.getElementById('connectWalletBtn');
+                const disconnectBtn = document.getElementById('disconnectWalletBtn');
+                const walletInfo = document.getElementById('walletInfo');
+                const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
+                const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
+                const walletInfoFixed = document.getElementById('walletInfoFixed');
+                
+                if (connectBtn) connectBtn.classList.add('hidden');
+                if (disconnectBtn) disconnectBtn.classList.remove('hidden');
+                if (walletInfo) {
+                  walletInfo.textContent = `Wallet: ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}`;
+                  walletInfo.classList.remove('hidden');
+                }
+                if (connectBtnFixed) connectBtnFixed.classList.add('hidden');
+                if (disconnectBtnFixed) {
+                  disconnectBtnFixed.classList.remove('hidden');
+                  disconnectBtnFixed.style.display = '';
+                }
+                if (walletInfoFixed) {
+                  walletInfoFixed.innerHTML = `
+                    <div><strong>Connected:</strong> ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}</div>
+                    <div><strong>Balance:</strong> <span id="balanceDisplayFixed">Checking...</span> Luna</div>
+                  `;
+                  walletInfoFixed.classList.remove('hidden');
+                }
+                
+                await checkLunaBalance();
+                await checkSolBalance();
+                await loadQuickStats();
+                startBalanceUpdate();
+                startSolBalanceUpdate();
+              }
+            }
+          } catch (err) {
+            console.warn('[VS Luna] Auto-reconnect failed:', err);
+            // Don't clear signature - user might want to connect manually
+          }
+        }
+      }
+      
       setupWalletConnection();
       setupEventListeners();
       initializeHands();

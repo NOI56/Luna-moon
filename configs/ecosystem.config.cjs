@@ -1,9 +1,11 @@
+const path = require("path");
+
 module.exports = {
   apps: [
     {
       name: "luna-v10",
-      script: "index.js",
-      cwd: __dirname,
+      script: "../index.js",
+      cwd: path.join(__dirname, ".."),
       env: {
         NODE_ENV: "production"
       },

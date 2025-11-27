@@ -130,7 +130,7 @@ npm start
 npm start
 
 # 2. เปิด terminal ใหม่และรันการทดสอบ
-node test-all-systems.js
+node tests/test-all-systems.js
 ```
 
 ## ไฟล์ที่สร้างขึ้น

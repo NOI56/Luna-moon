@@ -598,7 +598,7 @@ ELEVEN_VOICE_PASSION=21m00Tcm4TlvDq8ikWAM (voice ID สำหรับ passion)
 VTS_ENABLED=true (false = ปิด VTS)
 VTS_HOST=127.0.0.1
 VTS_PORT=8001
-VTS_AUTH_TOKEN=... (รัน 'node vts-auth.cjs' เพื่อขอ token)
+VTS_AUTH_TOKEN=... (รัน 'node scripts/vts/vts-auth.cjs' เพื่อขอ token)
 
 # Database
 DB_DRIVER=sqlite (sqlite|postgres|none)
