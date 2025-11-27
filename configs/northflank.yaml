@@ -1,0 +1,55 @@
+# Northflank Deployment Configuration
+# สำหรับ Luna AI v10 - Streamer Core + Emotion Engine + RPS Game
+
+# Build Configuration
+build:
+  # Build command - ติดตั้ง dependencies ก่อน start
+  command: npm install
+  
+  # Node.js version (ใช้ version ที่ Northflank รองรับ)
+  # Northflank จะ auto-detect จาก package.json หรือ .nvmrc
+  # แนะนำ: Node.js 18+ (ตรวจสอบจาก package.json)
+
+# Deploy Configuration
+deploy:
+  # Start command - รัน server
+  startCommand: node index.js
+  
+  # Port configuration
+  # ระบบจะอ่าน PORT จาก environment variable (default: 8787)
+  # Northflank จะ auto-assign port ถ้าไม่ระบุ
+  
+  # Health check endpoint
+  healthCheckPath: /luna/health
+  
+  # Restart policy
+  restartPolicy:
+    type: ON_FAILURE
+    maxRetries: 10
+
+# Environment Variables
+# ตั้งค่าใน Northflank Dashboard > Service > Environment Variables
+# หรือใช้ไฟล์ .env (แต่ต้องไม่ commit ลง Git)
+#
+# Required Variables:
+#   - PORT=8787 (หรือให้ Northflank auto-assign)
+#   - OPENAI_KEY หรือ OPENROUTER_KEY (อย่างใดอย่างหนึ่ง)
+#   - VTS_ENABLED=true/false
+#   - VTS_AUTH_TOKEN=... (ถ้า VTS_ENABLED=true)
+#   - ELEVEN_KEY=... (ถ้า TTS_ENABLED=true)
+#
+# Optional Variables:
+#   - TTS_ENABLED=true/false
+#   - SIMPLE_MODEL=gpt-4o-mini
+#   - COMPLEX_MODEL=anthropic/claude-3-opus
+#   - CORS_ORIGINS=*
+#   - ADMIN_SECRET=...
+#   - และอื่นๆ (ดู env.example)
+
+# Resource Limits (Optional)
+# ตั้งค่าใน Northflank Dashboard > Service > Resources
+# แนะนำ:
+#   - CPU: 0.1-0.5 vCPU
+#   - Memory: 256-512 MB
+#   - Disk: 1-2 GB (สำหรับ database และ logs)
+
