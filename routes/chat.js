@@ -77,6 +77,8 @@ export function setupChatRoutes(app, dependencies) {
   // ----------------------
   
   // Initialize WebSocket connection handling (clients is shared from index.js)
+  const WS_HEARTBEAT_INTERVAL_MS = Number(process.env.WS_HEARTBEAT_INTERVAL_MS || 30000);
+
   wss.on('connection', (ws, req) => {
     const clientIp = req.socket.remoteAddress || 'unknown';
     const clientUrl = req.url || 'unknown';
@@ -98,6 +100,40 @@ export function setupChatRoutes(app, dependencies) {
     
     // Store client ID for debugging
     ws._clientId = clientId;
+    ws.isAlive = true;
+    
+    if (WS_HEARTBEAT_INTERVAL_MS > 0) {
+      ws._heartbeatInterval = setInterval(() => {
+        if (ws.readyState !== ws.OPEN) {
+          clearInterval(ws._heartbeatInterval);
+          log.warn(`[websocket] ⛔️ Heartbeat stopped for ${clientId} (readyState=${ws.readyState})`);
+          return;
+        }
+        
+        if (ws.isAlive === false) {
+          log.warn(`[websocket] ⚠️ No heartbeat response from ${clientId}. Terminating connection.`);
+          try {
+            ws.terminate();
+          } catch (error) {
+            log.error(`[websocket] ❌ Failed to terminate ${clientId} during heartbeat:`, error.message);
+          }
+          return;
+        }
+        
+        ws.isAlive = false;
+        try {
+          ws.ping();
+          log.debug(`[websocket] 🔄 Sent heartbeat ping to ${clientId}`);
+        } catch (error) {
+          log.error(`[websocket] ❌ Heartbeat ping failed for ${clientId}:`, error.message);
+        }
+      }, WS_HEARTBEAT_INTERVAL_MS);
+      
+      ws.on('pong', () => {
+        ws.isAlive = true;
+        log.debug(`[websocket] 🏓 Heartbeat pong received from ${clientId}`);
+      });
+    }
     
     // Note: Server-side WebSocket doesn't have 'open' event - connection is already open
     // Check readyState immediately
@@ -131,6 +167,9 @@ export function setupChatRoutes(app, dependencies) {
       const beforeSize = clients.size;
       clients.delete(ws);
       const afterSize = clients.size;
+      if (ws._heartbeatInterval) {
+        clearInterval(ws._heartbeatInterval);
+      }
       log.info(`[websocket] ========== CLIENT DISCONNECTED ==========`);
       log.info(`[websocket] Client ID: ${ws._clientId || 'unknown'}`);
       log.info(`[websocket] Close Code: ${code}, Reason: ${reason?.toString() || 'none'}`);
@@ -145,6 +184,9 @@ export function setupChatRoutes(app, dependencies) {
       const beforeSize = clients.size;
       clients.delete(ws);
       const afterSize = clients.size;
+      if (ws._heartbeatInterval) {
+        clearInterval(ws._heartbeatInterval);
+      }
       log.info(`[websocket] Removed client due to error. Before: ${beforeSize}, After: ${afterSize}`);
     });
   });
@@ -753,6 +795,7 @@ export function setupChatRoutes(app, dependencies) {
           return true;
         };
         
+        let minRequirement = 100000; // default fallback before try
         try {
           // Validate wallet address
           if (!isValidWalletAddress(wallet)) {
@@ -776,7 +819,6 @@ export function setupChatRoutes(app, dependencies) {
           
           // Get dynamic requirement for group chat (10 USD base, 5-20 USD range)
           // Note: We import the function from deposit.js since it handles dynamic pricing
-          let minRequirement = 100000; // Fallback: ~10 USD at default price
           try {
             // Import dynamic requirement function from deposit routes
             const { getDynamicRequirement } = await import('./deposit.js');
