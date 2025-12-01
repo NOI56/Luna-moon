@@ -628,8 +628,12 @@ export function setupChatRoutes(app, dependencies) {
    * Body: { roomId: "room_id", wallet: "wallet_address", message: "message", username: "username" }
    */
   app.post("/luna/chat/send", async (req, res) => {
+    const requestStartTime = Date.now();
+    log.info(`[chat] POST /luna/chat/send - Request received at ${new Date().toISOString()}`);
+    
     try {
       const { roomId, wallet, message, username, attachments } = req.body || {};
+      log.info(`[chat] Request body: roomId=${roomId}, wallet=${wallet?.substring(0, 8)}..., messageLength=${message?.length || 0}`);
       
       if (!roomId || typeof roomId !== "string") {
         return res.status(400).json({
@@ -874,7 +878,8 @@ export function setupChatRoutes(app, dependencies) {
         message: chatMessage
       });
     } catch (e) {
-      log.error("[chat] Send message error:", e);
+      const requestDuration = Date.now() - requestStartTime;
+      log.error(`[chat] Send message error after ${requestDuration}ms:`, e);
       log.error("[chat] Error stack:", e.stack);
       log.error("[chat] Request body:", JSON.stringify(req.body, null, 2));
       log.error("[chat] Error details:", {
@@ -882,8 +887,20 @@ export function setupChatRoutes(app, dependencies) {
         name: e.name,
         code: e.code,
         roomId: req.body?.roomId,
-        wallet: req.body?.wallet ? req.body.wallet.substring(0, 8) + '...' : 'missing'
+        wallet: req.body?.wallet ? req.body.wallet.substring(0, 8) + '...' : 'missing',
+        duration: requestDuration
       });
+      
+      // Check if it's a timeout or memory issue
+      if (e.message?.includes('timeout') || e.code === 'ETIMEDOUT') {
+        return res.status(503).json({
+          ok: false,
+          error: "Request timeout - server is busy. Please try again later.",
+          message: "Failed to send chat message",
+          statusCode: 503
+        });
+      }
+      
       res.status(500).json({
         ok: false,
         error: e.message || "Internal server error",

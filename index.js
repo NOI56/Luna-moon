@@ -340,6 +340,39 @@ app.use((req, res, next) => {
 
 app.use(express.json({ limit: "2mb" }));
 
+// Add request timeout middleware to prevent hanging requests
+app.use((req, res, next) => {
+  // Set timeout for all requests (30 seconds)
+  req.setTimeout(30000, () => {
+    if (!res.headersSent) {
+      log.warn(`[timeout] Request timeout: ${req.method} ${req.path}`);
+      res.status(503).json({
+        ok: false,
+        error: "Request timeout - server is busy. Please try again later.",
+        statusCode: 503
+      });
+    }
+  });
+  next();
+});
+
+// Add server status check middleware for API endpoints
+app.use((req, res, next) => {
+  // Only check for API endpoints
+  if (req.path.startsWith('/luna/') || req.path.startsWith('/api/')) {
+    // Check memory usage
+    const memUsage = process.memoryUsage();
+    const memoryUsageMB = memUsage.heapUsed / 1024 / 1024;
+    const memoryLimitMB = 200; // 200 MB limit for 256 MB server (leave 56 MB buffer)
+    
+    if (memoryUsageMB > memoryLimitMB) {
+      log.warn(`[memory] High memory usage: ${memoryUsageMB.toFixed(2)} MB / ${memoryLimitMB} MB`);
+      // Don't block requests, just log warning
+    }
+  }
+  next();
+});
+
 // Security: CSRF Protection Middleware (for POST/PUT/DELETE requests)
 const csrfTokens = new Map(); // In-memory token store (use Redis in production)
 const CSRF_TOKEN_TTL = 3600000; // 1 hour
