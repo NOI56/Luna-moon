@@ -1177,6 +1177,21 @@ app.use((req, res) => {
 // ----------------------
 
 log.info(`[startup] Attempting to start server on port ${PORT}...`);
+log.info(`[startup] Environment: ${process.env.NODE_ENV || 'development'}`);
+log.info(`[startup] PORT: ${PORT}`);
+
+// Add error handler for server listen errors
+server.on('error', (error) => {
+  if (error.code === 'EADDRINUSE') {
+    log.error(`[startup] ❌ Port ${PORT} is already in use!`);
+    log.error(`[startup] Please change PORT environment variable or stop the process using port ${PORT}`);
+    process.exit(1);
+  } else {
+    log.error(`[startup] ❌ Server error:`, error);
+    process.exit(1);
+  }
+});
+
 server.listen(PORT, '0.0.0.0', async () => {
   const host = process.env.HOST || '0.0.0.0';
   log.info(`✅ Luna v10 server listening on http://${host}:${PORT}`);
