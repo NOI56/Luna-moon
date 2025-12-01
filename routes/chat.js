@@ -78,6 +78,7 @@ export function setupChatRoutes(app, dependencies) {
   // Initialize WebSocket connection handling (clients is shared from index.js)
   wss.on('connection', (ws) => {
     clients.add(ws);
+    log.info(`[websocket] Client connected. Total clients: ${clients.size}`);
     
     ws.on('message', (raw) => {
       try {
@@ -93,6 +94,7 @@ export function setupChatRoutes(app, dependencies) {
 
     ws.on('close', () => {
       clients.delete(ws);
+      log.info(`[websocket] Client disconnected. Total clients: ${clients.size}`);
     });
     
     ws.on('error', (error) => {
@@ -106,16 +108,24 @@ export function setupChatRoutes(app, dependencies) {
    */
   function broadcast(data) {
     const message = JSON.stringify(data);
+    let sentCount = 0;
+    let skippedCount = 0;
+    
     clients.forEach((client) => {
       try {
         if (client.readyState === 1) { // WebSocket.OPEN
           client.send(message);
+          sentCount++;
+        } else {
+          skippedCount++;
         }
       } catch (error) {
         log.error('[websocket] Broadcast error:', error);
         clients.delete(client);
       }
     });
+    
+    log.info(`[websocket] Broadcast ${data.type} to ${sentCount} clients (${skippedCount} skipped, ${clients.size} total)`);
   }
 
   function broadcastTypingState(roomId) {
@@ -284,6 +294,7 @@ export function setupChatRoutes(app, dependencies) {
     }
     
     // Broadcast message
+    log.info(`[chat] Broadcasting message from ${wallet.substring(0, 8)}... in room ${roomId}`);
     broadcast({
       type: 'chat_message',
       roomId: roomId,

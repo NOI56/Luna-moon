@@ -3085,8 +3085,9 @@
           const msg = JSON.parse(event.data);
           console.log('[Group Chat] WebSocket message received:', msg);
           
-        if (msg.type === 'chat_message' && msg.roomId === GROUP_CHAT_ROOM_ID) {
+          if (msg.type === 'chat_message' && msg.roomId === GROUP_CHAT_ROOM_ID) {
             console.log('[Group Chat] Adding message from WebSocket:', msg.message);
+            console.log('[Group Chat] Message wallet:', msg.message.wallet, 'Current wallet:', walletPublicKey);
             addMessage(msg.message);
           } else if (msg.type === 'chat_reaction') {
             updateReaction(msg.messageId, msg.reactionType, msg.count, msg.active);

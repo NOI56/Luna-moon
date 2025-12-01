@@ -1085,6 +1085,35 @@ app.get('/favicon.ico', (req, res) => {
 });
 
 // ----------------------
+// Test Routes for Error Pages
+// ----------------------
+// Test 500 error
+app.get('/test/500', (req, res, next) => {
+  const error = new Error('Test 500 Error - Internal Server Error');
+  error.statusCode = 500;
+  next(error);
+});
+
+// Test 503 error
+app.get('/test/503', (req, res, next) => {
+  const error = new Error('Test 503 Error - Service Unavailable');
+  error.statusCode = 503;
+  next(error);
+});
+
+// Test 502 error
+app.get('/test/502', (req, res, next) => {
+  const error = new Error('Test 502 Error - Bad Gateway');
+  error.statusCode = 502;
+  next(error);
+});
+
+// Test generic error
+app.get('/test/error', (req, res, next) => {
+  throw new Error('Test Generic Error');
+});
+
+// ----------------------
 // Root Redirect (redirect / to /rps_stats.html)
 // ----------------------
 app.get('/', (req, res) => {
@@ -1092,6 +1121,39 @@ app.get('/', (req, res) => {
 });
 
 // ----------------------
+// Error Handling Middleware (must be before 404 handler)
+// ----------------------
+app.use((err, req, res, next) => {
+  log.error("[error] Server error:", err);
+  
+  // Don't send error page if headers already sent
+  if (res.headersSent) {
+    return next(err);
+  }
+
+  const statusCode = err.statusCode || err.status || 500;
+  
+  // Send appropriate error page
+  if (statusCode === 503 || statusCode === 502) {
+    // Service Unavailable or Bad Gateway
+    res.status(statusCode).sendFile(path.join(__dirname, "public", "500.html"));
+  } else if (statusCode === 500) {
+    // Internal Server Error
+    res.status(500).sendFile(path.join(__dirname, "public", "500.html"));
+  } else {
+    // Other errors - send JSON response for API, HTML for pages
+    if (req.path.startsWith('/luna/') || req.path.startsWith('/api/')) {
+      res.status(statusCode).json({
+        ok: false,
+        error: err.message || "Internal server error",
+        statusCode: statusCode
+      });
+    } else {
+      res.status(statusCode).sendFile(path.join(__dirname, "public", "500.html"));
+    }
+  }
+});
+
 // 404 Handler (must be after all routes)
 // ----------------------
 app.use((req, res) => {
