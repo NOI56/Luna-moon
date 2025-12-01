@@ -70,6 +70,7 @@ export function setupChatRoutes(app, dependencies) {
   const TYPING_TIMEOUT_MS = 5000;
   const groupChatBalanceCache = new Map();
   const GROUP_CHAT_BALANCE_TTL = 60 * 1000;
+  const STRICT_GROUP_CHAT_BALANCE = process.env.GROUP_CHAT_STRICT_BALANCE === 'true';
 
   // ----------------------
   // WebSocket Clients and Broadcast
@@ -729,6 +730,29 @@ export function setupChatRoutes(app, dependencies) {
         const GROUP_CHAT_MIN_USD_CAP = 20; // Cap: 20 USD
         const DYNAMIC_CACHE_MS = 60000; // Cache for 60 seconds
         
+        const allowMessageWithoutVerification = async (reason) => {
+          if (STRICT_GROUP_CHAT_BALANCE) {
+            return false;
+          }
+          log.warn(`[group_chat] ${reason}. STRICT_GROUP_CHAT_BALANCE=false, allowing message without verification.`);
+          const chatMessage = await sendChatMessage(
+            roomId,
+            wallet,
+            hasText ? trimmedMessage : '',
+            username,
+            null,
+            sanitizedAttachments
+          );
+          
+          res.json({
+            ok: true,
+            message: chatMessage,
+            fallback: true,
+            warning: reason
+          });
+          return true;
+        };
+        
         try {
           // Validate wallet address
           if (!isValidWalletAddress(wallet)) {
@@ -741,6 +765,9 @@ export function setupChatRoutes(app, dependencies) {
           // Get token mint address from env (with fallback)
           const mint = resolveLunaMint();
           if (!mint) {
+            if (await allowMessageWithoutVerification("Token mint address not configured")) {
+              return;
+            }
             return res.status(500).json({
               ok: false,
               error: "Token mint address not configured",
@@ -908,6 +935,9 @@ export function setupChatRoutes(app, dependencies) {
                 warning: "RPC rate limited - using cached balance"
               });
             }
+          }
+          if (await allowMessageWithoutVerification("Failed to verify balance and no cached entry available")) {
+            return;
           }
           return res.status(500).json({
             ok: false,
