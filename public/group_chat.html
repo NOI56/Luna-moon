@@ -1475,6 +1475,8 @@
     const GROUP_CHAT_ROOM_ID = 'group_chat';
     const DEFAULT_CHAT_MIN_BALANCE = 100000;
     const DYNAMIC_REQUIREMENT_CONTEXT = 'group-chat';
+    const MESSAGE_CACHE_KEY = 'groupChatMessageCache:v1';
+    const MESSAGE_CACHE_LIMIT = 150;
     let activeTimeouts = new Set();
     let onlineCountInterval = null;
     let isPageVisible = !document.hidden;
@@ -1965,6 +1967,37 @@
     let currentBalance = 0;
     let ws = null;
     let messages = [];
+
+    function hydrateMessagesFromCache() {
+      if (messages.length) {
+        return;
+      }
+      try {
+        const cachedRaw = localStorage.getItem(MESSAGE_CACHE_KEY);
+        if (!cachedRaw) {
+          return;
+        }
+        const cached = JSON.parse(cachedRaw);
+        if (Array.isArray(cached) && cached.length) {
+          console.log('[Group Chat] Hydrating messages from cache:', cached.length);
+          messages = cached;
+          updateMessages();
+        }
+      } catch (error) {
+        console.warn('[Group Chat] Failed to hydrate cache:', error);
+      }
+    }
+
+    function persistMessageCache() {
+      try {
+        const snapshot = messages.slice(-MESSAGE_CACHE_LIMIT);
+        localStorage.setItem(MESSAGE_CACHE_KEY, JSON.stringify(snapshot));
+      } catch (error) {
+        console.warn('[Group Chat] Failed to persist cache:', error);
+      }
+    }
+
+    hydrateMessagesFromCache();
 
     function setChatInputState(enabled, placeholderText) {
       const input = document.getElementById('groupChatInput');
@@ -2919,6 +2952,9 @@
       // Check balance (this will update the wallet balance display)
       console.log('[Group Chat] Calling checkBalance()...');
       checkBalance();
+
+      // Re-render messages so existing bubbles align with ownership
+      updateMessages();
     }
 
     // Handle wallet disconnected
@@ -2952,6 +2988,7 @@
       }
       
       showWalletRequired();
+      updateMessages();
     }
 
     async function forceDisconnect(options = {}) {
@@ -3212,6 +3249,7 @@
           updateMessages();
           scrollToBottom();
           hasInitialHistoryLoaded = true;
+          persistMessageCache();
         } else {
           console.error('[Group Chat] Failed to load messages:', data.error);
           messages = [];
@@ -3402,6 +3440,7 @@
       // Sort messages by timestamp
       messages.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
       
+      persistMessageCache();
       updateMessages();
       scrollToBottom();
       if (hasInitialHistoryLoaded && message.wallet !== walletPublicKey) {
