@@ -239,3 +239,14 @@ if (a !== b) throw new Error('fail');
 
 รัน `npm test` เพื่อทดสอบทั้งหมด!
 
+
+
+
+
+
+
+
+
+
+
+

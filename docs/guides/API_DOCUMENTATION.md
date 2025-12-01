@@ -177,3 +177,14 @@ curl "http://localhost:8787/luna/rps/balance?wallet=YOUR_WALLET_ADDRESS"
 
 **หมายเหตุ:** API Documentation ใช้ Swagger UI และ OpenAPI 3.0 specification
 
+
+
+
+
+
+
+
+
+
+
+

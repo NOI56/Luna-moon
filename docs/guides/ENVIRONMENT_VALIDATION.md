@@ -383,3 +383,14 @@ solana address --verify <wallet_address>
 
 **หมายเหตุ:** Environment Validation ทำงานอัตโนมัติเมื่อ start server และช่วยป้องกัน config errors ก่อน runtime
 
+
+
+
+
+
+
+
+
+
+
+

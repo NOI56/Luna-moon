@@ -600,3 +600,13 @@ Backup System → Auto Backup (every hour)
 
 **Made with ❤️ for Luna AI Streamer**
 
+
+
+
+
+
+
+
+
+
+

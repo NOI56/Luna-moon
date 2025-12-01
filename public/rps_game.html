@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Luna Rock Paper Scissors - PvP Mode</title>
+  <link rel="stylesheet" href="/css/cyberpunk-neon.css">
+  <link rel="stylesheet" href="/css/mobile-overrides.css">
+  <script src="/js/runtime-utils.js"></script>
   <style>
     * {
       margin: 0;
@@ -48,40 +51,160 @@
       z-index: 0;
     }
 
+    /* Enhanced Effects Styles */
+    .particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .particle {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: rgba(0, 255, 255, 0.6);
+      border-radius: 50%;
+      animation: float 20s infinite linear;
+      box-shadow: 0 0 6px rgba(0, 255, 255, 0.8);
+    }
+
+    @keyframes float {
+      0% {
+        transform: translateY(100vh) translateX(0) rotate(0deg);
+        opacity: 0;
+      }
+      10% {
+        opacity: 1;
+      }
+      90% {
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-100vh) translateX(100px) rotate(360deg);
+        opacity: 0;
+      }
+    }
+
+    .scroll-progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      background: linear-gradient(90deg,
+        rgba(0, 255, 255, 0.8),
+        rgba(255, 0, 255, 0.8),
+        rgba(0, 255, 157, 0.8)
+      );
+      background-size: 200% 100%;
+      z-index: 10000;
+      transform-origin: left;
+      transform: scaleX(0);
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+      animation: progressGradient 3s linear infinite;
+    }
+
+    @keyframes progressGradient {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 200% 50%; }
+    }
+
+    .cursor-trail {
+      position: fixed;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(0, 255, 255, 0.6);
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+      pointer-events: none;
+      z-index: 9999;
+      animation: trailFade 0.5s ease-out forwards;
+    }
+
+    @keyframes trailFade {
+      0% {
+        opacity: 1;
+        transform: scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: scale(0);
+      }
+    }
+
+    @keyframes sparkleFade {
+      0% {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+      }
+      100% {
+        opacity: 0;
+        transform: scale(0) rotate(360deg);
+      }
+    }
+
     .game-container {
       text-align: center;
-      padding: 40px;
-      padding-top: 100px;
-      background: rgba(10, 10, 26, 0.8);
-      border: none;
-      border-radius: 0;
-      box-shadow: 
-        0 0 20px rgba(0, 255, 255, 0.25),
-        0 0 40px rgba(0, 255, 255, 0.15),
-        inset 0 0 20px rgba(0, 255, 255, 0.05);
-      max-width: 800px;
+      padding: clamp(36px, 5vw, 60px);
+      padding-top: clamp(90px, 12vw, 120px);
+      background: rgba(5, 8, 30, 0.82);
+      border: 1px solid rgba(0, 255, 255, 0.25);
+      border-radius: 32px;
+      box-shadow:
+        0 25px 65px rgba(2, 10, 30, 0.65),
+        0 0 120px rgba(0, 255, 255, 0.12);
+      max-width: 1100px;
       width: 100%;
       position: relative;
       z-index: 1;
-      margin-top: 20px;
+      margin-top: 40px;
+      overflow: hidden;
+      backdrop-filter: blur(24px) saturate(135%);
+      isolation: isolate;
+      transform: translateZ(0);
+      will-change: transform;
     }
     
     .game-container::before {
       content: '';
       position: absolute;
-      top: -2px;
-      left: -2px;
-      right: -2px;
-      bottom: -2px;
-      background: linear-gradient(45deg, #00ffff, #00ffff, #00ffff);
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(120deg, rgba(0, 255, 255, 0.8), rgba(116, 39, 255, 0.65), rgba(255, 60, 172, 0.6));
+      opacity: 0.4;
+      filter: blur(28px);
+      z-index: -2;
+      animation: borderGlow 6s ease-in-out infinite;
+    }
+    
+    .game-container::after {
+      content: '';
+      position: absolute;
+      inset: 1px;
+      border-radius: inherit;
+      background: linear-gradient(130deg, rgba(255, 255, 255, 0.12), transparent 60%);
       z-index: -1;
-      animation: borderGlow 3s ease-in-out infinite;
-      opacity: 0.5;
+      opacity: 0.7;
+      mix-blend-mode: screen;
     }
     
     @keyframes borderGlow {
-      0%, 100% { opacity: 0.15; }
-      50% { opacity: 0.35; }
+      0% {
+        opacity: 0.25;
+        transform: translate3d(-2%, -2%, 0);
+      }
+      50% {
+        opacity: 0.6;
+        transform: translate3d(2%, 2%, 0);
+      }
+      100% {
+        opacity: 0.25;
+        transform: translate3d(-2%, -2%, 0);
+      }
     }
 
     h1 {
@@ -179,10 +302,6 @@
     /* Luna hand (right) faces left (towards player) and rotated to horizontal */
     #lunaHand img {
       transform: scaleX(1) rotate(-90deg) !important; /* Rotate to horizontal and face left */
-    }
-
-    .hand-icon:hover {
-      /* Don't use transform here as it will override the img transform */
     }
 
     .hand-icon.animate {
@@ -413,6 +532,7 @@
     .choice-btn.disabled {
       opacity: 0.5;
       cursor: not-allowed;
+      pointer-events: none;
     }
 
     .status {
@@ -449,58 +569,6 @@
     .wallet-connect {
       margin-bottom: 20px;
       text-align: center;
-    }
-
-    .wallet-btn {
-      padding: 15px 30px;
-      background: rgba(0, 255, 255, 0.1);
-      border: none;
-      border-radius: 0;
-      color: #00ffff;
-      font-size: 1.1em;
-      font-family: 'Courier New', monospace;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 
-        0 0 10px rgba(0, 255, 255, 0.3),
-        inset 0 0 10px rgba(0, 255, 255, 0.1);
-    }
-
-    .wallet-btn:hover {
-      background: rgba(0, 255, 255, 0.2);
-      box-shadow: 
-        0 0 20px rgba(0, 255, 255, 0.6),
-        inset 0 0 20px rgba(0, 255, 255, 0.2);
-      transform: scale(1.05);
-    }
-
-    .wallet-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .wallet-btn.disconnect-btn {
-      background: rgba(255, 0, 102, 0.1);
-      border-color: #ff0066;
-      color: #ff0066;
-      margin-left: 10px;
-    }
-
-    .wallet-btn.disconnect-btn:hover {
-      background: rgba(255, 0, 102, 0.2);
-      box-shadow: 
-        0 0 20px rgba(255, 0, 102, 0.6),
-        inset 0 0 20px rgba(255, 0, 102, 0.2);
-    }
-
-    .wallet-info {
-      margin-top: 10px;
-      padding: 10px;
-      background: rgba(0, 255, 255, 0.05);
-      border: 1px solid #00ffff;
-      border-radius: 0;
-      font-size: 0.9em;
-      color: #00ffff;
     }
 
     .balance-check {
@@ -645,71 +713,7 @@
       transform: scale(0.98) !important;
     }
 
-    /* Wallet Connect Button (Fixed Position - Top Right) */
-    #walletConnectFixed {
-      position: fixed;
-      top: 40px;
-      right: 20px;
-      z-index: 99999;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      align-items: flex-end;
-    }
-
-    #walletConnectFixed .wallet-btn {
-      background: rgba(0, 0, 0, 0.9);
-      border: 2px solid #00ffff;
-      color: #00ffff;
-      padding: 10px 20px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-family: 'Courier New', monospace;
-      font-size: 0.9em;
-      transition: all 0.3s;
-      backdrop-filter: blur(5px);
-      white-space: nowrap;
-    }
-
-    #walletConnectFixed .wallet-btn:hover {
-      background: rgba(0, 255, 255, 0.2);
-      box-shadow: 0 0 10px #00ffff;
-    }
-
-    #walletConnectFixed .wallet-info {
-      background: rgba(0, 0, 0, 0.9);
-      border: 1px solid #00ffff;
-      color: #00ffff;
-      padding: 8px 15px;
-      border-radius: 8px;
-      font-size: 0.85em;
-      backdrop-filter: blur(5px);
-      max-width: 250px;
-      word-break: break-all;
-    }
-
-    /* Neon Toggle Button (Bottom Right) */
-    #neonToggle {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      z-index: 99999;
-      background: rgba(0, 0, 0, 0.9);
-      border: 2px solid #00ffff;
-      color: #00ffff;
-      padding: 10px 20px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-family: 'Courier New', monospace;
-      font-size: 0.9em;
-      transition: all 0.3s;
-      backdrop-filter: blur(5px);
-    }
-
-    #neonToggle:hover {
-      background: rgba(0, 255, 255, 0.2);
-      box-shadow: 0 0 10px #00ffff;
-    }
+    /* Wallet connect + neon toggle styles inherit from global theme */
 
     /* Neon Off Styles */
     body.neon-off * {
@@ -719,7 +723,14 @@
       animation: none !important;
     }
 
-    body.neon-off .game-container::before {
+    body.neon-off .particles,
+    body.neon-off .scroll-progress,
+    body.neon-off .cursor-trail {
+      display: none !important;
+    }
+
+    body.neon-off .game-container::before,
+    body.neon-off .game-container::after {
       display: none !important;
     }
 
@@ -727,174 +738,305 @@
       opacity: 0.01 !important;
     }
 
-    /* Contract Address Section */
-    .contract-section {
-      background: rgba(0, 255, 255, 0.05);
-      border: 1px solid rgba(0, 255, 255, 0.3);
-      border-radius: 8px;
-      padding: 20px;
-      margin: 20px 0;
-      text-align: center;
+  </style>
+  <style>
+    body.pvp-page {
+      font-family: 'Space Grotesk', var(--mono);
+      background:
+        radial-gradient(circle at 20% 20%, rgba(0, 255, 255, 0.12), transparent 45%),
+        radial-gradient(circle at 85% 5%, rgba(255, 60, 172, 0.12), transparent 55%),
+        radial-gradient(circle at 70% 80%, rgba(116, 39, 255, 0.15), transparent 60%),
+        linear-gradient(135deg, #02000d 0%, #050b1f 35%, #050524 65%, #0b0140 100%);
+      color: var(--text-base);
+      letter-spacing: 0.01em;
     }
 
-    .contract-label {
-      font-size: 1rem;
-      color: #00ffff;
-      margin-bottom: 15px;
-      font-weight: bold;
-      text-shadow: 0 0 5px #00ffff;
+    body.pvp-page::before,
+    body.pvp-page::after {
+      content: none;
     }
 
-    .contract-input-group {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      justify-content: center;
-      flex-wrap: wrap;
-      margin-bottom: 15px;
+    body.pvp-page .game-container {
+      padding: clamp(36px, 5vw, 60px);
+      padding-top: clamp(90px, 12vw, 120px);
+      background: rgba(5, 8, 30, 0.82);
+      border: 1px solid rgba(0, 255, 255, 0.25);
+      border-radius: 32px;
+      box-shadow:
+        0 25px 65px rgba(2, 10, 30, 0.65),
+        0 0 120px rgba(0, 255, 255, 0.12);
+      max-width: 1100px;
+      width: 100%;
+      margin-top: 40px;
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(24px) saturate(135%);
+      isolation: isolate;
     }
 
-    .contract-input {
-      background: rgba(0, 0, 0, 0.5);
-      border: 1px solid rgba(0, 255, 255, 0.3);
-      color: #00ffff;
-      padding: 12px 20px;
-      font-size: 0.9rem;
-      border-radius: 8px;
-      font-family: 'Courier New', monospace;
-      min-width: 300px;
-      max-width: 100%;
-      flex: 1;
+    body.pvp-page h1 {
+      font-size: clamp(2.5rem, 4vw, 3.2rem);
+      color: var(--text-base);
+      text-shadow: 0 0 30px rgba(0, 255, 255, 0.35);
+      letter-spacing: 4px;
     }
 
-    .contract-input:focus {
-      outline: none;
-      box-shadow: 0 0 15px #00ffff;
+    body.pvp-page .subtitle {
+      color: var(--text-muted);
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
     }
 
-    .contract-btn {
-      padding: 12px 24px;
-      font-size: 0.9rem;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.3s;
-      font-family: 'Courier New', monospace;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      white-space: nowrap;
-    }
-
-    .contract-btn-copy {
-      background: linear-gradient(135deg, #ff6b35, #ff8c42);
-      color: white;
-      font-weight: bold;
-    }
-
-    .contract-btn-copy:hover {
-      background: linear-gradient(135deg, #ff8c42, #ff6b35);
-      box-shadow: 0 0 15px rgba(255, 107, 53, 0.5);
-      transform: translateY(-2px);
-    }
-
-    .contract-btn-view {
-      background: linear-gradient(135deg, #1a237e, #283593);
-      color: white;
-      font-weight: bold;
-    }
-
-    .contract-btn-view:hover {
-      background: linear-gradient(135deg, #283593, #3949ab);
-      box-shadow: 0 0 15px rgba(26, 35, 126, 0.5);
-      transform: translateY(-2px);
-    }
-
-    .contract-warning {
-      font-size: 0.85rem;
-      color: #00ffff;
+    body.pvp-page .subtitle.note {
+      font-size: 0.9em;
+      margin-top: 10px;
       opacity: 0.8;
-      margin-top: 15px;
     }
 
-    /* X DEX Links Section */
-    .dex-links {
+    .pvp-page .match-section {
+      margin: 30px 0;
+      padding: 24px;
+      border-radius: 24px;
+      border: 1px solid var(--panel-border);
+      background: rgba(255, 255, 255, 0.02);
+      box-shadow: 0 25px 45px rgba(0, 0, 0, 0.45);
       display: flex;
-      gap: 20px;
-      justify-content: center;
       flex-wrap: wrap;
-      margin: 20px 0;
-    }
-
-    .dex-btn {
-      padding: 15px 30px;
-      font-size: 1.1rem;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.3s;
-      font-family: 'Courier New', monospace;
-      font-weight: bold;
-      display: flex;
+      gap: 20px;
       align-items: center;
-      gap: 10px;
+      justify-content: space-between;
+    }
+
+    .pvp-page .match-status {
+      flex: 1 1 320px;
+      text-align: left;
+    }
+
+    .pvp-page .match-timer {
+      font-size: 1.25rem;
+      font-family: var(--mono);
+      color: var(--text-base);
+    }
+
+    .pvp-page .opponent-info {
+      margin-top: 6px;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .pvp-page .match-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .pvp-page .match-section button {
+      border-radius: 18px;
+      padding: 14px 26px;
+      font-family: var(--mono);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: none;
+    }
+
+    .pvp-page .find-match-btn {
+      background: linear-gradient(120deg, rgba(0, 255, 255, 0.9), rgba(116, 39, 255, 0.9));
+      color: #050510;
+      box-shadow: 0 25px 45px rgba(0, 255, 255, 0.25);
+    }
+
+    .pvp-page .cancel-match-btn {
+      background: rgba(255, 0, 0, 0.12);
+      border: 1px solid rgba(255, 0, 0, 0.4);
+      color: #ff4d4d;
+      box-shadow: 0 20px 35px rgba(255, 0, 0, 0.15);
+    }
+
+    body.pvp-page .hands-container {
+      gap: 50px;
+    }
+
+    body.pvp-page .hand-icon {
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      border: 1px solid var(--panel-border-strong);
+      background: rgba(0, 0, 0, 0.4);
+      box-shadow: 0 0 35px rgba(0, 255, 255, 0.25);
+    }
+
+    body.pvp-page .hand-icon img {
+      width: 180px;
+      height: 180px;
+      object-fit: contain;
+    }
+
+    body.pvp-page #playerHand img {
+      transform: scaleX(1) rotate(90deg) !important;
+    }
+
+    body.pvp-page #lunaHand img {
+      transform: scaleX(1) rotate(-90deg) !important;
+    }
+
+    body.pvp-page .player-choices {
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    body.pvp-page .choice-btn {
+      width: 130px;
+      height: 130px;
+      border-radius: 20px;
+      border: 1px solid var(--panel-border-strong);
+      background: rgba(0, 0, 0, 0.45);
+      box-shadow: 0 25px 45px rgba(0, 0, 0, 0.45);
+    }
+
+    body.pvp-page .choice-btn img {
+      width: 85px;
+      height: 85px;
+    }
+
+    body.pvp-page #result {
+      min-height: 60px;
+      font-size: 1.8rem;
+    }
+
+    body.pvp-page #result.win {
+      color: #00ff9d;
+      text-shadow: 0 0 20px rgba(0, 255, 157, 0.7);
+    }
+
+    body.pvp-page #result.lose {
+      color: #ff4d4d;
+      text-shadow: 0 0 20px rgba(255, 77, 77, 0.7);
+    }
+
+    body.pvp-page #result.tie {
+      color: #ffe066;
+    }
+
+    body.pvp-page .status {
+      color: var(--text-muted);
+      min-height: 30px;
+    }
+
+    body.pvp-page .extra-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 40px;
       text-decoration: none;
-      white-space: nowrap;
+      font-family: var(--mono);
+      letter-spacing: 0.2em;
+      color: var(--text-base);
+      border: 1px solid var(--panel-border-strong);
+      border-radius: 18px;
+      padding: 14px 30px;
+      transition: all 0.3s;
     }
 
-    .dex-btn-buy {
-      background: linear-gradient(135deg, #ff6b35, #ff8c42);
-      color: white;
-    }
-
-    .dex-btn-buy:hover {
-      background: linear-gradient(135deg, #ff8c42, #ff6b35);
-      box-shadow: 0 0 20px rgba(255, 107, 53, 0.6);
-      transform: translateY(-2px);
-    }
-
-    .dex-btn-community {
-      background: linear-gradient(135deg, #1a237e, #283593);
-      color: white;
-    }
-
-    .dex-btn-community:hover {
-      background: linear-gradient(135deg, #283593, #3949ab);
-      box-shadow: 0 0 20px rgba(26, 35, 126, 0.6);
+    body.pvp-page .extra-link:hover {
+      box-shadow: 0 20px 45px rgba(0, 255, 255, 0.2);
       transform: translateY(-2px);
     }
 
     @media (max-width: 768px) {
-      .contract-input-group {
+      .pvp-page .match-section {
         flex-direction: column;
+        align-items: flex-start;
       }
 
-      .contract-input {
-        min-width: 100%;
-      }
-
-      .dex-links {
-        flex-direction: column;
-      }
-
-      .dex-btn {
+      .pvp-page .match-actions {
         width: 100%;
-        justify-content: center;
+        justify-content: stretch;
       }
+
+      .pvp-page .match-actions button {
+        flex: 1;
+      }
+
+      body.pvp-page .hands-container {
+        flex-direction: column;
+      }
+    }
+
+    .dynamic-requirement-card {
+      margin: 25px auto 15px;
+      padding: 20px 24px;
+      border-radius: 22px;
+      border: 1px solid rgba(0, 255, 255, 0.2);
+      background:
+        radial-gradient(circle at 15% 15%, rgba(0, 255, 255, 0.08), transparent 55%),
+        rgba(3, 10, 24, 0.92);
+      text-align: center;
+      max-width: 520px;
+      box-shadow: 0 25px 40px rgba(0, 0, 0, 0.35);
+    }
+
+    .dynamic-requirement-card__title {
+      font-size: 0.8rem;
+      letter-spacing: 0.3em;
+      color: rgba(255, 255, 255, 0.7);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .dynamic-requirement-card__value {
+      font-size: clamp(1.8rem, 3vw, 2.4rem);
+      font-weight: 700;
+      color: #00ffff;
+      text-shadow: 0 0 25px rgba(0, 255, 255, 0.45);
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      align-items: baseline;
+    }
+
+    .dynamic-requirement-card__value .unit {
+      font-size: 0.9rem;
+      letter-spacing: 0.2em;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .dynamic-requirement-card__usd {
+      margin-top: 6px;
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .dynamic-requirement-card__meta {
+      margin-top: 10px;
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      color: rgba(255, 255, 255, 0.65);
     }
   </style>
   </head>
-  <body>
+  <body class="pvp-page">
   <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
-    <div id="modeNavigation" style="position: fixed !important; top: 40px !important; left: 20px !important; display: flex !important; gap: 10px; z-index: 99999 !important; flex-wrap: wrap; pointer-events: auto !important; visibility: visible !important; opacity: 1 !important;">
-      <a href="/rps_vs_luna.html" id="vsLunaLink" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">🎮 VS Luna</a>
-      <a href="/rps_game.html" id="pvpLink" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">Play PvP! Find</a>
-    <a href="/rps_betting.html" id="bettingLink" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">💰 Betting Mode</a>
-    <a href="/rps_deposit.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">💾 Deposit Luna</a>
-    <a href="/group_chat.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 255, 255, 0.2) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important; box-shadow: 0 0 15px rgba(0, 255, 255, 0.5) !important;">💬 Group Chat</a>
-      <a href="/rps_leaderboard.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">🏆 Leaderboard</a>
-      <a href="/rps_stats.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">📊 Stats</a>
-      <a href="/rps_history.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">📜 Match History</a>
+  <script src="/js/utils.js"></script>
+  <script src="/js/phantom-helper.js"></script>
+  <script src="/js/toast.js"></script>
+    <!-- Floating Particles -->
+  <div class="particles" id="particles"></div>
+
+  <!-- Scroll Progress Bar -->
+  <div class="scroll-progress" id="scrollProgress"></div>
+
+    <div id="modeNavigation">
+      <a href="/luna_guide.html">📖 Guide</a>
+      <a href="/rps_vs_luna.html">🎮 VS Luna</a>
+      <a href="/rps_game.html" class="highlighted current">Play PvP! Find</a>
+      <a href="/rps_betting.html">💰 Betting Mode</a>
+      <a href="/rps_deposit.html">💾 Deposit Luna</a>
+      <a href="/group_chat.html">💬 Group Chat</a>
+      <a href="/rps_leaderboard.html">🏆 Leaderboard</a>
+      <a href="/rps_stats.html">📊 Stats</a>
     </div>
 
     <!-- Fixed Wallet Connect (Top Right) -->
@@ -909,41 +1051,25 @@
 
     <div class="game-container">
     <h1>Rock Paper Scissors</h1>
-    <div class="subtitle">Play PvP! Find an opponent and play! (Requires 100K+ Luna tokens)</div>
-    <div class="subtitle" style="margin-top: 10px; font-size: 0.9em; color: #00ffff;">🎮 Scroll down to find a match and play!</div>
+    <div class="subtitle">Play PvP! Find an opponent and play! (Requires dynamic Luna amount ≈ $10 USD)</div>
+    <div class="subtitle note">🎮 Scroll down to find a match and play!</div>
 
-    <!-- Contract Address Section -->
-    <div class="contract-section">
-      <div class="contract-label">Contract Address:</div>
-      <div class="contract-input-group">
-        <input type="text" id="contractAddress" class="contract-input" readonly value="Loading...">
-        <button class="contract-btn contract-btn-copy" onclick="copyContractAddress()">
-          <span>📋</span> Copy
-        </button>
-        <button class="contract-btn contract-btn-view" onclick="viewContractAddress()">
-          <span>🔗</span> View
-        </button>
-      </div>
-      <div class="contract-warning">Always verify the contract address before buying.</div>
-    </div>
-
-    <!-- X DEX Links Section -->
-    <div class="dex-links">
-      <a href="#" id="buyDexLink" class="dex-btn dex-btn-buy" target="_blank" onclick="openBuyDex(event)">
-        <span>⚡</span> Buy Luna
-      </a>
-      <a href="#" id="communityLink" class="dex-btn dex-btn-community" target="_blank" onclick="openCommunity(event)">
-        <span>𝕏</span> Join Community
-      </a>
-    </div>
-
-    <div id="walletConnect" class="wallet-connect" style="display: none;">
+    <div id="walletConnect" class="wallet-connect hidden">
       <button id="connectWalletBtn" class="wallet-btn">🔗 Connect Phantom Wallet</button>
       <button id="disconnectWalletBtn" class="wallet-btn disconnect-btn hidden">🔌 Disconnect / Change Wallet</button>
       <div id="walletInfo" class="wallet-info hidden"></div>
     </div>
     <div id="balanceCheck" class="balance-check hidden">
       <span class="loading"></span> Checking balance...
+    </div>
+    <div id="pvpDynamicRequirementCard" class="dynamic-requirement-card">
+      <div class="dynamic-requirement-card__title">Dynamic Minimum Requirement</div>
+      <div class="dynamic-requirement-card__value">
+        <span id="pvpRequirementAmount">100,000</span>
+        <span class="unit">Luna</span>
+      </div>
+      <div class="dynamic-requirement-card__usd" id="pvpRequirementUsd">USD value unavailable</div>
+      <div class="dynamic-requirement-card__meta" id="pvpRequirementMeta">Updated -- • Source: Fallback</div>
     </div>
 
 
@@ -953,8 +1079,10 @@
         <div id="matchTimer" class="match-timer">⏱️ Ready to find match!</div>
         <div id="opponentInfo" class="opponent-info">Connect wallet and check balance to start</div>
       </div>
+      <div class="match-actions">
       <button id="findMatchBtn" class="find-match-btn">🎮 Find Match</button>
       <button id="cancelMatchBtn" class="cancel-match-btn hidden">❌ Cancel</button>
+      </div>
     </div>
 
     <div class="hands-container">
@@ -969,7 +1097,7 @@
       </div>
     </div>
 
-    <div id="result" class="result"></div>
+    <div id="result" class="result result-box"></div>
 
     <div class="controls">
       <div class="player-choices">
@@ -980,14 +1108,25 @@
       <div id="status" class="status"></div>
     </div>
     
-    <div style="margin-top: 40px; text-align: center;">
-      <a href="/rps_betting.html" style="color: #00ffff; text-decoration: none; padding: 15px 30px; border: 2px solid #00ffff; border-radius: 8px; transition: all 0.3s; display: inline-block; font-size: 1.1em;">💰 Betting Mode</a>
+    <div style="text-align: center;">
+      <a href="/rps_betting.html" class="extra-link">💰 Betting Mode</a>
     </div>
   </div>
 
   <script>
     const API_BASE = window.location.origin;
-    const RPS_MIN_BALANCE = 100000; // 100K Luna tokens (for PvP mode)
+    const DEFAULT_PVP_MIN_BALANCE = 100000;
+    const DYNAMIC_REQUIREMENT_CONTEXT = 'play-pvp';
+    const dynamicRequirementState = {
+      amount: DEFAULT_PVP_MIN_BALANCE,
+      usd: null,
+      priceUsd: null,
+      marketCap: null,
+      volume24h: null,
+      liquidity: null,
+      source: 'fallback',
+      updatedAt: null,
+    };
     // Mint address will be read from backend (.env) automatically
     // No need to hardcode here
     
@@ -995,12 +1134,315 @@
     let gameActive = false;
     let walletConnected = false;
     let walletPublicKey = null;
+    let hasValidSignature = false;
     let currentMatchId = null;
     let opponentWallet = null;
     let isWaitingForOpponent = false;
     let matchStartTime = 0;
     let matchTimer = null;
     let balanceUpdateInterval = null; // For real-time balance updates
+    let handCycleInterval = null;
+    let activeTimeouts = new Set();
+    let isPageVisible = !document.hidden;
+    
+    // Cleanup all intervals and timeouts
+    function cleanupAll() {
+      if (balanceUpdateInterval) {
+        clearInterval(balanceUpdateInterval);
+        balanceUpdateInterval = null;
+      }
+      if (handCycleInterval) {
+        clearInterval(handCycleInterval);
+        handCycleInterval = null;
+      }
+      if (matchTimer) {
+        clearInterval(matchTimer);
+        matchTimer = null;
+      }
+      activeTimeouts.forEach(timeout => clearTimeout(timeout));
+      activeTimeouts.clear();
+    }
+    
+    // Safe setTimeout wrapper
+    function safeSetTimeout(callback, delay) {
+      const timeoutId = setTimeout(() => {
+        activeTimeouts.delete(timeoutId);
+        callback();
+      }, delay);
+      activeTimeouts.add(timeoutId);
+      return timeoutId;
+    }
+    
+    // Page visibility API
+    document.addEventListener('visibilitychange', () => {
+      isPageVisible = !document.hidden;
+      if (isPageVisible) {
+        if (walletConnected && walletPublicKey) {
+          startBalanceUpdate();
+        }
+      } else {
+        stopBalanceUpdate();
+      }
+    });
+
+    function hasForceDisconnectFlag() {
+      if (window.phantomHelper && typeof window.phantomHelper.hasForceDisconnect === 'function') {
+        return window.phantomHelper.hasForceDisconnect();
+      }
+      try {
+        return !!localStorage.getItem('phantomForceDisconnect');
+      } catch (err) {
+        console.warn('[Game] Failed to read force disconnect flag:', err);
+        return false;
+      }
+    }
+
+    function markForceDisconnectFlag(reason) {
+      if (window.phantomHelper && typeof window.phantomHelper.markForceDisconnect === 'function') {
+        window.phantomHelper.markForceDisconnect(reason);
+        return;
+      }
+      try {
+        localStorage.setItem('phantomForceDisconnect', Date.now().toString());
+      } catch (err) {
+        console.warn('[Game] Failed to set force disconnect flag:', err);
+      }
+    }
+
+    function clearForceDisconnectFlag() {
+      if (window.phantomHelper && typeof window.phantomHelper.clearForceDisconnect === 'function') {
+        window.phantomHelper.clearForceDisconnect();
+        return;
+      }
+      try {
+        localStorage.removeItem('phantomForceDisconnect');
+      } catch (err) {
+        console.warn('[Game] Failed to clear force disconnect flag:', err);
+      }
+    }
+
+    function formatNumberDetailed(value) {
+      return Number(value || 0).toLocaleString('en-US');
+    }
+
+    function formatUsdValue(value) {
+      const amount = Number(value);
+      if (!Number.isFinite(amount)) return null;
+      return '$' + amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function formatPriceUsd(value) {
+      const price = Number(value);
+      if (!Number.isFinite(price)) return null;
+      if (price >= 0.01) return `$${price.toFixed(4)}`;
+      if (price >= 0.0001) return `$${price.toFixed(6)}`;
+      return `$${price.toExponential(2)}`;
+    }
+
+    function getCurrentMinRequirement() {
+      return Number(dynamicRequirementState.amount) || DEFAULT_PVP_MIN_BALANCE;
+    }
+
+    function updateDynamicRequirementCard() {
+      const amountEl = document.getElementById('pvpRequirementAmount');
+      if (amountEl) {
+        amountEl.textContent = formatNumberDetailed(getCurrentMinRequirement());
+      }
+      const usdEl = document.getElementById('pvpRequirementUsd');
+      if (usdEl) {
+        const usdText = typeof dynamicRequirementState.usd === 'number'
+          ? `≈ ${formatUsdValue(dynamicRequirementState.usd)}`
+          : 'USD value unavailable';
+        const priceText = dynamicRequirementState.priceUsd
+          ? ` • Price ${formatPriceUsd(dynamicRequirementState.priceUsd)}`
+          : '';
+        usdEl.textContent = `${usdText}${priceText}`;
+      }
+      const metaEl = document.getElementById('pvpRequirementMeta');
+      if (metaEl) {
+        const updatedAt = dynamicRequirementState.updatedAt
+          ? new Date(dynamicRequirementState.updatedAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })
+          : '--';
+        const sourceLabel = dynamicRequirementState.source === 'dexscreener' ? 'DexScreener' : 'Fallback';
+        const mcap = dynamicRequirementState.marketCap
+          ? ` • MCap ${formatUsdValue(dynamicRequirementState.marketCap)}`
+          : '';
+        const volume = dynamicRequirementState.volume24h
+          ? ` • 24h Vol ${formatUsdValue(dynamicRequirementState.volume24h)}`
+          : '';
+        metaEl.textContent = `Updated ${updatedAt} • Source: ${sourceLabel}${mcap}${volume}`;
+      }
+    }
+
+    function applyDynamicRequirementData(payload = {}) {
+      if (typeof payload.amount === 'number' && Number.isFinite(payload.amount) && payload.amount > 0) {
+        dynamicRequirementState.amount = payload.amount;
+      }
+      dynamicRequirementState.usd = typeof payload.usd === 'number' ? payload.usd : null;
+      dynamicRequirementState.priceUsd = typeof payload.priceUsd === 'number' ? payload.priceUsd : null;
+      dynamicRequirementState.marketCap = typeof payload.marketCap === 'number' ? payload.marketCap : null;
+      dynamicRequirementState.volume24h = typeof payload.volume24h === 'number' ? payload.volume24h : null;
+      dynamicRequirementState.liquidity = typeof payload.liquidity === 'number' ? payload.liquidity : null;
+      dynamicRequirementState.source = payload.source || dynamicRequirementState.source || 'fallback';
+      dynamicRequirementState.updatedAt = payload.updatedAt || Date.now();
+      updateDynamicRequirementCard();
+    }
+
+    async function fetchDynamicRequirement(force = false) {
+      try {
+        const url = new URL(`${API_BASE}/luna/dynamic-requirement`);
+        url.searchParams.set('context', DYNAMIC_REQUIREMENT_CONTEXT);
+        if (force) {
+          url.searchParams.set('force', 'true');
+        }
+        const response = await (window.lunaUtils?.retryFetch || fetch)(url.toString());
+        const data = await response.json();
+        if (!response.ok || !data.ok) {
+          throw new Error(data.error || 'Failed to fetch requirement');
+        }
+        const requirement = data.requirement || data;
+        applyDynamicRequirementData(requirement);
+      } catch (error) {
+        console.warn('[Game] Dynamic requirement fetch failed:', error);
+        updateDynamicRequirementCard();
+      }
+    }
+
+    function resetWalletUI() {
+      const connectBtn = document.getElementById('connectWalletBtn');
+      const disconnectBtn = document.getElementById('disconnectWalletBtn');
+      const walletInfo = document.getElementById('walletInfo');
+      const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
+      const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
+      const walletInfoFixed = document.getElementById('walletInfoFixed');
+      const balanceCheck = document.getElementById('balanceCheck');
+      const matchStatus = document.getElementById('matchStatus');
+      const matchSection = document.getElementById('matchSection');
+
+      if (connectBtn) {
+        connectBtn.classList.remove('hidden');
+        connectBtn.disabled = false;
+        connectBtn.style.cursor = 'pointer';
+        connectBtn.textContent = '🔗 Connect Phantom Wallet';
+      }
+      if (disconnectBtn) disconnectBtn.classList.add('hidden');
+      if (walletInfo) walletInfo.classList.add('hidden');
+
+      if (connectBtnFixed) {
+        connectBtnFixed.classList.remove('hidden');
+        connectBtnFixed.disabled = false;
+      }
+      if (disconnectBtnFixed) {
+        disconnectBtnFixed.classList.add('hidden');
+        disconnectBtnFixed.style.display = 'none';
+        disconnectBtnFixed.style.visibility = 'hidden';
+        disconnectBtnFixed.style.opacity = '0';
+      }
+      if (walletInfoFixed) {
+        walletInfoFixed.classList.add('hidden');
+        walletInfoFixed.style.display = 'none';
+        walletInfoFixed.style.visibility = 'hidden';
+        walletInfoFixed.style.opacity = '0';
+      }
+
+      if (balanceCheck) {
+        balanceCheck.classList.add('hidden');
+      }
+
+      cancelMatch();
+
+      if (matchStatus) {
+        matchStatus.innerHTML = '<div id="matchTimer" class="match-timer">⏱️ Ready to find match!</div><div id="opponentInfo" class="opponent-info">Connect wallet and check balance to start</div>';
+      }
+      if (matchSection) {
+        matchSection.classList.remove('hidden');
+      }
+
+      disableGame();
+    }
+
+    async function forceDisconnect(options = {}) {
+      const {
+        skipProviderDisconnect = false,
+        reason = 'manual',
+        suppressForceFlag = false,
+      } = options;
+
+      if (!suppressForceFlag) {
+        markForceDisconnectFlag(reason);
+      }
+
+      if (
+        !skipProviderDisconnect &&
+        window.solana &&
+        typeof window.solana.disconnect === 'function' &&
+        window.solana.isConnected
+      ) {
+        try {
+          await window.solana.disconnect();
+        } catch (err) {
+          console.warn('[Game] Provider disconnect failed:', err);
+        }
+      }
+
+      if (window.phantomHelper && typeof window.phantomHelper.clearState === 'function') {
+        window.phantomHelper.clearState();
+      }
+
+      stopBalanceUpdate();
+      if (matchTimer) {
+        clearInterval(matchTimer);
+        matchTimer = null;
+      }
+      currentMatchId = null;
+      opponentWallet = null;
+      isWaitingForOpponent = false;
+      matchStartTime = 0;
+
+      walletConnected = false;
+      walletPublicKey = null;
+      hasValidSignature = false;
+      playerBalance = 0;
+      gameActive = false;
+
+      resetWalletUI();
+    }
+    async function attemptPhantomAutoConnect(onConnected) {
+      if (typeof onConnected !== 'function') {
+        return false;
+      }
+
+      if (hasForceDisconnectFlag()) {
+        return false;
+      }
+
+      let connected = false;
+
+      if (window.phantomHelper && typeof window.phantomHelper.autoConnect === 'function') {
+        try {
+          await window.phantomHelper.autoConnect({
+            onConnected: async (publicKey, state) => {
+              const normalized = typeof publicKey === 'string' ? publicKey : publicKey?.toString();
+              if (!normalized) {
+                return;
+              }
+              connected = true;
+              await onConnected(normalized, !!state?.hasSignature);
+            },
+            onError: (err) => console.warn('[Game] Auto-connect skipped:', err?.message || err)
+          });
+        } catch (err) {
+          console.warn('[Game] Phantom helper auto-connect failed:', err);
+        }
+      }
+
+      if (!connected && window.solana?.isConnected && window.solana.publicKey) {
+        connected = true;
+        await onConnected(window.solana.publicKey.toString(), hasValidSignature);
+      }
+
+      return connected;
+    }
 
     // Hand images - use real hand images from files
     // Place hand PNG files in public/images/hands/:
@@ -1008,10 +1450,10 @@
     // - paper.png (open hand)
     // - scissors.png (two fingers)
     const HAND_IMAGES = {
-      rock: '/public/images/hands/rock.png',
-      paper: '/public/images/hands/paper.png',
-      scissors: '/public/images/hands/scissors.png',
-      default: '/public/images/hands/rock.png' // use fist as default
+      rock: '/images/hands/rock.png',
+      paper: '/images/hands/paper.png',
+      scissors: '/images/hands/scissors.png',
+      default: '/images/hands/rock.png' // use fist as default
     };
     
     const HAND_EMOJIS = {
@@ -1057,10 +1499,24 @@
           body.classList.remove('neon-off');
           neonToggle.textContent = '💡 Neon: ON';
           localStorage.setItem('neonEnabled', 'true');
+          // Restart effects when turning neon back on
+          createParticles();
+          initCursorTrail();
         } else {
           body.classList.add('neon-off');
           neonToggle.textContent = '💡 Neon: OFF';
           localStorage.setItem('neonEnabled', 'false');
+          // Stop effects when turning neon off
+          const particles = document.getElementById('particles');
+          if (particles) {
+            particles.innerHTML = '';
+          }
+          // Remove all cursor trail elements
+          document.querySelectorAll('.cursor-trail').forEach(trail => {
+            if (trail.parentNode) {
+              trail.parentNode.removeChild(trail);
+            }
+          });
         }
       });
     }
@@ -1094,6 +1550,40 @@
       playSound(600, 0.1, 'sine', 0.2);
     }
 
+    function playButtonClickSound() {
+      playSound(740, 0.08, 'square', 0.25);
+    }
+
+    function playCancelSound() {
+      playSound(420, 0.12, 'sawtooth', 0.2);
+    }
+
+    function playMatchFoundSound() {
+      playSound(520, 0.1, 'triangle', 0.25);
+      safeSetTimeout(() => playSound(660, 0.12, 'triangle', 0.25), 100);
+      safeSetTimeout(() => playSound(820, 0.18, 'triangle', 0.3), 220);
+    }
+
+    function playCountdownSound() {
+      playSound(900, 0.1, 'square', 0.2);
+    }
+
+    function playWinSound() {
+      playSound(600, 0.12, 'sine', 0.35);
+      safeSetTimeout(() => playSound(760, 0.14, 'sine', 0.35), 120);
+      safeSetTimeout(() => playSound(920, 0.2, 'sine', 0.4), 260);
+    }
+
+    function playLoseSound() {
+      playSound(500, 0.15, 'sine', 0.3);
+      safeSetTimeout(() => playSound(380, 0.2, 'sine', 0.25), 140);
+    }
+
+    function playTieSound() {
+      playSound(700, 0.1, 'triangle', 0.2);
+      safeSetTimeout(() => playSound(700, 0.1, 'triangle', 0.2), 150);
+    }
+
     // Add click sound to navigation links
     function initNavigationSounds() {
       const navLinks = document.querySelectorAll('#modeNavigation a');
@@ -1109,206 +1599,252 @@
       });
     }
 
+    // Enhanced Effects Functions
+    function createParticles() {
+      const particlesContainer = document.getElementById('particles');
+      if (!particlesContainer) return;
+
+      const particleCount = 30;
+      for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.animationDelay = Math.random() * 20 + 's';
+        particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+        particlesContainer.appendChild(particle);
+      }
+    }
+
+    function initParallax() {
+      let ticking = false;
+      
+      function updateParallax() {
+        const scrolled = window.pageYOffset;
+        const hero = document.querySelector('.game-container h1');
+        const cards = document.querySelectorAll('.info-card');
+        
+        // Hero parallax (subtle)
+        if (hero) {
+          const heroSpeed = 0.2;
+          hero.style.transform = `translateY(${scrolled * heroSpeed}px)`;
+        }
+        
+        // Cards parallax (subtle)
+        cards.forEach((card, index) => {
+          const rect = card.getBoundingClientRect();
+          const speed = 0.05;
+          
+          if (rect.top < window.innerHeight && rect.bottom > 0) {
+            const offset = (window.innerHeight - rect.top) * speed;
+            card.style.transform = `translateY(${offset}px)`;
+          }
+        });
+        
+        ticking = false;
+      }
+      
+      window.addEventListener('scroll', () => {
+        if (!ticking) {
+          window.requestAnimationFrame(updateParallax);
+          ticking = true;
+        }
+      });
+    }
+
+    function initScrollProgress() {
+      const progressBar = document.getElementById('scrollProgress');
+      if (!progressBar) return;
+
+      window.addEventListener('scroll', () => {
+        const windowHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        const scrolled = (window.scrollY / windowHeight) * 100;
+        progressBar.style.transform = `scaleX(${scrolled / 100})`;
+      });
+    }
+
+    function initCursorTrail() {
+      let trail = [];
+      const trailLength = 15;
+      
+      // Remove existing listener if any
+      if (window.cursorTrailHandler) {
+        document.removeEventListener('mousemove', window.cursorTrailHandler);
+      }
+
+      window.cursorTrailHandler = (e) => {
+        // Don't create trail if neon is off
+        if (document.body.classList.contains('neon-off')) {
+          return;
+        }
+        
+        const trailDot = document.createElement('div');
+        trailDot.className = 'cursor-trail';
+        trailDot.style.left = e.clientX + 'px';
+        trailDot.style.top = e.clientY + 'px';
+        document.body.appendChild(trailDot);
+
+        trail.push(trailDot);
+        if (trail.length > trailLength) {
+          const oldDot = trail.shift();
+          if (oldDot && oldDot.parentNode) {
+            oldDot.parentNode.removeChild(oldDot);
+          }
+        }
+
+        setTimeout(() => {
+          if (trailDot && trailDot.parentNode) {
+            trailDot.parentNode.removeChild(trailDot);
+          }
+        }, 500);
+      };
+      
+      document.addEventListener('mousemove', window.cursorTrailHandler);
+    }
+
+    function initSparkles() {
+      const gameContainer = document.querySelector('.game-container');
+      if (!gameContainer) return;
+
+      setInterval(() => {
+        const sparkle = document.createElement('div');
+        sparkle.style.position = 'absolute';
+        sparkle.style.width = '4px';
+        sparkle.style.height = '4px';
+        sparkle.style.background = '#00ffff';
+        sparkle.style.borderRadius = '50%';
+        sparkle.style.boxShadow = '0 0 10px #00ffff, 0 0 20px #00ffff';
+        sparkle.style.left = Math.random() * 100 + '%';
+        sparkle.style.top = Math.random() * 100 + '%';
+        sparkle.style.pointerEvents = 'none';
+        sparkle.style.zIndex = '999';
+        sparkle.style.animation = 'sparkleFade 1s ease-out forwards';
+        gameContainer.style.position = 'relative';
+        gameContainer.appendChild(sparkle);
+
+        setTimeout(() => {
+          if (sparkle.parentNode) {
+            sparkle.parentNode.removeChild(sparkle);
+          }
+        }, 1000);
+      }, 500);
+    }
+
+    function initSmoothScroll() {
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute('href'));
+          if (target) {
+            const offset = 120;
+            const targetPosition = target.getBoundingClientRect().top + window.pageYOffset - offset;
+            window.scrollTo({
+              top: targetPosition,
+              behavior: 'smooth'
+            });
+          }
+        });
+      });
+    }
+
     document.addEventListener('DOMContentLoaded', async () => {
       initNeonToggle();
+      
+      // Initialize enhanced effects (respect neon toggle)
+      const neonEnabled = localStorage.getItem('neonEnabled') !== 'false';
+      if (neonEnabled) {
+        createParticles();
+        initCursorTrail();
+      }
+      initParallax();
+      initScrollProgress();
+      initSparkles();
+      initSmoothScroll();
       initNavigationSounds();
+      updateDynamicRequirementCard();
+      fetchDynamicRequirement().catch((error) => console.warn('[Game] Initial requirement fetch failed:', error));
+      setInterval(() => {
+        fetchDynamicRequirement().catch((error) => console.warn('[Game] Requirement refresh failed:', error));
+      }, 5 * 60 * 1000);
       connectWebSocket();
-      setupWalletConnection();
-      setupEventListeners();
       setupMatchSystem();
-      initializeHands();
       
-      // Check if wallet already connected OR has valid signature (like pump.fun)
-      const storedSignature = localStorage.getItem('walletSignature');
+      hasValidSignature = false;
+      walletConnected = false;
+      walletPublicKey = null;
       
-      if (window.solana && window.solana.isPhantom) {
-        // Case 1: Wallet is already connected
-        if (window.solana.isConnected && window.solana.publicKey) {
-          const currentWallet = window.solana.publicKey.toString();
-          
-          if (storedSignature) {
-            try {
-              const sigData = JSON.parse(storedSignature);
-              
-              // Verify signature is for current wallet
-              if (sigData.publicKey === currentWallet) {
-                console.log('[Game] ✅ Persistent connection found - using existing authenticated connection');
-              } else {
-                console.log('[Game] Signature wallet mismatch - clearing signature');
-                localStorage.removeItem('walletSignature');
-              }
-            } catch (err) {
-              console.error('[Game] Error checking signature:', err);
-              localStorage.removeItem('walletSignature');
-            }
-          }
-          
-          // Update UI if needed
-          const connectBtn = document.getElementById('connectWalletBtn');
-          const disconnectBtn = document.getElementById('disconnectWalletBtn');
-          const walletInfo = document.getElementById('walletInfo');
-          const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
-          const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
-          const walletInfoFixed = document.getElementById('walletInfoFixed');
-          
-          walletPublicKey = currentWallet;
-          walletConnected = true;
-          
-          if (connectBtn) connectBtn.classList.add('hidden');
-          if (disconnectBtn) disconnectBtn.classList.remove('hidden');
-          if (walletInfo) {
-            walletInfo.textContent = `Wallet: ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}`;
-            walletInfo.classList.remove('hidden');
-          }
-          
-          if (connectBtnFixed) connectBtnFixed.classList.add('hidden');
-          if (disconnectBtnFixed) {
-            disconnectBtnFixed.classList.remove('hidden');
-            disconnectBtnFixed.style.display = '';
-            disconnectBtnFixed.style.visibility = '';
-            disconnectBtnFixed.style.opacity = '';
-          }
-          if (walletInfoFixed) {
-            walletInfoFixed.innerHTML = `
-              <div><strong>Connected:</strong> ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}</div>
-              <div><strong>Balance:</strong> <span id="balanceDisplayFixed">Checking...</span> Luna</div>
-            `;
-            walletInfoFixed.classList.remove('hidden');
-            walletInfoFixed.style.display = '';
-            walletInfoFixed.style.visibility = '';
-            walletInfoFixed.style.opacity = '';
-          }
-          
-          await checkLunaBalance();
-          startBalanceUpdate();
-          
-          // Update fixed balance display
-          const balanceDisplayFixed = document.getElementById('balanceDisplayFixed');
-          if (balanceDisplayFixed) {
-            balanceDisplayFixed.textContent = formatNumber(playerBalance);
-          }
+      setupWalletConnection();
+      initializeHands(); // Initialize hands first
+      setupEventListeners(); // Setup event listeners AFTER initializeHands (to prevent them from being removed)
+      
+      // Initialize tooltips and keyboard shortcuts
+      initTooltips();
+      initKeyboardShortcuts();
+    });
+
+    function initTooltips() {
+      if (!window.lunaUtils) return;
+      
+      const choiceBtns = document.querySelectorAll('.choice-btn');
+      choiceBtns.forEach(btn => {
+        const choice = btn.dataset.choice;
+        if (choice) {
+          window.lunaUtils.createTooltip(btn, `Choose ${choice.charAt(0).toUpperCase() + choice.slice(1)}`, 'top');
         }
-        // Case 2: Wallet not connected but has valid signature - reconnect automatically (like pump.fun)
-        else if (storedSignature && !window.solana.isConnected) {
-          try {
-            const sigData = JSON.parse(storedSignature);
-            console.log('[Game] ✅ Valid signature found - reconnecting automatically (like pump.fun)...');
-            
-            // Try to reconnect silently first
-            let response;
-            try {
-              response = await window.solana.connect({ onlyIfTrusted: true });
-            } catch (silentErr) {
-              // If silent connect fails, try normal connect (may show popup)
-              console.log('[Game] Silent connect failed, trying normal connect...');
-              response = await window.solana.connect({ onlyIfTrusted: false });
-            }
-            
-            if (response && response.publicKey) {
-              const currentWallet = response.publicKey.toString();
-              
-              // Verify signature is for reconnected wallet
-              if (sigData.publicKey === currentWallet) {
-                console.log('[Game] ✅ Auto-reconnected with valid signature');
-                walletPublicKey = currentWallet;
-                walletConnected = true;
-                
-                // Update UI
-                const connectBtn = document.getElementById('connectWalletBtn');
-                const disconnectBtn = document.getElementById('disconnectWalletBtn');
-                const walletInfo = document.getElementById('walletInfo');
-                const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
-                const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
-                const walletInfoFixed = document.getElementById('walletInfoFixed');
-                
-                if (connectBtn) connectBtn.classList.add('hidden');
-                if (disconnectBtn) disconnectBtn.classList.remove('hidden');
-                if (walletInfo) {
-                  walletInfo.textContent = `Wallet: ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}`;
-                  walletInfo.classList.remove('hidden');
-                }
-                
-                if (connectBtnFixed) connectBtnFixed.classList.add('hidden');
-                if (disconnectBtnFixed) {
-                  disconnectBtnFixed.classList.remove('hidden');
-                  disconnectBtnFixed.style.display = '';
-                  disconnectBtnFixed.style.visibility = '';
-                  disconnectBtnFixed.style.opacity = '';
-                }
-                if (walletInfoFixed) {
-                  walletInfoFixed.innerHTML = `
-                    <div><strong>Connected:</strong> ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}</div>
-                    <div><strong>Balance:</strong> <span id="balanceDisplayFixed">Checking...</span> Luna</div>
-                  `;
-                  walletInfoFixed.classList.remove('hidden');
-                  walletInfoFixed.style.display = '';
-                  walletInfoFixed.style.visibility = '';
-                  walletInfoFixed.style.opacity = '';
-                }
-                
-                await checkLunaBalance();
-                startBalanceUpdate();
-                
-                // Update fixed balance display
-                const balanceDisplayFixed = document.getElementById('balanceDisplayFixed');
-                if (balanceDisplayFixed) {
-                  balanceDisplayFixed.textContent = formatNumber(playerBalance);
-                }
-              } else {
-                console.log('[Game] Signature wallet mismatch after reconnect - clearing signature');
-                localStorage.removeItem('walletSignature');
-                // Still connect but without signature
-                walletPublicKey = currentWallet;
-                walletConnected = true;
-                
-                // Update UI
-                const connectBtn = document.getElementById('connectWalletBtn');
-                const disconnectBtn = document.getElementById('disconnectWalletBtn');
-                const walletInfo = document.getElementById('walletInfo');
-                const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
-                const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
-                const walletInfoFixed = document.getElementById('walletInfoFixed');
-                
-                if (connectBtn) connectBtn.classList.add('hidden');
-                if (disconnectBtn) disconnectBtn.classList.remove('hidden');
-                if (walletInfo) {
-                  walletInfo.textContent = `Wallet: ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}`;
-                  walletInfo.classList.remove('hidden');
-                }
-                
-                if (connectBtnFixed) connectBtnFixed.classList.add('hidden');
-                if (disconnectBtnFixed) {
-                  disconnectBtnFixed.classList.remove('hidden');
-                  disconnectBtnFixed.style.display = '';
-                  disconnectBtnFixed.style.visibility = '';
-                  disconnectBtnFixed.style.opacity = '';
-                }
-                if (walletInfoFixed) {
-                  walletInfoFixed.innerHTML = `
-                    <div><strong>Connected:</strong> ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}</div>
-                    <div><strong>Balance:</strong> <span id="balanceDisplayFixed">Checking...</span> Luna</div>
-                  `;
-                  walletInfoFixed.classList.remove('hidden');
-                  walletInfoFixed.style.display = '';
-                  walletInfoFixed.style.visibility = '';
-                  walletInfoFixed.style.opacity = '';
-                }
-                
-                await checkLunaBalance();
-                startBalanceUpdate();
-                
-                // Update fixed balance display
-                const balanceDisplayFixed = document.getElementById('balanceDisplayFixed');
-                if (balanceDisplayFixed) {
-                  balanceDisplayFixed.textContent = formatNumber(playerBalance);
-                }
-              }
-            }
-          } catch (err) {
-            console.warn('[Game] Auto-reconnect failed:', err);
-            // Don't clear signature - user might want to connect manually
-          }
+      });
+      
+      const connectBtn = document.getElementById('connectWalletBtnFixed');
+      if (connectBtn) {
+        window.lunaUtils.createTooltip(connectBtn, 'Connect your Phantom wallet to play PvP', 'bottom');
+      }
+    }
+
+    function initKeyboardShortcuts() {
+      if (!window.lunaUtils) return;
+      
+      // 1, 2, 3: Select Rock, Paper, Scissors
+      window.lunaUtils.registerShortcut('1', () => {
+        const rockBtn = document.querySelector('.choice-btn[data-choice="rock"]');
+        if (rockBtn && !rockBtn.disabled) rockBtn.click();
+      });
+      window.lunaUtils.registerShortcut('2', () => {
+        const paperBtn = document.querySelector('.choice-btn[data-choice="paper"]');
+        if (paperBtn && !paperBtn.disabled) paperBtn.click();
+      });
+      window.lunaUtils.registerShortcut('3', () => {
+        const scissorsBtn = document.querySelector('.choice-btn[data-choice="scissors"]');
+        if (scissorsBtn && !scissorsBtn.disabled) scissorsBtn.click();
+      });
+      
+      // Ctrl/Cmd + K: Connect wallet
+      window.lunaUtils.registerShortcut('k', () => {
+        const connectBtn = document.getElementById('connectWalletBtnFixed');
+        if (connectBtn && !connectBtn.disabled) {
+          connectBtn.click();
         }
+      }, { ctrl: true, meta: true });
+    }
+    
+    // Disable game initially
+    disableGame();
+    
+    setTimeout(() => {
+      if (!walletConnected || !walletPublicKey || !hasValidSignature) {
+        disableGame();
+      }
+    }, 100);
+
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'phantomForceDisconnect' && event.newValue) {
+        if (!walletConnected && !walletPublicKey) {
+          return;
+        }
+        forceDisconnect({
+          skipProviderDisconnect: true,
+          reason: 'storage-event',
+          suppressForceFlag: true,
+        }).catch((err) => {
+          console.error('[Game] Failed to handle global force disconnect:', err);
+        });
       }
     });
 
@@ -1358,17 +1894,35 @@
 
       findMatchBtn.addEventListener('click', async () => {
         if (!walletConnected || !walletPublicKey) {
+          if (window.showToast) {
+            window.showToast('Please connect your Phantom wallet first!', 'warning');
+          } else {
           alert('Please connect your Phantom wallet first!');
+          }
           return;
         }
-        if (playerBalance < RPS_MIN_BALANCE) {
-          alert(`You need at least ${formatNumber(RPS_MIN_BALANCE)} Luna tokens to play!`);
+        if (!hasValidSignature) {
+          if (window.showToast) {
+            window.showToast('Please reconnect and sign the message again before playing!', 'warning');
+          } else {
+          alert('Please reconnect and sign the message again before playing!');
+          }
           return;
         }
+        if (playerBalance < getCurrentMinRequirement()) {
+          if (window.showToast) {
+            window.showToast(`You need at least ${formatNumber(getCurrentMinRequirement())} Luna tokens to play!`, 'warning');
+          } else {
+            alert(`You need at least ${formatNumber(getCurrentMinRequirement())} Luna tokens to play!`);
+          }
+          return;
+        }
+        playButtonClickSound();
         await findMatch();
       });
 
       cancelMatchBtn.addEventListener('click', () => {
+        playCancelSound();
         cancelMatch();
       });
     }
@@ -1382,7 +1936,16 @@
       const opponentInfo = document.getElementById('opponentInfo');
 
       if (!findMatchBtn || !cancelMatchBtn || !matchStatus || !matchTimerEl || !opponentInfo) return;
-
+      if (!hasValidSignature) {
+        if (window.showToast) {
+          window.showToast('Please reconnect your Phantom wallet and sign the message again before matchmaking.', 'warning');
+        } else {
+        alert('Please reconnect your Phantom wallet and sign the message again before matchmaking.');
+        }
+        findMatchBtn.classList.remove('hidden');
+        cancelMatchBtn.classList.add('hidden');
+        return;
+      }
       findMatchBtn.classList.add('hidden');
       cancelMatchBtn.classList.remove('hidden');
       isWaitingForOpponent = true;
@@ -1405,7 +1968,7 @@
       }, 1000);
 
       try {
-        const response = await fetch(`${API_BASE}/luna/rps/queue`, {
+        const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/rps/queue`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ wallet: walletPublicKey })
@@ -1442,7 +2005,7 @@
               
               try {
                 console.log('[RPS] Polling for match...');
-                const checkResponse = await fetch(`${API_BASE}/luna/rps/match?wallet=${encodeURIComponent(walletPublicKey)}`);
+                const checkResponse = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/rps/match?wallet=${encodeURIComponent(walletPublicKey)}`);
                 const checkData = await checkResponse.json();
                 console.log('[RPS] Match check response:', checkData);
                 
@@ -1477,7 +2040,11 @@
       } catch (error) {
         console.error('Find match error:', error);
         const errorMsg = error.message || 'Unknown error';
+        if (window.showToast) {
+          window.showToast(`Failed to find match: ${errorMsg}`, 'error');
+        } else {
         alert(`Failed to find match: ${errorMsg}`);
+        }
         cancelMatch();
       }
     }
@@ -1582,45 +2149,13 @@
         
         if (altMatchTimer && altOpponentInfo) {
           console.log('[RPS] ✅ Found elements using alternative selectors');
-          // Use alternative elements
-          const finalMatchTimer = matchTimerEl || altMatchTimer;
-          const finalOpponentInfo = opponentInfo || altOpponentInfo;
-          
-          if (matchTimer) {
-            clearInterval(matchTimer);
-            matchTimer = null;
-          }
-
-          currentMatchId = data.matchId;
-          opponentWallet = data.player1 === walletPublicKey ? data.player2 : data.player1;
-
-          if (matchSection) {
-            matchSection.classList.remove('hidden');
-            matchSection.style.display = 'block';
-          }
-          
-          if (finalMatchTimer) finalMatchTimer.textContent = '✅ Match Found!';
-          if (matchStatus) matchStatus.textContent = 'Match found! Choose your hand!';
-          if (finalOpponentInfo) finalOpponentInfo.textContent = `Opponent: ${opponentWallet.substring(0, 8)}...${opponentWallet.substring(opponentWallet.length - 8)}${data.isBot ? ' (Bot)' : ''}`;
-          
-          if (findMatchBtn) {
-            findMatchBtn.classList.remove('hidden');
-            findMatchBtn.style.display = 'inline-block';
-          }
-          if (cancelMatchBtn) {
-            cancelMatchBtn.classList.add('hidden');
-            cancelMatchBtn.style.display = 'none';
-          }
-          
-          isWaitingForOpponent = false;
-          enableGame();
-          console.log('[RPS] ✅ Match UI updated using alternative elements');
-          return;
-        }
-        
+          matchTimerEl = matchTimerEl || altMatchTimer;
+          opponentInfo = opponentInfo || altOpponentInfo;
+        } else {
         console.warn('[RPS] ⚠️ Still not found, retrying in 100ms...');
         setTimeout(() => handleMatchFound(data), 100);
         return;
+        }
       }
 
       if (matchTimer) {
@@ -1680,6 +2215,7 @@
       });
       
       // Enable game buttons
+      playMatchFoundSound();
       enableGame();
     }
 
@@ -1688,6 +2224,7 @@
       const findMatchBtn = document.getElementById('findMatchBtn');
       const cancelMatchBtn = document.getElementById('cancelMatchBtn');
       const matchSection = document.getElementById('matchSection');
+      playCancelSound();
 
       if (matchTimer) {
         clearInterval(matchTimer);
@@ -1737,16 +2274,19 @@
         result.textContent = '🤝 Tie!';
         result.className = 'result tie';
         status.textContent = `Both chose ${myChoice}. It's a tie!`;
+        playTieSound();
       } else {
         const isWinner = (isPlayer1 && data.result === 'player1') || (!isPlayer1 && data.result === 'player2');
         if (isWinner) {
           result.textContent = '🎉 You Win!';
           result.className = 'result win';
           status.textContent = `Opponent chose ${opponentChoice}. You win!`;
+          playWinSound();
         } else {
           result.textContent = '😢 You Lose!';
           result.className = 'result lose';
           status.textContent = `Opponent chose ${opponentChoice}. You lose!`;
+          playLoseSound();
         }
       }
 
@@ -1810,6 +2350,17 @@
     async function playPvPMatch(playerChoice) {
       if (!currentMatchId) return;
 
+      // Check wallet connection first (like pump.fun - must connect before playing)
+      if (!walletConnected || !walletPublicKey) {
+        const status = document.getElementById('status');
+        if (status) {
+          status.textContent = 'Please connect your Phantom wallet first!';
+          status.className = 'status error';
+        }
+        alert('⚠️ Please connect your Phantom wallet first!\n\nYou must connect your wallet before playing, just like pump.fun requires connection before buying tokens.');
+        return;
+      }
+
       const status = document.getElementById('status');
       const result = document.getElementById('result');
       const playerHand = document.getElementById('playerHand');
@@ -1845,6 +2396,7 @@
           countdownText.textContent = countdownNumbers[countdownIndex];
           countdownOverlay.innerHTML = '';
           countdownOverlay.appendChild(countdownText);
+          playCountdownSound();
           countdownIndex++;
           setTimeout(showCountdown, 1000);
         } else {
@@ -1859,7 +2411,7 @@
     // Submit PvP Choice
     async function submitPvPChoice(playerChoice) {
       try {
-        const response = await fetch(`${API_BASE}/luna/rps/submit`, {
+        const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/rps/submit`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -1913,18 +2465,22 @@
         lunaHand.appendChild(getHandDisplay('rock'));
       }
       
-      // Set button images (use hand images)
+      // Set button images without clearing innerHTML (to preserve event listeners)
+      // Use firstChild check to avoid duplicate images
       if (rockBtn) {
-        rockBtn.innerHTML = '';
-        rockBtn.appendChild(getHandDisplay('rock'));
+        if (!rockBtn.querySelector('img')) {
+          rockBtn.appendChild(getHandDisplay('rock'));
+        }
       }
       if (paperBtn) {
-        paperBtn.innerHTML = '';
-        paperBtn.appendChild(getHandDisplay('paper'));
+        if (!paperBtn.querySelector('img')) {
+          paperBtn.appendChild(getHandDisplay('paper'));
+        }
       }
       if (scissorsBtn) {
-        scissorsBtn.innerHTML = '';
-        scissorsBtn.appendChild(getHandDisplay('scissors'));
+        if (!scissorsBtn.querySelector('img')) {
+          scissorsBtn.appendChild(getHandDisplay('scissors'));
+        }
       }
     }
 
@@ -1944,6 +2500,62 @@
         return;
       }
 
+      async function finalizeWalletConnection({ publicKey, hasSignature = false } = {}) {
+        if (!publicKey) {
+          return;
+        }
+
+        walletPublicKey = publicKey;
+        walletConnected = true;
+        hasValidSignature = !!hasSignature;
+
+        if (window.phantomHelper) {
+          window.phantomHelper.saveState({ publicKey, hasSignature: hasValidSignature });
+        }
+        clearForceDisconnectFlag();
+
+        if (hasValidSignature) {
+          connectBtn.classList.add('hidden');
+        } else {
+          connectBtn.classList.remove('hidden');
+          connectBtn.textContent = '🔗 Connect Phantom Wallet';
+        }
+        disconnectBtn.classList.remove('hidden');
+        walletInfo.textContent = `Wallet: ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}`;
+        walletInfo.classList.remove('hidden');
+
+        const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
+        const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
+        const walletInfoFixed = document.getElementById('walletInfoFixed');
+
+        if (connectBtnFixed) connectBtnFixed.classList.add('hidden');
+        if (disconnectBtnFixed) {
+          disconnectBtnFixed.classList.remove('hidden');
+          disconnectBtnFixed.style.display = '';
+          disconnectBtnFixed.style.visibility = '';
+          disconnectBtnFixed.style.opacity = '';
+        }
+        if (walletInfoFixed) {
+          walletInfoFixed.innerHTML = `
+            <div><strong>Connected:</strong> ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}</div>
+            <div><strong>Balance:</strong> <span id="balanceDisplayFixed">Checking...</span> Luna</div>
+          `;
+          walletInfoFixed.classList.remove('hidden');
+          walletInfoFixed.style.display = '';
+          walletInfoFixed.style.visibility = '';
+          walletInfoFixed.style.opacity = '';
+        }
+
+        stopBalanceUpdate();
+        await checkLunaBalance();
+        startBalanceUpdate();
+
+        const balanceDisplayFixed = document.getElementById('balanceDisplayFixed');
+        if (balanceDisplayFixed) {
+          balanceDisplayFixed.textContent = formatNumber(playerBalance);
+        }
+      }
+
       // Check if Phantom wallet is available
       if (typeof window.solana === 'undefined' || !window.solana.isPhantom) {
         connectBtn.textContent = '⚠️ Phantom Wallet not found!';
@@ -1960,7 +2572,10 @@
       connectBtn.style.cursor = 'pointer';
       
       // Connect button
-      const connectHandler = async () => {
+      const connectHandler = async (e) => {
+        if (e) {
+          e.stopPropagation(); // Prevent sound from global listeners
+        }
         try {
           console.log('[Game] Connect button clicked');
           
@@ -1974,22 +2589,6 @@
           if (typeof window.solana.connect !== 'function') {
             alert('⚠️ Phantom wallet extension is not ready!\n\nPlease:\n1. Make sure Phantom wallet is unlocked\n2. Refresh this page\n3. Try again');
             return;
-          }
-          
-          // ALWAYS disconnect first to force popup (even if not connected)
-          console.log('[Game] Disconnecting wallet first to force popup...');
-          try {
-            if (window.solana.isConnected) {
-              await window.solana.disconnect();
-              console.log('[Game] Wallet disconnected');
-            }
-            // Wait briefly to ensure disconnect is complete (reduced from 2000ms to 300ms for faster popup)
-            console.log('[Game] Waiting 300ms to clear cached connection...');
-            await new Promise(resolve => setTimeout(resolve, 300));
-          } catch (disconnectErr) {
-            console.warn('[Game] Error during disconnect (may not be connected):', disconnectErr);
-            // Still wait even if disconnect fails
-            await new Promise(resolve => setTimeout(resolve, 300));
           }
           
           console.log('[Game] Connecting to Phantom wallet...');
@@ -2011,7 +2610,6 @@
             throw new Error('Failed to connect: ' + connectErr.message);
           }
           
-          // Check response
           if (!response || !response.publicKey) {
             throw new Error('Connection failed: No public key returned');
           }
@@ -2061,18 +2659,12 @@
             
             console.log('[Game] Signature received (length):', signatureArray.length);
             
-            // Store signature in localStorage for session
-            localStorage.setItem('walletSignature', JSON.stringify({
-              signature: signatureArray,
-              publicKey: walletPublicKey,
-              timestamp: timestamp,
-              message: message
-            }));
-            
-            console.log('[Game] ✅ Authentication signature stored in localStorage');
+            hasValidSignature = true;
+            console.log('[Game] ✅ Authentication signature stored in memory (session only)');
             
           } catch (signErr) {
             console.error('[Game] Sign message failed:', signErr);
+            hasValidSignature = false;
             // Disconnect if sign fails
             try {
               await window.solana.disconnect();
@@ -2084,58 +2676,17 @@
           
           walletConnected = true;
           console.log('[Game] ✅ Authentication complete! Wallet is now authenticated.');
-          
           console.log('[Game] ✅ Phantom wallet connected!');
           console.log('[Game] Wallet connected:', walletPublicKey);
-          
-          // Show info message after successful connection
-          console.log('[Game] ========================================');
-          console.log('[Game] If you did NOT see a popup, it means:');
-          console.log('[Game] - Phantom wallet was already connected');
-          console.log('[Game] - Or popup was blocked by browser');
-          console.log('[Game] To see popup next time, disconnect first');
-          console.log('[Game] ========================================');
 
-          // Update container UI
-          connectBtn.classList.add('hidden');
-          disconnectBtn.classList.remove('hidden');
-          walletInfo.textContent = `Wallet: ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}`;
-          walletInfo.classList.remove('hidden');
-
-          // Update fixed buttons
-          const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
-          const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
-          const walletInfoFixed = document.getElementById('walletInfoFixed');
-          if (connectBtnFixed) connectBtnFixed.classList.add('hidden');
-          if (disconnectBtnFixed) {
-            disconnectBtnFixed.classList.remove('hidden');
-            disconnectBtnFixed.style.display = '';
-            disconnectBtnFixed.style.visibility = '';
-            disconnectBtnFixed.style.opacity = '';
-          }
-          if (walletInfoFixed) {
-            walletInfoFixed.innerHTML = `
-              <div><strong>Connected:</strong> ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}</div>
-              <div><strong>Balance:</strong> <span id="balanceDisplayFixed">Checking...</span> Luna</div>
-            `;
-            walletInfoFixed.classList.remove('hidden');
-            walletInfoFixed.style.display = '';
-            walletInfoFixed.style.visibility = '';
-            walletInfoFixed.style.opacity = '';
-          }
-
-          // Check balance
-          await checkLunaBalance();
-          startBalanceUpdate(); // Start real-time balance updates
-          
-          // Update fixed balance display
-          const balanceDisplayFixed = document.getElementById('balanceDisplayFixed');
-          if (balanceDisplayFixed) {
-            balanceDisplayFixed.textContent = formatNumber(playerBalance);
-          }
+          await finalizeWalletConnection({ publicKey: walletPublicKey, hasSignature: true });
         } catch (error) {
           console.error('Wallet connection error:', error);
+          if (window.showToast) {
+            window.showToast('Failed to connect wallet: ' + error.message, 'error');
+          } else {
           alert('Failed to connect wallet: ' + error.message);
+          }
         }
       };
       
@@ -2150,61 +2701,9 @@
       // Disconnect button
       const disconnectHandler = async () => {
         try {
-          // Disconnect from Phantom
-          if (window.solana && window.solana.isConnected) {
-            await window.solana.disconnect();
-          }
-          
-          // Reset state
-          stopBalanceUpdate(); // Stop real-time balance updates
-          walletPublicKey = null;
-          walletConnected = false;
-          playerBalance = 0;
-          gameActive = false;
-          
-          // Clear signature when disconnected (like pump.fun - must sign again on reconnect)
-          localStorage.removeItem('walletSignature');
-          console.log('[Game] Wallet disconnected - signature cleared. Must sign again on next connect.');
-
-          // Update container UI
-          connectBtn.classList.remove('hidden');
-          disconnectBtn.classList.add('hidden');
-          
-          // Update fixed buttons
-          const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
-          const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
-          const walletInfoFixed = document.getElementById('walletInfoFixed');
-          if (connectBtnFixed) connectBtnFixed.classList.remove('hidden');
-          if (disconnectBtnFixed) {
-            disconnectBtnFixed.classList.add('hidden');
-            disconnectBtnFixed.style.display = 'none';
-            disconnectBtnFixed.style.visibility = 'hidden';
-            disconnectBtnFixed.style.opacity = '0';
-          }
-          if (walletInfoFixed) {
-            walletInfoFixed.classList.add('hidden');
-            walletInfoFixed.style.display = 'none';
-            walletInfoFixed.style.visibility = 'hidden';
-            walletInfoFixed.style.opacity = '0';
-          }
-          walletInfo.classList.add('hidden');
-          
-          const balanceCheck = document.getElementById('balanceCheck');
-          if (balanceCheck) {
-            balanceCheck.classList.add('hidden');
-          }
-          
-          disableGame();
+          await forceDisconnect({ reason: 'pvp-user' });
         } catch (error) {
           console.error('Wallet disconnect error:', error);
-          // Force reset even if disconnect fails
-          walletPublicKey = null;
-          walletConnected = false;
-          playerBalance = 0;
-          connectBtn.classList.remove('hidden');
-          disconnectBtn.classList.add('hidden');
-          walletInfo.classList.add('hidden');
-          disableGame();
         }
       };
       
@@ -2218,33 +2717,31 @@
 
       // Set up wallet event listeners
       if (window.solana && window.solana.isPhantom) {
-        window.solana.on('connect', async () => {
-          walletPublicKey = window.solana.publicKey.toString();
-          walletConnected = true;
-          connectBtn.classList.add('hidden');
-          disconnectBtn.classList.remove('hidden');
-          walletInfo.textContent = `Wallet: ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}`;
-          walletInfo.classList.remove('hidden');
-          await checkLunaBalance();
-          startBalanceUpdate(); // Start real-time balance updates
+        window.solana.on('connect', () => {
+          walletPublicKey = window.solana.publicKey?.toString() || walletPublicKey;
+          walletConnected = !!walletPublicKey;
         });
 
         window.solana.on('disconnect', () => {
-          stopBalanceUpdate(); // Stop real-time balance updates
-          walletPublicKey = null;
-          walletConnected = false;
-          playerBalance = 0;
-          
-          // Clear signature when disconnected (like pump.fun - must sign again on reconnect)
-          localStorage.removeItem('walletSignature');
-          console.log('[Game] Wallet disconnected - signature cleared. Must sign again on next connect.');
-          
-          connectBtn.classList.remove('hidden');
-          disconnectBtn.classList.add('hidden');
-          walletInfo.classList.add('hidden');
-          disableGame();
+          console.log('[Game] Wallet disconnected event received.');
+          const alreadyForced = hasForceDisconnectFlag();
+          forceDisconnect({
+            skipProviderDisconnect: true,
+            reason: 'provider-event',
+            suppressForceFlag: alreadyForced,
+          }).catch((err) => {
+            console.error('[Game] Failed to handle provider disconnect:', err);
+          });
         });
-      }
+                }
+
+      attemptPhantomAutoConnect(async (publicKey, signatureValid) => {
+                if (!signatureValid) {
+                  hasValidSignature = false;
+                  console.log('[Game] Auto-connected wallet detected, but signature is required. Please sign again.');
+                }
+        await finalizeWalletConnection({ publicKey, hasSignature: signatureValid });
+      });
     }
 
     // Check Luna Token Balance from Phantom Wallet
@@ -2271,7 +2768,7 @@
       try {
         // Use backend API to check balance (bypasses RPC rate limiting)
         // Backend will read mint address from .env automatically
-        const response = await fetch(`${API_BASE}/luna/rps/balance?wallet=${walletPublicKey}`);
+        const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/rps/balance?wallet=${walletPublicKey}`);
         const data = await response.json();
         
         if (!data.ok) {
@@ -2286,9 +2783,9 @@
           balanceDisplayFixed.textContent = formatNumber(playerBalance);
         }
 
-        if (playerBalance >= RPS_MIN_BALANCE) {
-          balanceCheck.className = 'balance-check success';
-          balanceCheck.textContent = `✅ Balance: ${formatNumber(playerBalance)} Luna (Ready to play!)`;
+        if (playerBalance >= getCurrentMinRequirement()) {
+          // Hide balance check message (no need to show "Ready to play!")
+          balanceCheck.classList.add('hidden');
           // Don't enable game buttons yet - wait for match
           disableGame();
           
@@ -2306,7 +2803,7 @@
           }
         } else {
           balanceCheck.className = 'balance-check error';
-          balanceCheck.textContent = `❌ Insufficient balance! You need at least ${formatNumber(RPS_MIN_BALANCE)} Luna tokens to play. Current: ${formatNumber(playerBalance)}`;
+          balanceCheck.textContent = `❌ Insufficient balance! You need at least ${formatNumber(getCurrentMinRequirement())} Luna tokens to play. Current: ${formatNumber(playerBalance)}`;
           disableGame();
         }
       } catch (error) {
@@ -2359,11 +2856,42 @@
 
     // Enable/disable game
     function enableGame() {
+      // Must have wallet connected and freshly signed
+      if (!walletConnected || !walletPublicKey || !hasValidSignature) {
+        console.log('[Game] Cannot enable game - wallet not connected or missing fresh signature');
+        disableGame();
+        return;
+      }
+      
+      // Double-check wallet is actually connected
+      if (window.solana && window.solana.isPhantom) {
+        if (!window.solana.isConnected || !window.solana.publicKey) {
+          console.log('[Game] Cannot enable game - wallet not actually connected');
+          disableGame();
+          return;
+        }
+        const currentWallet = window.solana.publicKey.toString();
+        if (currentWallet !== walletPublicKey) {
+          console.log('[Game] Cannot enable game - wallet mismatch');
+          disableGame();
+          return;
+        }
+      } else {
+        console.log('[Game] Cannot enable game - Phantom wallet not available');
+        disableGame();
+        return;
+      }
+      
       gameActive = true;
       document.querySelectorAll('.choice-btn').forEach(btn => {
         btn.classList.remove('disabled');
         btn.disabled = false;
+        // Remove inline styles when enabling
+        btn.style.pointerEvents = '';
+        btn.style.cursor = '';
+        btn.style.opacity = '';
       });
+      console.log('[Game] Game enabled - wallet verified connected');
     }
 
     function disableGame() {
@@ -2371,22 +2899,59 @@
       document.querySelectorAll('.choice-btn').forEach(btn => {
         btn.classList.add('disabled');
         btn.disabled = true;
+        // Force pointer-events to none via inline style as backup
+        btn.style.pointerEvents = 'none';
+        btn.style.cursor = 'not-allowed';
+        btn.style.opacity = '0.5';
       });
+      console.log('[Game] Game disabled - buttons should not be clickable');
     }
 
     // Setup event listeners
     function setupEventListeners() {
+      // Remove existing listeners first to prevent duplicates
+      document.querySelectorAll('.choice-btn').forEach(btn => {
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+      });
+      
       document.querySelectorAll('.choice-btn').forEach(btn => {
         btn.addEventListener('click', async (e) => {
-          if (!gameActive || btn.classList.contains('disabled')) return;
+          // ALWAYS check disabled state first (before any other checks)
+          if (btn.classList.contains('disabled') || btn.disabled) {
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+          }
           
+          // Check gameActive state
+          if (!gameActive) {
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+          }
+          
+          // Check wallet connection first (like pump.fun - must connect before playing)
+          if (!walletConnected || !walletPublicKey) {
+            e.preventDefault();
+            e.stopPropagation();
+            const status = document.getElementById('status');
+            if (status) {
+              status.textContent = 'Please connect your Phantom wallet first!';
+              status.className = 'status error';
+            }
+            alert('⚠️ Please connect your Phantom wallet first!\n\nYou must connect your wallet before playing, just like pump.fun requires connection before buying tokens.');
+            disableGame(); // Ensure game is disabled
+            return;
+          }
+          
+          playButtonClickSound();
+          const choice = btn.dataset.choice;
           // Check if we have a match (PvP mode)
           if (currentMatchId) {
-            const choice = btn.dataset.choice;
             await playPvPMatch(choice);
           } else {
             // Fallback to old vs Luna mode (if needed)
-            const choice = btn.dataset.choice;
             await playGame(choice);
           }
         });
@@ -2405,9 +2970,9 @@
         return;
       }
       
-      if (playerBalance < RPS_MIN_BALANCE) {
+      if (playerBalance < getCurrentMinRequirement()) {
         const status = document.getElementById('status');
-        status.textContent = `Insufficient balance! You need at least ${formatNumber(RPS_MIN_BALANCE)} Luna tokens.`;
+        status.textContent = `Insufficient balance! You need at least ${formatNumber(getCurrentMinRequirement())} Luna tokens.`;
         status.className = 'status error';
         await checkLunaBalance(); // Refresh balance
         return;
@@ -2448,6 +3013,7 @@
           countdownText.textContent = countdownNumbers[countdownIndex];
           countdownOverlay.innerHTML = '';
           countdownOverlay.appendChild(countdownText);
+          playCountdownSound();
           countdownIndex++;
           setTimeout(showCountdown, 1000);
         } else {
@@ -2463,7 +3029,6 @@
     }
 
     // Hand cycling animation
-    let handCycleInterval = null;
     const handChoices = ['rock', 'paper', 'scissors'];
     let currentCycleIndex = 0;
     
@@ -2492,15 +3057,21 @@
     // Continue game after countdown
     async function continueGame(playerChoice, username, playerHand, lunaHand, status, result) {
       // Keep Luna's hand cycling while waiting
-
+      if (!hasValidSignature) {
+        stopHandCycle();
+        status.textContent = 'Please reconnect your Phantom wallet and sign in again.';
+        status.className = 'status error';
+        disableGame();
+        return;
+      }
       try {
         // Re-check balance before playing
         await checkLunaBalance();
-        if (playerBalance < RPS_MIN_BALANCE) {
+        if (playerBalance < getCurrentMinRequirement()) {
           throw new Error('Insufficient balance!');
         }
 
-        const response = await fetch(`${API_BASE}/luna/rps/play`, {
+        const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/rps/play`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -2532,21 +3103,29 @@
             result.className = 'result win';
             status.textContent = `Luna chose ${data.lunaChoice}. You win!`;
             status.className = 'status success';
+            playWinSound();
           } else if (data.result === 'lose') {
             result.textContent = '😢 You Lose!';
             result.className = 'result lose';
             status.textContent = `Luna chose ${data.lunaChoice}. You lose!`;
             status.className = 'status error';
+            playLoseSound();
           } else {
             result.textContent = '🤝 Tie!';
             result.className = 'result tie';
             status.textContent = `Luna chose ${data.lunaChoice}. It's a tie!`;
             status.className = 'status';
+            playTieSound();
           }
 
-          // Re-enable game after 2 seconds
+          // Re-enable game after 2 seconds (only if wallet is still connected)
           setTimeout(() => {
-            enableGame();
+            // Only enable if wallet is still connected (enableGame() will check)
+            if (walletConnected && walletPublicKey) {
+              enableGame(); // enableGame() will verify wallet connection internally
+            } else {
+              disableGame(); // Ensure game stays disabled if wallet disconnected
+            }
             status.textContent = '';
             result.textContent = '';
             playerHand.innerHTML = '';
@@ -2561,99 +3140,15 @@
         lunaHand.classList.remove('cycling');
         status.textContent = `Error: ${error.message}`;
         status.className = 'status error';
-        enableGame();
-      }
-    }
-
-    // Load contract address from backend
-    async function loadContractAddress() {
-      try {
-        const response = await fetch(`${API_BASE}/luna/rps/contract-address`);
-        const data = await response.json();
-        
-        if (data.ok && data.contractAddress) {
-          const contractInput = document.getElementById('contractAddress');
-          if (contractInput) {
-            contractInput.value = data.contractAddress;
-          }
-          
-          // Update buy DEX link from env
-          const buyDexLink = document.getElementById('buyDexLink');
-          if (buyDexLink && data.buyLink) {
-            buyDexLink.href = data.buyLink;
-          } else if (buyDexLink) {
-            // Fallback to pump.fun if buyLink not provided
-            buyDexLink.href = `https://pump.fun/${data.contractAddress}`;
-          }
-          
-          // Update X/Twitter community link from env
-          const communityLink = document.getElementById('communityLink');
-          if (communityLink && data.xLink) {
-            communityLink.href = data.xLink;
-          }
-        }
-      } catch (error) {
-        console.error('Failed to load contract address:', error);
-        const contractInput = document.getElementById('contractAddress');
-        if (contractInput) {
-          contractInput.value = 'Error loading address';
+        // Only enable if wallet is still connected (enableGame() will check)
+        if (walletConnected && walletPublicKey) {
+          enableGame(); // enableGame() will verify wallet connection internally
+        } else {
+          disableGame(); // Ensure game stays disabled if wallet disconnected
         }
       }
     }
 
-    // Copy contract address to clipboard
-    function copyContractAddress() {
-      const contractInput = document.getElementById('contractAddress');
-      if (contractInput) {
-        contractInput.select();
-        contractInput.setSelectionRange(0, 99999);
-        document.execCommand('copy');
-        
-        const btn = event.target.closest('.contract-btn-copy');
-        if (btn) {
-          const originalText = btn.innerHTML;
-          btn.innerHTML = '<span>✓</span> Copied!';
-          setTimeout(() => {
-            btn.innerHTML = originalText;
-          }, 2000);
-        }
-      }
-    }
-
-    // View contract address on Solscan
-    function viewContractAddress() {
-      const contractInput = document.getElementById('contractAddress');
-      if (contractInput && contractInput.value && contractInput.value !== 'Loading...' && contractInput.value !== 'Error loading address') {
-        window.open(`https://solscan.io/token/${contractInput.value}`, '_blank');
-      }
-    }
-
-    // Open buy DEX link
-    function openBuyDex(event) {
-      event.preventDefault();
-      const buyDexLink = document.getElementById('buyDexLink');
-      if (buyDexLink && buyDexLink.href && buyDexLink.href !== '#') {
-        window.open(buyDexLink.href, '_blank');
-      } else {
-        alert('Contract address not loaded yet. Please wait a moment and try again.');
-      }
-    }
-
-    // Open community link (X/Twitter)
-    function openCommunity(event) {
-      event.preventDefault();
-      const communityLink = document.getElementById('communityLink');
-      if (communityLink && communityLink.href && communityLink.href !== '#') {
-        window.open(communityLink.href, '_blank');
-      } else {
-        alert('Community link not loaded yet. Please wait a moment and try again.');
-      }
-    }
-
-    // Load contract address on page load
-    document.addEventListener('DOMContentLoaded', () => {
-      loadContractAddress();
-    });
   </script>
   <script>
     // Initialize UI components immediately (will work with or without wallet)

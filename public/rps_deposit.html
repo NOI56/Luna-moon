@@ -4,13 +4,43 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Luna Deposit - Reduce Betting Fee</title>
+  
+  <!-- Favicon and Icons for Phantom Wallet Popup -->
+  <!-- IMPORTANT: favicon.ico must be first for Phantom Wallet to detect it -->
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/logo/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/logo/favicon-16x16.png">
+  <link rel="icon" type="image/png" sizes="64x64" href="/images/logo/favicon-64x64.png">
+  <link rel="icon" type="image/png" sizes="128x128" href="/images/logo/favicon-128x128.png">
+  <link rel="icon" type="image/png" sizes="256x256" href="/images/logo/favicon-256x256.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="/images/logo/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.json">
+  
+  <!-- Open Graph / Social Media Meta Tags (for wallet popups) -->
+  <!-- Use absolute URL for og:image so Phantom Wallet can display it -->
+  <meta property="og:image" id="og-image" content="">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="256">
+  <meta property="og:image:height" content="256">
+  <meta property="og:title" content="Luna Deposit - Reduce Betting Fee">
+  <meta property="og:description" content="Deposit Luna tokens to reduce betting fees in Rock Paper Scissors games.">
+  <meta property="og:url" content="">
+  <meta property="og:type" content="website">
+  
+  <!-- Additional Meta Tags -->
+  <meta name="description" content="Deposit Luna tokens to reduce betting fees in Rock Paper Scissors games.">
+  <meta name="theme-color" content="#00ffff">
   <link rel="stylesheet" href="/css/notifications.css">
+  <link rel="stylesheet" href="/css/cyberpunk-neon.css">
+  <link rel="stylesheet" href="/css/mobile-overrides.css">
+  <script src="/js/runtime-utils.js"></script>
   <script>
     // Declare handleConnectWalletClick early in head so it's available when button is rendered
     window.handleConnectWalletClick = async function(event) {
       if (event) {
         event.preventDefault();
-        event.stopPropagation();
+        event.stopPropagation(); // Prevent sound from global listeners
       }
       console.log('[Deposit] handleConnectWalletClick called from head');
       
@@ -110,6 +140,12 @@
         window.walletConnected = true;
         
         console.log('[Deposit] ✅ Authentication complete! Wallet is now authenticated and persistent.');
+        if (window.phantomHelper) {
+          window.phantomHelper.saveState({ publicKey: walletPublicKey, hasSignature: true });
+          if (typeof window.phantomHelper.clearForceDisconnect === 'function') {
+            window.phantomHelper.clearForceDisconnect();
+          }
+        }
         
         // Store wallet address with connect time
         localStorage.setItem('phantomWalletAddress', walletPublicKey);
@@ -185,7 +221,11 @@
         }
       } catch (err) {
         console.error('[Deposit] Wallet connection error:', err);
+        if (window.showToast) {
+          window.showToast('Failed to connect wallet: ' + err.message, 'error');
+        } else {
         alert('Failed to connect wallet: ' + err.message);
+        }
       }
     };
   </script>
@@ -197,21 +237,23 @@
     }
 
     body {
-      font-family: 'Courier New', 'Monaco', monospace;
-      background: #0a0a0a;
-      background-image: 
-        radial-gradient(circle at 20% 50%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
-        linear-gradient(135deg, #0a0a0a 0%, #1a0a2e 50%, #16213e 100%);
+      font-family: 'Space Grotesk', var(--mono);
+      background:
+        radial-gradient(circle at 20% 20%, rgba(0, 255, 255, 0.12), transparent 45%),
+        radial-gradient(circle at 85% 5%, rgba(255, 60, 172, 0.12), transparent 55%),
+        radial-gradient(circle at 70% 80%, rgba(116, 39, 255, 0.15), transparent 60%),
+        linear-gradient(135deg, #02000d 0%, #050b1f 35%, #050524 65%, #0b0140 100%);
       display: flex;
       justify-content: center;
       align-items: flex-start;
       min-height: 100vh;
       padding: 20px;
-      color: #00ffff;
+      color: var(--text-base);
       position: relative;
       overflow-y: auto;
       overflow-x: hidden;
+      letter-spacing: 0.01em;
+      -webkit-font-smoothing: antialiased;
     }
     
     body::before {
@@ -226,62 +268,97 @@
           0deg,
           transparent,
           transparent 2px,
-          rgba(0, 255, 255, 0.03) 2px,
-          rgba(0, 255, 255, 0.03) 4px
+          rgba(0, 255, 255, 0.025) 2px,
+          rgba(0, 255, 255, 0.025) 4px
         );
       pointer-events: none;
       z-index: 0;
+      opacity: 0.3;
+      mix-blend-mode: screen;
+      animation: gridDrift 18s linear infinite;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(circle at 15% 75%, rgba(0, 255, 255, 0.18), transparent 40%),
+        radial-gradient(circle at 85% 25%, rgba(255, 60, 172, 0.15), transparent 45%);
+      filter: blur(120px);
+      opacity: 0.4;
+      z-index: 0;
+      animation: auroraDrift 20s ease-in-out infinite alternate;
     }
 
     .game-container {
       text-align: center;
-      padding: 40px;
-      padding-top: 100px;
-      background: rgba(10, 10, 26, 0.8);
-      border: none;
-      border-radius: 0;
-      box-shadow: 
-        0 0 20px rgba(0, 255, 255, 0.25),
-        0 0 40px rgba(0, 255, 255, 0.15),
-        inset 0 0 20px rgba(0, 255, 255, 0.05);
-      max-width: 800px;
+      padding: 60px;
+      padding-top: 120px;
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 32px;
+      box-shadow: var(--panel-shadow), 0 0 120px rgba(0, 255, 255, 0.12);
+      max-width: 1100px;
       width: 100%;
       position: relative;
       z-index: 1;
-      margin-top: 20px;
+      margin-top: 40px;
+      overflow: hidden;
+      backdrop-filter: blur(22px) saturate(140%);
+      isolation: isolate;
     }
     
     .game-container::before {
       content: '';
       position: absolute;
-      top: -2px;
-      left: -2px;
-      right: -2px;
-      bottom: -2px;
-      background: linear-gradient(45deg, #00ffff, #00ffff, #00ffff);
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(120deg, rgba(0, 255, 255, 0.8), rgba(116, 39, 255, 0.65), rgba(255, 60, 172, 0.6));
+      opacity: 0.35;
+      filter: blur(25px);
+      z-index: -2;
+      animation: borderGlow 6s ease-in-out infinite;
+    }
+    
+    .game-container::after {
+      content: '';
+      position: absolute;
+      inset: 1px;
+      border-radius: inherit;
+      background: linear-gradient(130deg, rgba(255, 255, 255, 0.08), transparent 60%);
       z-index: -1;
-      animation: borderGlow 3s ease-in-out infinite;
-      opacity: 0.5;
+      opacity: 0.6;
+    }
+    
+    @keyframes gridDrift {
+      0% { background-position: 0 0; }
+      100% { background-position: 0 24px; }
+    }
+
+    @keyframes auroraDrift {
+      0% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.35; }
+      100% { transform: translate3d(-3%, -3%, 0) scale(1.05); opacity: 0.5; }
     }
     
     @keyframes borderGlow {
-      0%, 100% { opacity: 0.15; }
-      50% { opacity: 0.35; }
+      0%, 100% { opacity: 0.15; filter: blur(0px); }
+      50% { opacity: 0.5; filter: blur(1px); }
     }
 
     h1 {
-      font-size: 2.5em;
+      font-size: clamp(2.5rem, 4vw, 3.2rem);
       margin-bottom: 10px;
-      color: #00ffff;
-      text-shadow: 
-        0 0 5px #00ffff,
-        0 0 10px #00ffff,
-        0 0 15px #00ffff,
-        2px 2px 4px rgba(0, 0, 0, 0.8);
-      font-weight: bold;
-      letter-spacing: 3px;
+      color: var(--text-base);
+      background: linear-gradient(120deg, #f6f6f6, var(--cyber-cyan), var(--cyber-pink));
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 30px rgba(0, 255, 255, 0.35);
+      font-weight: 600;
+      letter-spacing: 4px;
       text-transform: uppercase;
-      animation: textGlow 2s ease-in-out infinite alternate;
+      animation: textGlow 3s ease-in-out infinite alternate;
     }
     
     @keyframes textGlow {
@@ -290,113 +367,141 @@
     }
 
     .subtitle {
-      font-size: 1.2em;
+      font-size: 1.1em;
       margin-bottom: 30px;
-      color: #00ffff;
-      text-shadow: 0 0 5px #00ffff;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.35em;
+      text-shadow: 0 0 12px rgba(0, 255, 255, 0.35);
     }
     
-    /* Ensure mode navigation is always visible */
-    #modeNavigation {
-      position: fixed !important;
-      top: 40px !important;
-      left: 20px !important;
-      z-index: 99999 !important;
-      display: flex !important;
-      visibility: visible !important;
-      opacity: 1 !important;
+    /* Enhanced Effects Styles */
+    .particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .particle {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: rgba(0, 255, 255, 0.6);
+      border-radius: 50%;
+      animation: float 20s infinite linear;
+      box-shadow: 0 0 6px rgba(0, 255, 255, 0.8);
+    }
+
+    @keyframes float {
+      0% {
+        transform: translateY(100vh) translateX(0) rotate(0deg);
+        opacity: 0;
+      }
+      10% {
+        opacity: 1;
+      }
+      90% {
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-100vh) translateX(100px) rotate(360deg);
+        opacity: 0;
+      }
+    }
+
+    .scroll-progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      background: linear-gradient(90deg,
+        rgba(0, 255, 255, 0.8),
+        rgba(255, 0, 255, 0.8),
+        rgba(0, 255, 157, 0.8)
+      );
+      background-size: 200% 100%;
+      z-index: 10000;
+      transform-origin: left;
+      transform: scaleX(0);
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+      animation: progressGradient 3s linear infinite;
+    }
+
+    @keyframes progressGradient {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 200% 50%; }
+    }
+
+    .cursor-trail {
+      position: fixed;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(0, 255, 255, 0.6);
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+      pointer-events: none;
+      z-index: 9999;
+      animation: trailFade 0.5s ease-out forwards;
+    }
+
+    @keyframes trailFade {
+      0% {
+        opacity: 1;
+        transform: scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: scale(0);
+      }
+    }
+
+    @keyframes sparkleFade {
+      0% {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+      }
+      100% {
+        opacity: 0;
+        transform: scale(0) rotate(360deg);
+      }
+    }
+
+    body.neon-off .particles,
+    body.neon-off .scroll-progress,
+    body.neon-off .cursor-trail {
+      display: none !important;
     }
     
+    /* Navigation styles handled by theme */
     #modeNavigation a {
-      display: inline-block !important;
-      visibility: visible !important;
-      opacity: 1 !important;
-      cursor: pointer !important;
+      transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease, text-shadow 0.25s ease !important;
     }
-    
+
     #modeNavigation a:hover {
-      box-shadow: 
-        0 0 20px currentColor,
-        0 0 40px currentColor,
-        0 0 60px currentColor,
-        inset 0 0 20px rgba(255, 255, 255, 0.1) !important;
-      transform: scale(1.05) !important;
-      text-shadow: 
+      box-shadow:
+        0 20px 45px rgba(0, 0, 0, 0.6),
+        0 0 28px rgba(0, 255, 255, 0.45),
+        0 0 55px rgba(255, 255, 255, 0.65) !important;
+      border-color: rgba(255, 255, 255, 0.85) !important;
+      transform: translateY(-2px) scale(1.05) !important;
+      background: rgba(0, 0, 0, 0.92) !important;
+      text-shadow:
         0 0 10px currentColor,
         0 0 20px currentColor,
-        0 0 30px currentColor !important;
-      background: rgba(0, 0, 0, 0.95) !important;
+        0 0 35px rgba(255, 255, 255, 0.55) !important;
     }
 
-    /* Wallet Connect Button (Fixed Position - Top Right) */
-    #walletConnectFixed {
-      position: fixed;
-      top: 40px;
-      right: 20px;
-      z-index: 99999;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      align-items: flex-end;
-      pointer-events: auto;
-    }
-    
-    #walletConnectFixed * {
-      pointer-events: auto;
-    }
-
-    #walletConnectFixed .wallet-btn {
-      background: rgba(0, 0, 0, 0.9);
-      border: 2px solid #00ffff;
-      color: #00ffff;
-      padding: 10px 20px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-family: 'Courier New', monospace;
-      font-size: 0.9em;
-      transition: all 0.3s;
-      backdrop-filter: blur(5px);
-      white-space: nowrap;
-    }
-
-    #walletConnectFixed .wallet-btn:hover {
-      background: rgba(0, 255, 255, 0.2);
-      box-shadow: 0 0 10px #00ffff;
-    }
-
-    #walletConnectFixed .wallet-info {
-      background: rgba(0, 0, 0, 0.9);
-      border: 1px solid #00ffff;
-      color: #00ffff;
-      padding: 8px 15px;
-      border-radius: 8px;
-      font-size: 0.85em;
-      backdrop-filter: blur(5px);
-      max-width: 250px;
-      word-break: break-all;
-    }
-
-    /* Neon Toggle Button (Bottom Right) */
-    #neonToggle {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      z-index: 99999;
-      background: rgba(0, 0, 0, 0.9);
-      border: 2px solid #00ffff;
-      color: #00ffff;
-      padding: 10px 20px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-family: 'Courier New', monospace;
-      font-size: 0.9em;
-      transition: all 0.3s;
-      backdrop-filter: blur(5px);
-    }
-
-    #neonToggle:hover {
-      background: rgba(0, 255, 255, 0.2);
-      box-shadow: 0 0 10px #00ffff;
+    #modeNavigation a:active {
+      transform: translateY(0) scale(0.97) !important;
+      box-shadow:
+        0 10px 25px rgba(0, 0, 0, 0.6),
+        0 0 30px rgba(255, 255, 255, 0.45) !important;
+      border-color: rgba(255, 255, 255, 0.75) !important;
     }
 
     /* Neon Off Styles */
@@ -411,36 +516,27 @@
       display: none !important;
     }
 
-    .wallet-connect {
-      margin-bottom: 30px;
-    }
-
-    .wallet-btn {
-      background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(0, 255, 255, 0.2));
-      border: none;
-      color: #00ffff;
-      padding: 15px 30px;
-      font-size: 1.1em;
-      cursor: pointer;
-      border-radius: 8px;
-      transition: all 0.3s;
-      font-family: 'Courier New', monospace;
-      margin: 5px;
-    }
-
-    .wallet-btn:hover {
-      background: linear-gradient(135deg, rgba(0, 255, 255, 0.4), rgba(0, 255, 255, 0.4));
-      box-shadow: 0 0 10px #00ffff;
-      transform: scale(1.05);
-    }
-
     .wallet-info {
       margin-top: 15px;
-      padding: 15px;
-      background: rgba(0, 255, 255, 0.1);
-      border: 1px solid #00ffff;
-      border-radius: 8px;
+      padding: 18px;
+      background: rgba(6, 12, 32, 0.82);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
       font-size: 0.9em;
+      text-align: center;
+      letter-spacing: 0.05em;
+      color: rgba(246, 255, 254, 0.88);
+      box-shadow: 0 18px 30px rgba(0, 0, 0, 0.45);
+    }
+
+    /* Hide inline wallet info block - fixed panel already shows this data */
+    #walletInfo {
+      display: none !important;
+    }
+
+    /* Hide timestamp row inside fixed wallet card */
+    #walletInfoFixed div:nth-child(3) {
+      display: none !important;
     }
 
     .balance-check {
@@ -470,32 +566,40 @@
     .deposit-section {
       margin: 20px 0;
       padding: 30px;
-      background: rgba(0, 255, 255, 0.05);
-      border: 1px solid rgba(0, 255, 255, 0.3);
-      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--panel-border);
+      border-radius: 24px;
+      box-shadow: 0 25px 45px rgba(0, 0, 0, 0.45);
+      text-align: left;
     }
 
     .deposit-section h3 {
-      color: #00ffff;
+      color: var(--text-base);
       margin-bottom: 15px;
-      text-shadow: 0 0 5px #00ffff;
-      font-size: 1.8em;
+      text-shadow: 0 0 5px var(--cyber-cyan);
+      font-size: 1.5em;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
     }
 
     .info-box {
       margin: 20px 0;
-      padding: 20px;
-      background: rgba(0, 255, 255, 0.1);
-      border: 1px solid #00ffff;
-      border-radius: 8px;
+      padding: 24px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--panel-border);
+      border-radius: 18px;
       font-size: 0.95em;
       line-height: 1.6;
+      color: var(--text-base);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
     }
 
     .info-box h4 {
-      color: #00ffff;
+      color: var(--text-base);
       margin-bottom: 10px;
-      font-size: 1.2em;
+      font-size: 1.1em;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
     }
 
     .info-box ul {
@@ -514,20 +618,173 @@
       content: '→';
       position: absolute;
       left: 0;
+      color: var(--cyber-cyan);
+    }
+
+    .burn-stats-card {
+      margin-top: 25px;
+      padding: 20px 24px;
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background:
+        radial-gradient(circle at 20% 30%, rgba(255, 85, 0, 0.15), transparent 55%),
+        radial-gradient(circle at 80% 20%, rgba(0, 255, 255, 0.12), transparent 60%),
+        rgba(5, 10, 25, 0.9);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      box-shadow: 0 25px 45px rgba(0, 0, 0, 0.4);
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+    }
+
+    .burn-stats-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      pointer-events: none;
+    }
+
+    .burn-stats-card.loading {
+      opacity: 0.7;
+    }
+
+    .burn-icon {
+      font-size: 2rem;
+      filter: drop-shadow(0 0 10px rgba(255, 140, 0, 0.8));
+      text-align: center;
+    }
+
+    .burn-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .burn-label {
+      font-size: 0.85rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.75);
+      text-align: center;
+      width: 100%;
+    }
+
+    .burn-value {
+      font-size: clamp(1.8rem, 3vw, 2.4rem);
+      font-weight: 600;
+      color: #ffffff;
+      text-shadow: 0 0 25px rgba(255, 255, 255, 0.5);
+      font-family: 'Space Grotesk', 'Courier New', monospace;
+      text-align: center;
+      width: 100%;
+    }
+
+    .burn-subtext {
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.8);
+      text-align: center;
+      width: 100%;
+    }
+
+    .burn-subtext strong {
+      color: #ffb347;
+    }
+
+    .dynamic-requirement-card {
+      margin: 25px auto 15px;
+      padding: 24px 28px;
+      border-radius: 24px;
+      border: 1px solid rgba(0, 255, 255, 0.2);
+      background:
+        radial-gradient(circle at 30% 0%, rgba(0, 255, 255, 0.07), transparent 55%),
+        rgba(4, 10, 26, 0.92);
+      text-align: center;
+      box-shadow: 0 25px 45px rgba(0, 0, 0, 0.35);
+      max-width: 720px;
+    }
+
+    .dynamic-requirement-card__title {
+      font-size: 0.85rem;
+      letter-spacing: 0.3em;
+      color: rgba(255, 255, 255, 0.7);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .dynamic-requirement-card__value {
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      font-weight: 700;
       color: #00ffff;
+      text-shadow: 0 0 25px rgba(0, 255, 255, 0.4);
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      align-items: baseline;
+    }
+
+    .dynamic-requirement-card__value .unit {
+      font-size: 1rem;
+      letter-spacing: 0.2em;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .dynamic-requirement-card__usd {
+      margin-top: 8px;
+      font-size: 0.95rem;
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .dynamic-requirement-card__meta {
+      margin-top: 12px;
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.65);
+      letter-spacing: 0.08em;
+    }
+
+    .requirement-highlight {
+      color: #00ffff;
+      font-weight: 600;
+    }
+
+    .requirement-note {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 0.85rem;
+    }
+    
+    .burn-subtext > div {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+    }
+    
+    .burn-subtext a {
+      margin: 0 auto;
     }
   </style>
 </head>
-<body>
-  <div id="modeNavigation" style="position: fixed !important; top: 40px !important; left: 20px !important; display: flex !important; gap: 10px; z-index: 99999 !important; flex-wrap: wrap; pointer-events: auto !important; visibility: visible !important; opacity: 1 !important;">
-    <a href="/rps_vs_luna.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">🎮 VS Luna</a>
-    <a href="/rps_game.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">Play PvP! Find</a>
-    <a href="/rps_betting.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">💰 Betting Mode</a>
-    <a href="/rps_deposit.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 255, 255, 0.2) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important; box-shadow: 0 0 15px rgba(0, 255, 255, 0.5) !important;">💾 Deposit Luna</a>
-    <a href="/group_chat.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">💬 Group Chat</a>
-    <a href="/rps_leaderboard.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">🏆 Leaderboard</a>
-    <a href="/rps_stats.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">📊 Stats</a>
-    <a href="/rps_history.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">📜 Match History</a>
+<body class="cyber-page deposit-page">
+  <div id="modeNavigation">
+    <a href="/luna_guide.html">📖 Guide</a>
+    <a href="/rps_vs_luna.html">🎮 VS Luna</a>
+    <a href="/rps_game.html">Play PvP! Find</a>
+    <a href="/rps_betting.html">💰 Betting Mode</a>
+    <a href="/rps_deposit.html" class="highlighted current">💾 Deposit Luna</a>
+    <a href="/group_chat.html">💬 Group Chat</a>
+    <a href="/rps_leaderboard.html">🏆 Leaderboard</a>
+    <a href="/rps_stats.html">📊 Stats</a>
   </div>
 
   <!-- Fixed Wallet Connect (Top Right) -->
@@ -540,11 +797,17 @@
   <!-- Neon Toggle Button (Bottom Right) -->
   <button id="neonToggle" title="Toggle Neon Effects">💡 Neon: ON</button>
 
+  <!-- Floating Particles -->
+  <div class="particles" id="particles"></div>
+
+  <!-- Scroll Progress Bar -->
+  <div class="scroll-progress" id="scrollProgress"></div>
+
   <div class="game-container">
     <h1>💰 Deposit Luna</h1>
     <div class="subtitle">Reduce Betting Mode Fee by Holding Luna</div>
     
-    <div id="walletConnect" class="wallet-connect" style="display: none;">
+    <div id="walletConnect" class="wallet-connect hidden">
       <button id="connectWalletBtn" class="wallet-btn">🔗 Connect Phantom Wallet</button>
       <button id="disconnectWalletBtn" class="wallet-btn disconnect-btn hidden">🔌 Disconnect / Change Wallet</button>
       <div id="walletInfo" class="wallet-info hidden"></div>
@@ -569,20 +832,72 @@
     <div id="infoBox" class="info-box hidden">
       <h4>📋 How It Works</h4>
       <ul>
-        <li>Hold at least 150,000 Luna tokens to deposit</li>
-        <li>Deposit Luna for 3 days → Betting Mode fee reduces to 2% (from 3%)</li>
-        <li>Deposit Luna for 6 days → Betting Mode fee reduces to 1% (from 3%)</li>
+        <li>
+          Hold at least
+          <span class="requirement-highlight" id="requirementListValue">150,000</span>
+          Luna
+          <span class="requirement-note" id="requirementListUsd">≈ $10.00</span>
+          (auto-adjusted by dynamic pricing)
+        </li>
+        <li>Deposit Luna for 5 days → Betting Mode fee reduces to 2% (from 3%)</li>
+        <li>Deposit Luna for 10 days → Betting Mode fee reduces to 1% (from 3%)</li>
+        <li>Deposit Luna for 15 days → Betting Mode fee reduces to 0.5% (from 3%)</li>
         <li>You can withdraw your Luna anytime</li>
-        <li>Withdrawal fee: 0% (we pay SOL transaction fees)</li>
-        <li>Deposit fee: 3% (deducted from deposit amount)</li>
+        <li>Deposit fee: 3% (deducted from deposit amount and burned)</li>
       </ul>
+      <div style="margin-top: 18px; padding: 15px; border: 1px solid rgba(0, 255, 255, 0.4); border-radius: 10px; background: rgba(0, 0, 0, 0.35); font-size: 0.95em;">
+        <div style="color: #00ffff; margin-bottom: 10px; font-weight: bold;">💡 Why deposit?</div>
+        <div style="color: #d2fdfd; margin-bottom: 10px;">Lower fees mean more Luna kept from every bet. Example per 1,000 Luna wager:</div>
+        <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; text-align: center; font-family: 'Courier New', monospace;">
+          <div style="padding: 8px; background: rgba(255, 255, 255, 0.05); border-radius: 6px;">
+            <div style="color: #ff7676; font-size: 0.85em;">No deposit</div>
+            <div style="font-size: 1.1em;">3%</div>
+            <div style="color: #ff9999;">Lose 30 Luna</div>
+          </div>
+          <div style="padding: 8px; background: rgba(255, 255, 255, 0.05); border-radius: 6px;">
+            <div style="color: #ffe680; font-size: 0.85em;">5 days</div>
+            <div style="font-size: 1.1em;">2%</div>
+            <div style="color: #9effa8;">Save 10 Luna</div>
+          </div>
+          <div style="padding: 8px; background: rgba(255, 255, 255, 0.05); border-radius: 6px;">
+            <div style="color: #8ef0ff; font-size: 0.85em;">10 days</div>
+            <div style="font-size: 1.1em;">1%</div>
+            <div style="color: #9effa8;">Save 20 Luna</div>
+          </div>
+          <div style="padding: 8px; background: rgba(255, 255, 255, 0.05); border-radius: 6px;">
+            <div style="color: #7bffcb; font-size: 0.85em;">15 days</div>
+            <div style="font-size: 1.1em;">0.5%</div>
+            <div style="color: #9effa8;">Save 25 Luna</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="burnStatsCard" class="burn-stats-card">
+      <div class="burn-icon">🔥</div>
+      <div class="burn-content">
+        <div class="burn-label">TOTAL LUNA BURNED</div>
+        <div class="burn-value" id="burnTotalAmount">Loading...</div>
+        <div class="burn-subtext" id="burnSubtext">Collecting burn statistics...</div>
+      </div>
+    </div>
+
+    <div id="dynamicRequirementCard" class="dynamic-requirement-card">
+      <div class="dynamic-requirement-card__title">Dynamic Minimum Requirement</div>
+      <div class="dynamic-requirement-card__value">
+        <span id="dynamicMinAmountDisplay">150,000</span>
+        <span class="unit">Luna</span>
+      </div>
+      <div class="dynamic-requirement-card__usd" id="dynamicMinUsdDisplay">≈ $10.00 USD • Price $0.00010</div>
+      <div class="dynamic-requirement-card__meta" id="dynamicMinMetaDisplay">Updated just now • Source: Fallback</div>
     </div>
 
     <!-- Deposit/Withdraw Section -->
     <div id="depositSection" class="deposit-section hidden">
       <h3>💰 Deposit Luna (Reduce Betting Fee)</h3>
-      <div style="font-size: 0.9em; color: #00ffff; opacity: 0.8; margin-bottom: 15px;">
-        Hold 150,000+ Luna to deposit. Deposit for 3 days → 2% fee, 6 days → 1% fee (default: 3%)
+      <div style="font-size: 0.95em; color: #00ffff; margin-bottom: 15px;">
+        Current minimum: <span class="requirement-highlight" id="depositRequirementSummary">150,000 Luna (~$10.00)</span>.
+        Once you deposit, this threshold is locked (grandfathered) for your wallet until you withdraw.
       </div>
       
       <!-- Deposit Status -->
@@ -594,90 +909,64 @@
       <div id="depositForm" style="display: none;">
         <div style="margin-bottom: 15px;">
           <label style="color: #00ffff; display: block; margin-bottom: 5px;">Deposit Amount (Luna):</label>
-          <input type="number" id="depositAmount" min="1" placeholder="Enter amount" style="width: 100%; padding: 10px; background: rgba(0, 0, 0, 0.5); border: 1px solid #00ffff; border-radius: 8px; color: #00ffff; font-family: 'Courier New', monospace; font-size: 1em;">
+          <input type="number" id="depositAmount" min="1" placeholder="Locked at minimum" style="width: 100%; padding: 10px; background: rgba(0, 0, 0, 0.5); border: 1px solid #00ffff; border-radius: 8px; color: #00ffff; font-family: 'Courier New', monospace; font-size: 1em;" readonly>
           <div style="font-size: 0.85em; color: #00ffff; opacity: 0.7; margin-top: 5px;">
-            Fee: 3% (will be deducted from amount)
+            Amount is locked at the current minimum (<span id="depositLockedAmount">150,000</span> Luna <span id="depositLockedUsd">(~$10.00)</span>). Fee: <span id="depositFeeRate">3%</span> (burned immediately)
           </div>
         </div>
-        <button id="depositBtn" class="wallet-btn" style="width: 100%;">💾 Deposit Luna</button>
+        <button id="depositBtn" class="wallet-btn" style="width: 100%;" aria-label="Deposit Luna tokens">
+          <span class="btn-text">💾 Deposit Luna</span>
+          <span class="btn-loading hidden" aria-hidden="true">
+            <span class="loading-spinner"></span> Processing...
+          </span>
+        </button>
       </div>
       
       <!-- Withdraw Button -->
-      <button id="withdrawBtn" class="wallet-btn" style="width: 100%; margin-top: 10px; display: none; background: linear-gradient(135deg, rgba(255, 0, 0, 0.3), rgba(255, 100, 100, 0.3)); border: 2px solid #ff0000; color: #ff0000;">
-        💸 Withdraw Luna
+      <button id="withdrawBtn" class="wallet-btn" style="width: 100%; margin-top: 10px; display: none; background: linear-gradient(135deg, rgba(255, 0, 0, 0.3), rgba(255, 100, 100, 0.3)); border: 2px solid #ff0000; color: #ff0000;" aria-label="Withdraw Luna tokens">
+        <span class="btn-text">💸 Withdraw Luna</span>
+        <span class="btn-loading hidden" aria-hidden="true">
+          <span class="loading-spinner"></span> Processing...
+        </span>
       </button>
+
+      <!-- Manual Withdrawal Finalization -->
+      <div id="manualWithdrawSection" class="info-box hidden" style="margin-top: 15px; background: rgba(255, 0, 0, 0.05); border-color: rgba(255, 0, 0, 0.4);">
+        <div style="color: #ffaaaa; font-size: 0.9em; margin-bottom: 15px;">
+          📝 Already withdrew in Phantom but still see an active deposit? <br>
+          Follow these steps to finalize:
+          <ol style="margin-top: 10px; padding-left: 18px; line-height: 1.4em; font-size: 0.9em;">
+            <li>Open <strong>Phantom → Activity</strong> and tap your latest withdrawal.</li>
+            <li>Choose <strong>View on Explorer</strong> and copy the <em>Transaction Signature</em>.</li>
+            <li>Paste it below and press <strong>Finalize with Signature</strong>.</li>
+          </ol>
+          💡 Tip: If Phantom shows “insufficient funds” but you already received the tokens, just use the signature from Explorer to close this deposit.
+        </div>
+        <input
+          type="text"
+          id="manualWithdrawSignatureInput"
+          placeholder="Paste withdrawal transaction signature"
+          style="width: 100%; padding: 10px; background: rgba(0, 0, 0, 0.6); border: 1px solid #ff5555; border-radius: 6px; color: #ffcccc; font-family: 'Courier New', monospace; font-size: 0.9em;"
+        >
+        <button id="manualWithdrawFinalizeBtn" class="wallet-btn" style="width: 100%; margin-top: 10px; background: linear-gradient(135deg, rgba(255, 0, 0, 0.4), rgba(255, 100, 100, 0.4)); border: 2px solid #ff7777; color: #ffdddd;" aria-label="Finalize withdrawal with transaction signature">
+          <span class="btn-text">✅ Finalize with Signature</span>
+          <span class="btn-loading hidden" aria-hidden="true">
+            <span class="loading-spinner"></span> Processing...
+          </span>
+        </button>
+      </div>
     </div>
   </div>
 
   <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
-  <script>
-    // Load SPL Token library with multiple fallbacks
-    // Note: Only use IIFE (Immediately Invoked Function Expression) versions, not ES modules
-    (function() {
-      const cdnUrls = [
-        'https://unpkg.com/@solana/spl-token@0.3.9/lib/index.iife.js',
-        'https://cdn.jsdelivr.net/npm/@solana/spl-token@0.3.9/lib/index.iife.js',
-        'https://unpkg.com/@solana/spl-token@0.3.8/lib/index.iife.js',
-        'https://cdn.jsdelivr.net/npm/@solana/spl-token@0.3.8/lib/index.iife.js',
-        'https://unpkg.com/@solana/spl-token@0.3.7/lib/index.iife.js'
-      ];
-      
-      let currentIndex = 0;
-      let loaded = false;
-      
-      function tryLoadLibrary() {
-        if (currentIndex >= cdnUrls.length) {
-          if (!loaded) {
-            console.error('[Deposit] Failed to load SPL Token library from all CDNs');
-            console.warn('[Deposit] You can still send Luna manually through Phantom wallet');
-            console.warn('[Deposit] The system will use manual transaction creation (fallback mode)');
-          }
-          return;
-        }
-        
-        const script = document.createElement('script');
-        script.src = cdnUrls[currentIndex];
-        script.crossOrigin = 'anonymous';
-        script.onload = function() {
-          if (loaded) return; // Prevent duplicate loading
-          
-          // Wait a bit for the library to initialize
-          setTimeout(() => {
-            const possibleNames = ['splToken', 'spl', 'SPLToken', 'SPL', 'spl_token', 'Token'];
-            let found = false;
-            for (const name of possibleNames) {
-              if (typeof window[name] !== 'undefined') {
-                console.log(`[Deposit] ✅ SPL Token library loaded from: ${cdnUrls[currentIndex]}`);
-                console.log(`[Deposit] Found SPL Token library as window.${name}`);
-                loaded = true;
-                found = true;
-                break;
-              }
-            }
-            
-            if (!found) {
-              // Library loaded but didn't expose expected global, try next
-              console.warn(`[Deposit] ⚠️ Library loaded but didn't expose expected global variable, trying next...`);
-              currentIndex++;
-              tryLoadLibrary();
-            }
-          }, 1000);
-        };
-        script.onerror = function() {
-          console.warn(`[Deposit] ⚠️ Failed to load from ${cdnUrls[currentIndex]}, trying next...`);
-          currentIndex++;
-          setTimeout(tryLoadLibrary, 500); // Add delay between attempts
-        };
-        document.head.appendChild(script);
-      }
-      
-      tryLoadLibrary();
-    })();
-  </script>
+  <script src="/js/runtime-utils.js"></script>
+  <script src="/js/utils.js"></script>
+  <script src="/js/phantom-helper.js"></script>
+  <script src="/js/toast.js"></script>
   <script>
     // Wait for libraries to load and verify
     window.addEventListener('load', () => {
-      setTimeout(() => {
+      safeSetTimeout(() => {
         console.log('[Deposit] Libraries check:', {
           solanaWeb3: typeof window.solanaWeb3 !== 'undefined',
           solanaWeb3Global: typeof solanaWeb3 !== 'undefined',
@@ -701,12 +990,126 @@
     const API_BASE = window.location.origin;
     let walletConnected = false;
     let walletPublicKey = null;
+    let isConnecting = false; // Prevent multiple connection attempts
     
-    // Note: handleConnectWalletClick is already declared in <head> section
     let playerBalance = 0;
     let balanceUpdateInterval = null;
-    let lunaMintAddress = null;
-    let escrowWalletAddress = null;
+    let activeTimeouts = new Set();
+    let isPageVisible = !document.hidden;
+    
+    // Cleanup all intervals and timeouts
+    function cleanupAll() {
+      if (balanceUpdateInterval) {
+        clearInterval(balanceUpdateInterval);
+        balanceUpdateInterval = null;
+      }
+      activeTimeouts.forEach(timeout => clearTimeout(timeout));
+      activeTimeouts.clear();
+    }
+    
+    // Safe setTimeout wrapper
+    function safeSetTimeout(callback, delay) {
+      const timeoutId = setTimeout(() => {
+        activeTimeouts.delete(timeoutId);
+        callback();
+      }, delay);
+      activeTimeouts.add(timeoutId);
+      return timeoutId;
+    }
+    
+    // Page visibility API
+    document.addEventListener('visibilitychange', () => {
+      isPageVisible = !document.hidden;
+      if (isPageVisible) {
+        if (walletConnected && walletPublicKey) {
+          startBalanceUpdate();
+        }
+      } else {
+        stopBalanceUpdate();
+      }
+    });
+    
+    const depositConfig = {
+      escrowWallet: null,
+      mint: null,
+      mintDecimals: 9,
+      minDeposit: 150000,
+      minDepositUsd: null,
+      minDepositSource: 'fallback',
+      minDepositUpdatedAt: null,
+      priceUsd: null,
+      burnWallet: null,
+    };
+    const dynamicRequirementState = {
+      amount: depositConfig.minDeposit,
+      usd: null,
+      source: 'fallback',
+      updatedAt: null,
+      priceUsd: null,
+      marketCap: null,
+      volume24h: null,
+      liquidity: null,
+    };
+    const DEPOSIT_TIERS = [
+      { days: 5, feeLabel: '2%', description: '2% fee' },
+      { days: 10, feeLabel: '1%', description: '1% fee' },
+      { days: 15, feeLabel: '0.5%', description: '0.5% fee' },
+    ];
+    let competitionEndTime = null;
+    const MS_PER_DAY = 24 * 60 * 60 * 1000;
+    const VERIFY_MAX_ATTEMPTS = 6;
+    const VERIFY_RETRY_DELAY_MS = 4000;
+    const WITHDRAW_VERIFY_MAX_ATTEMPTS = 6;
+    const WITHDRAW_VERIFY_DELAY_MS = 4000;
+    const PENDING_WITHDRAW_KEY = 'pendingWithdrawSignature';
+    const BURN_STATS_REFRESH_INTERVAL = 60000;
+    const BURN_STATS_MIN_INTERVAL = 15000;
+    let burnStatsLastFetch = 0;
+    let currentBurnRate = 0.03;
+    let depositListenerAttached = false;
+    let withdrawListenerAttached = false;
+    let pendingWithdrawalProcessing = false;
+
+    function decodeTransactionFromBase64(serialized) {
+      if (!serialized) {
+        throw new Error('Missing transaction payload from server.');
+      }
+
+      const lib = window.solanaWeb3 || window.solana?.solanaWeb3 || window.solana?.web3;
+      if (!lib || !lib.Transaction) {
+        throw new Error('Solana Web3.js library not loaded. Please refresh the page.');
+      }
+
+      let binaryString;
+      if (typeof atob === 'function') {
+        binaryString = atob(serialized);
+      } else if (window.Buffer) {
+        binaryString = window.Buffer.from(serialized, 'base64').toString('binary');
+      } else {
+        throw new Error('Base64 decoding is not supported in this browser.');
+      }
+
+      const bytes = Uint8Array.from(binaryString, (char) => char.charCodeAt(0));
+      return lib.Transaction.from(bytes);
+    }
+
+    function enforceLockedDepositAmount() {
+      const depositInput = document.getElementById('depositAmount');
+      if (!depositInput) return;
+      const min = depositConfig.minDeposit || 150000;
+      depositInput.value = min;
+      depositInput.min = min;
+      depositInput.readOnly = true;
+      depositInput.title = `Deposit amount locked at ${formatNumberDetailed(min)} Luna`;
+      const lockedAmountSpan = document.getElementById('depositLockedAmount');
+      if (lockedAmountSpan) {
+        lockedAmountSpan.textContent = formatNumberDetailed(min);
+      }
+      const lockedUsdSpan = document.getElementById('depositLockedUsd');
+      if (lockedUsdSpan) {
+        lockedUsdSpan.textContent = dynamicRequirementState.usd ? `(~${formatUsdValue(dynamicRequirementState.usd)})` : '';
+      }
+    }
 
     // Security: HTML Sanitization function
     function escapeHtml(text) {
@@ -723,7 +1126,586 @@
     }
 
     function formatNumber(num) {
-      return num.toLocaleString('en-US');
+      const value = Number(num) || 0;
+      if (value >= 1000000) {
+        return (value / 1000000).toFixed(2) + 'M';
+      } else if (value >= 1000) {
+        return (value / 1000).toFixed(2) + 'K';
+      }
+      return value.toLocaleString();
+    }
+
+    function formatNumberDetailed(num) {
+      const value = Number(num) || 0;
+      return value.toLocaleString('en-US');
+    }
+
+    function formatUsdValue(value, { fallback = '—', compact = false } = {}) {
+      const amount = Number(value);
+      if (!Number.isFinite(amount)) return fallback;
+      if (compact) {
+        const abs = Math.abs(amount);
+        if (abs >= 1_000_000_000) return `$${(amount / 1_000_000_000).toFixed(2)}B`;
+        if (abs >= 1_000_000) return `$${(amount / 1_000_000).toFixed(2)}M`;
+        if (abs >= 1_000) return `$${(amount / 1_000).toFixed(2)}K`;
+      }
+      return '$' + amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function formatPriceUsd(value) {
+      const price = Number(value);
+      if (!Number.isFinite(price)) return null;
+      if (price >= 0.01) return `$${price.toFixed(4)}`;
+      if (price >= 0.0001) return `$${price.toFixed(6)}`;
+      return `$${price.toExponential(2)}`;
+    }
+
+    function applyDynamicRequirement(info = {}) {
+      const payload = info.dynamicMin ? info.dynamicMin : info;
+      const amountCandidate = Number(
+        payload.amount ?? payload.minDeposit ?? depositConfig.minDeposit ?? 150000
+      );
+      const normalizedAmount = Number.isFinite(amountCandidate) ? Math.max(Math.round(amountCandidate), 1) : depositConfig.minDeposit;
+      depositConfig.minDeposit = normalizedAmount;
+      dynamicRequirementState.amount = normalizedAmount;
+
+      const usdCandidate =
+        typeof payload.usd === 'number'
+          ? payload.usd
+          : typeof payload.minDepositUsd === 'number'
+            ? payload.minDepositUsd
+            : null;
+      dynamicRequirementState.usd = Number.isFinite(usdCandidate) ? usdCandidate : null;
+      const source = payload.source || payload.minDepositSource || 'fallback';
+      dynamicRequirementState.source = source;
+      const updatedAtCandidate = Number(payload.updatedAt || payload.minDepositUpdatedAt);
+      dynamicRequirementState.updatedAt = Number.isFinite(updatedAtCandidate) ? updatedAtCandidate : Date.now();
+      const priceCandidate = Number(payload.priceUsd);
+      dynamicRequirementState.priceUsd = Number.isFinite(priceCandidate) ? priceCandidate : null;
+      const marketCapCandidate = Number(payload.marketCap);
+      dynamicRequirementState.marketCap = Number.isFinite(marketCapCandidate) ? marketCapCandidate : null;
+      const volumeCandidate = Number(payload.volume24h);
+      dynamicRequirementState.volume24h = Number.isFinite(volumeCandidate) ? volumeCandidate : null;
+      let liquidityCandidate = Number(payload.liquidity);
+      if (!Number.isFinite(liquidityCandidate)) {
+        liquidityCandidate = Number(payload.liquidityUsd);
+      }
+      dynamicRequirementState.liquidity = Number.isFinite(liquidityCandidate) ? liquidityCandidate : null;
+
+      depositConfig.minDepositUsd = dynamicRequirementState.usd;
+      depositConfig.minDepositSource = dynamicRequirementState.source;
+      depositConfig.minDepositUpdatedAt = dynamicRequirementState.updatedAt;
+      depositConfig.priceUsd = dynamicRequirementState.priceUsd;
+
+      enforceLockedDepositAmount();
+      updateDynamicRequirementCard();
+    }
+
+    function updateDynamicRequirementCard() {
+      const amount = dynamicRequirementState.amount || depositConfig.minDeposit || 150000;
+      const amountDisplay = document.getElementById('dynamicMinAmountDisplay');
+      if (amountDisplay) {
+        amountDisplay.textContent = formatNumberDetailed(amount);
+      }
+      const usdDisplay = document.getElementById('dynamicMinUsdDisplay');
+      if (usdDisplay) {
+        const usdText = dynamicRequirementState.usd
+          ? `≈ ${formatUsdValue(dynamicRequirementState.usd)}`
+          : 'USD value unavailable';
+        const priceText = dynamicRequirementState.priceUsd
+          ? ` • Price ${formatPriceUsd(dynamicRequirementState.priceUsd)}`
+          : '';
+        usdDisplay.textContent = `${usdText}${priceText}`;
+      }
+      const metaDisplay = document.getElementById('dynamicMinMetaDisplay');
+      if (metaDisplay) {
+        const updatedAtText = dynamicRequirementState.updatedAt
+          ? new Date(dynamicRequirementState.updatedAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })
+          : '--';
+        const sourceLabel = dynamicRequirementState.source === 'dexscreener' ? 'DexScreener' : 'Fallback';
+        const marketCapPart = dynamicRequirementState.marketCap
+          ? ` • MCap ${formatUsdValue(dynamicRequirementState.marketCap, { compact: true })}`
+          : '';
+        const volumePart = dynamicRequirementState.volume24h
+          ? ` • 24h Vol ${formatUsdValue(dynamicRequirementState.volume24h, { compact: true })}`
+          : '';
+        metaDisplay.textContent = `Updated ${updatedAtText} • Source: ${sourceLabel}${marketCapPart}${volumePart}`;
+      }
+
+      const requirementSummary = document.getElementById('depositRequirementSummary');
+      if (requirementSummary) {
+        const usdSummary = dynamicRequirementState.usd ? ` (~${formatUsdValue(dynamicRequirementState.usd)})` : '';
+        requirementSummary.textContent = `${formatNumberDetailed(amount)} Luna${usdSummary}`;
+      }
+
+      const requirementListValue = document.getElementById('requirementListValue');
+      if (requirementListValue) {
+        requirementListValue.textContent = formatNumberDetailed(amount);
+      }
+      const requirementListUsd = document.getElementById('requirementListUsd');
+      if (requirementListUsd) {
+        requirementListUsd.textContent = dynamicRequirementState.usd
+          ? `≈ ${formatUsdValue(dynamicRequirementState.usd)}`
+          : '≈ $--';
+      }
+
+      const lockedAmountSpan = document.getElementById('depositLockedAmount');
+      if (lockedAmountSpan) {
+        lockedAmountSpan.textContent = formatNumberDetailed(depositConfig.minDeposit);
+      }
+      const lockedUsdSpan = document.getElementById('depositLockedUsd');
+      if (lockedUsdSpan) {
+        lockedUsdSpan.textContent = dynamicRequirementState.usd ? `(~${formatUsdValue(dynamicRequirementState.usd)})` : '';
+      }
+    }
+
+    async function prefetchDynamicRequirement() {
+      try {
+        const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/deposit/status`);
+        const data = await response.json();
+        if (data?.ok) {
+          const dynamicInfo = data.dynamicMin || {
+            amount: data.minDeposit,
+            usd: data.minDepositUsd,
+            source: data.minDepositSource,
+            updatedAt: data.minDepositUpdatedAt,
+            priceUsd: data.priceUsd,
+            marketCap: data.marketCap,
+            volume24h: data.volume24h,
+            liquidity: data.liquidityUsd,
+          };
+          applyDynamicRequirement(dynamicInfo);
+        }
+      } catch (error) {
+        console.warn('[Deposit] Prefetch dynamic requirement failed:', error);
+      }
+    }
+
+    function formatBurnRate(rate = currentBurnRate) {
+      if (typeof rate !== 'number' || !Number.isFinite(rate)) {
+        return '3%';
+      }
+      const percentage = rate * 100;
+      return percentage % 1 === 0 ? `${percentage.toFixed(0)}%` : `${percentage.toFixed(2)}%`;
+    }
+
+    function updateDepositFeeRateDisplay() {
+      const noteEl = document.getElementById('depositFeeRate');
+      if (noteEl) {
+        noteEl.textContent = formatBurnRate();
+      }
+    }
+
+    async function fetchCompetitionEndTime(force = false) {
+      if (competitionEndTime && !force) return;
+      try {
+        const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/rps/competition/time`);
+        const data = await response.json();
+        if (response.ok && data?.ok) {
+          competitionEndTime = Number(data.endTime || Date.parse(data.endDate));
+        }
+      } catch (error) {
+        console.warn('[Deposit] Failed to fetch competition timer:', error);
+      }
+    }
+
+    async function fetchBurnStats(force = false) {
+      const burnCard = document.getElementById('burnStatsCard');
+      const burnValue = document.getElementById('burnTotalAmount');
+      const burnSubtext = document.getElementById('burnSubtext');
+      if (!burnCard || !burnValue || !burnSubtext) return;
+
+      const now = Date.now();
+      if (!force && now - burnStatsLastFetch < BURN_STATS_MIN_INTERVAL) {
+        return;
+      }
+      burnStatsLastFetch = now;
+
+      burnCard.classList.add('loading');
+      try {
+        const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/deposit/burn-stats`);
+        const data = await response.json();
+        if (!response.ok || !data.ok) {
+          throw new Error(data.error || 'Failed to load burn stats');
+        }
+
+        const total = Number(data.totalBurned || 0);
+        const burnRatePercent = Number(data.burnRate || 0) * 100;
+        const burnWallet = data.burnWallet || depositConfig.burnWallet || null;
+        if (typeof data.burnRate === 'number') {
+          currentBurnRate = data.burnRate;
+          updateDepositFeeRateDisplay();
+        }
+        if (burnWallet && !depositConfig.burnWallet) {
+          depositConfig.burnWallet = burnWallet;
+        }
+        burnValue.textContent = `${total.toLocaleString('en-US', { maximumFractionDigits: 2 })} Luna`;
+        const rateText =
+          burnRatePercent % 1 === 0
+            ? burnRatePercent.toFixed(0)
+            : burnRatePercent.toFixed(2);
+        
+        let burnWalletHtml = '';
+        if (burnWallet) {
+          const shortBurnWallet = burnWallet.length > 24 
+            ? `${burnWallet.substring(0, 12)}...${burnWallet.substring(burnWallet.length - 8)}`
+            : burnWallet;
+          burnWalletHtml = `
+            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.1); text-align: center; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+              <div style="font-size: 0.85em; color: #7bffcb; margin-bottom: 8px; text-align: center;">
+                🔥 Burn Wallet: <span style="font-family: 'Courier New', monospace; color: #00ffff;">${escapeHtml(shortBurnWallet)}</span>
+              </div>
+              <a href="https://solscan.io/account/${burnWallet}" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 6px 12px; background: linear-gradient(135deg, rgba(255, 165, 0, 0.3), rgba(255, 165, 0, 0.3)); border: 1px solid #ffa500; border-radius: 6px; color: #ffa500; cursor: pointer; font-family: 'Courier New', monospace; font-size: 0.8em; font-weight: bold; text-decoration: none; margin: 0 auto;">
+                🔍 Verify on Solscan
+              </a>
+              <div style="font-size: 0.75em; color: #7bffcb; margin-top: 6px; opacity: 0.8; text-align: center;">
+                ✅ All burned tokens are permanently sent to this address (no private key = true burn)
+              </div>
+            </div>
+          `;
+        }
+        
+        burnSubtext.innerHTML = `
+          <strong>${rateText}%</strong> of every deposit is burned forever.
+          ${burnWalletHtml}
+        `;
+      } catch (error) {
+        console.warn('[Deposit] Burn stats error:', error);
+        burnSubtext.textContent = 'Unable to load burn stats. Retrying shortly...';
+      } finally {
+        burnCard.classList.remove('loading');
+      }
+    }
+
+    function formatCountdownDuration(ms) {
+      if (!Number.isFinite(ms) || ms <= 0) {
+        return '0d';
+      }
+      const totalSeconds = Math.floor(ms / 1000);
+      const days = Math.floor(totalSeconds / 86400);
+      const hours = Math.floor((totalSeconds % 86400) / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const parts = [];
+      if (days > 0) parts.push(`${days}d`);
+      if (hours > 0) parts.push(`${hours}h`);
+      if (days === 0 && minutes > 0) parts.push(`${minutes}m`);
+      if (!parts.length) parts.push('<1m');
+      return parts.join(' ');
+    }
+
+    function getNextTierCountdownInfo(daysElapsed) {
+      const nextTier = DEPOSIT_TIERS.find((tier) => daysElapsed < tier.days);
+      if (!nextTier) {
+        return null;
+      }
+      const msRemaining = Math.max(0, (nextTier.days - daysElapsed) * MS_PER_DAY);
+      const eta = new Date(Date.now() + msRemaining);
+      return {
+        nextTier,
+        countdownText: formatCountdownDuration(msRemaining),
+        etaText: eta.toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }),
+        etaRaw: eta,
+      };
+    }
+
+    function renderTierCountdown(daysElapsed) {
+      const info = getNextTierCountdownInfo(daysElapsed);
+      if (!info) {
+        return '<div style="margin-top: 8px; color: #00ff00;">🎉 Lowest fee unlocked. Enjoy 0.5% fee!</div>';
+      }
+      const etaDisplay = competitionEndTime
+        ? new Date(competitionEndTime).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })
+        : info.etaRaw
+          ? info.etaRaw.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })
+          : info.etaText;
+      return `
+        <div style="margin-top: 8px; color: #00ffff;">
+          ⏱ Next discount (<strong>${escapeHtml(info.nextTier.feeLabel)}</strong>) in <strong>${escapeHtml(info.countdownText)}</strong><br>
+          <span style="font-size: 0.8em; opacity: 0.8;">Est. ${escapeHtml(etaDisplay)}</span>
+        </div>
+      `;
+    }
+
+    async function handleAutoConnectedWallet(publicKey, hasSignature = false) {
+      try {
+        walletPublicKey = publicKey;
+        walletConnected = true;
+
+        if (window.phantomHelper && typeof window.phantomHelper.saveState === 'function') {
+          window.phantomHelper.saveState({ publicKey, hasSignature });
+          if (typeof window.phantomHelper.clearForceDisconnect === 'function') {
+            window.phantomHelper.clearForceDisconnect();
+          }
+        }
+
+        let connectTimestamp = parseInt(localStorage.getItem('phantomConnectTime') || '0', 10);
+        if (!connectTimestamp) {
+          connectTimestamp = Date.now();
+          localStorage.setItem('phantomConnectTime', connectTimestamp.toString());
+          localStorage.setItem('phantomConnectTimeFormatted', new Date(connectTimestamp).toLocaleString('th-TH'));
+      }
+
+        localStorage.setItem('phantomWalletAddress', publicKey);
+        localStorage.setItem('phantomLastConnect', connectTimestamp.toString());
+
+        const connectTimeDisplay = localStorage.getItem('phantomConnectTimeFormatted') || new Date(connectTimestamp).toLocaleString('th-TH');
+        const sanitizedWallet = sanitizeWalletAddress(publicKey);
+        const shortWallet = sanitizedWallet.length > 16 
+          ? `${sanitizedWallet.substring(0, 8)}...${sanitizedWallet.substring(sanitizedWallet.length - 8)}`
+          : sanitizedWallet;
+
+        const walletConnectContainer = document.getElementById('walletConnect');
+        if (walletConnectContainer) {
+          walletConnectContainer.classList.remove('hidden');
+        }
+
+        const connectBtn = document.getElementById('connectWalletBtn');
+        const disconnectBtn = document.getElementById('disconnectWalletBtn');
+        if (connectBtn) {
+          connectBtn.classList.add('hidden');
+          connectBtn.disabled = true;
+        }
+        if (disconnectBtn) {
+          disconnectBtn.classList.remove('hidden');
+        }
+
+        const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
+        const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
+        if (connectBtnFixed) {
+          connectBtnFixed.classList.add('hidden');
+        }
+        if (disconnectBtnFixed) {
+          disconnectBtnFixed.classList.remove('hidden');
+          disconnectBtnFixed.style.display = '';
+          disconnectBtnFixed.style.visibility = '';
+          disconnectBtnFixed.style.opacity = '';
+        }
+
+        const walletInfo = document.getElementById('walletInfo');
+        if (walletInfo) {
+          walletInfo.classList.remove('hidden');
+          walletInfo.innerHTML = `
+            <strong>Connected:</strong> ${escapeHtml(shortWallet)}<br>
+            <strong>Balance:</strong> <span id="balanceDisplay">Checking...</span><br>
+            <strong>Connected at:</strong> <span style="font-size: 0.9em;">${escapeHtml(connectTimeDisplay)}</span>
+          `;
+        }
+
+        const walletInfoFixed = document.getElementById('walletInfoFixed');
+        if (walletInfoFixed) {
+          walletInfoFixed.innerHTML = `
+            <div><strong>Connected:</strong> ${escapeHtml(shortWallet)}</div>
+            <div><strong>Balance:</strong> <span id="balanceDisplayFixed">Checking...</span> Luna</div>
+            <div style="font-size: 0.75em; opacity: 0.8; margin-top: 5px;"><strong>Connected at:</strong> ${escapeHtml(connectTimeDisplay)}</div>
+          `;
+          walletInfoFixed.classList.remove('hidden');
+          walletInfoFixed.style.display = '';
+          walletInfoFixed.style.visibility = '';
+          walletInfoFixed.style.opacity = '';
+        }
+
+        const walletRequiredMessage = document.getElementById('walletRequiredMessage');
+        const infoBox = document.getElementById('infoBox');
+        if (walletRequiredMessage) walletRequiredMessage.classList.add('hidden');
+        if (infoBox) infoBox.classList.remove('hidden');
+
+        await checkLunaBalance();
+        startBalanceUpdate();
+        setupDepositSystem();
+        await checkDepositStatus();
+
+        const balanceDisplayFixed = document.getElementById('balanceDisplayFixed');
+        if (balanceDisplayFixed) {
+          balanceDisplayFixed.textContent = formatNumber(playerBalance);
+        }
+      } catch (err) {
+        console.error('[Deposit] Auto-connect hydration failed:', err);
+      }
+    }
+
+    function clearWalletStorage() {
+      const keys = [
+        'walletSignature',
+        'phantomConnectTime',
+        'phantomConnectTimeFormatted',
+        'phantomWalletAddress',
+        'phantomLastConnect',
+      ];
+      keys.forEach((key) => {
+        try {
+          localStorage.removeItem(key);
+        } catch (err) {
+          console.warn('[Deposit] Failed to clear storage key:', key, err);
+          }
+        });
+    }
+
+    function resetWalletUI() {
+      const connectBtn = document.getElementById('connectWalletBtn');
+      const disconnectBtn = document.getElementById('disconnectWalletBtn');
+      const walletInfo = document.getElementById('walletInfo');
+      const walletRequiredMessage = document.getElementById('walletRequiredMessage');
+      const infoBox = document.getElementById('infoBox');
+      const depositSection = document.getElementById('depositSection');
+      const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
+      const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
+
+      if (connectBtn) {
+        connectBtn.classList.remove('hidden');
+        connectBtn.disabled = false;
+        connectBtn.style.cursor = 'pointer';
+        connectBtn.textContent = '🔗 Connect Phantom Wallet';
+      }
+      if (disconnectBtn) {
+        disconnectBtn.classList.add('hidden');
+      }
+      if (walletInfo) {
+        walletInfo.classList.add('hidden');
+        walletInfo.innerHTML = '';
+      }
+      if (walletRequiredMessage) walletRequiredMessage.classList.remove('hidden');
+      if (infoBox) infoBox.classList.add('hidden');
+      if (depositSection) depositSection.classList.add('hidden');
+
+      hideWalletInfoFixed();
+
+      if (connectBtnFixed) {
+        connectBtnFixed.disabled = false;
+        connectBtnFixed.classList.remove('hidden');
+        connectBtnFixed.style.cursor = 'pointer';
+        connectBtnFixed.textContent = '🔗 Connect Phantom Wallet';
+      }
+      if (disconnectBtnFixed) {
+        disconnectBtnFixed.classList.add('hidden');
+        disconnectBtnFixed.style.display = 'none';
+        disconnectBtnFixed.style.visibility = 'hidden';
+        disconnectBtnFixed.style.opacity = '0';
+      }
+    }
+
+    async function performWalletDisconnect(options = {}) {
+      const {
+        skipProviderDisconnect = false,
+        reason = 'manual',
+        suppressForceFlag = false,
+      } = options;
+
+      if (!suppressForceFlag) {
+        if (window.phantomHelper && typeof window.phantomHelper.markForceDisconnect === 'function') {
+          window.phantomHelper.markForceDisconnect(reason);
+        } else {
+          try {
+            localStorage.setItem('phantomForceDisconnect', Date.now().toString());
+      } catch (err) {
+            console.warn('[Deposit] Failed to broadcast force disconnect flag:', err);
+          }
+        }
+      }
+
+      try {
+        if (
+          !skipProviderDisconnect &&
+          window.solana &&
+          typeof window.solana.disconnect === 'function' &&
+          window.solana.isConnected
+        ) {
+          await window.solana.disconnect();
+        }
+      } catch (err) {
+        console.warn('[Deposit] Provider disconnect failed:', err);
+      }
+
+      if (window.phantomHelper && typeof window.phantomHelper.clearState === 'function') {
+        window.phantomHelper.clearState();
+      }
+
+      clearWalletStorage();
+      clearPendingWithdrawal();
+      stopBalanceUpdate();
+
+      walletConnected = false;
+      walletPublicKey = null;
+      isConnecting = false;
+      playerBalance = 0;
+
+      resetWalletUI();
+
+      console.log(`[Deposit] Wallet fully disconnected (${reason})`);
+    }
+
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'phantomForceDisconnect' && event.newValue) {
+        if (!walletConnected && !walletPublicKey) {
+          return;
+        }
+        performWalletDisconnect({
+          skipProviderDisconnect: true,
+          reason: 'storage-event',
+          suppressForceFlag: true,
+        }).catch((err) => {
+          console.error('[Deposit] Failed to handle global force disconnect:', err);
+        });
+      }
+    });
+
+    async function attemptPhantomAutoConnect(handler) {
+      if (typeof handler !== 'function') {
+      return false;
+      }
+
+      if (window.phantomHelper && typeof window.phantomHelper.hasForceDisconnect === 'function') {
+        if (window.phantomHelper.hasForceDisconnect()) {
+          return false;
+        }
+      } else {
+        try {
+          if (localStorage.getItem('phantomForceDisconnect')) {
+            return false;
+          }
+        } catch (err) {
+          console.warn('[Deposit] Failed to read force disconnect flag:', err);
+        }
+      }
+
+      let connected = false;
+
+      if (window.phantomHelper && typeof window.phantomHelper.autoConnect === 'function') {
+        try {
+          await window.phantomHelper.autoConnect({
+            onConnected: async (publicKey, state) => {
+              const normalized = typeof publicKey === 'string' ? publicKey : publicKey?.toString();
+              if (!normalized) {
+                return;
+              }
+              connected = true;
+              await handler(normalized, !!state?.hasSignature);
+            },
+            onError: (err) => {
+              console.warn('[Deposit] Auto-connect skipped:', err?.message || err);
+            }
+          });
+        } catch (err) {
+          console.warn('[Deposit] Phantom helper auto-connect failed:', err);
+        }
+      }
+
+      if (!connected && window.solana?.isConnected && window.solana.publicKey) {
+        connected = true;
+        const state = window.phantomHelper?.getState?.();
+        await handler(window.solana.publicKey.toString(), !!state?.hasSignature);
+      }
+
+      return connected;
+    }
+
+    function hideWalletInfoFixed() {
+      const walletInfoFixed = document.getElementById('walletInfoFixed');
+      if (!walletInfoFixed) return;
+      walletInfoFixed.innerHTML = '';
+      walletInfoFixed.classList.add('hidden');
+      walletInfoFixed.style.display = 'none';
+      walletInfoFixed.style.visibility = 'hidden';
+      walletInfoFixed.style.opacity = '0';
     }
 
     // Copy to clipboard function
@@ -736,411 +1718,362 @@
       textarea.select();
       try {
         document.execCommand('copy');
+        if (window.showToast) {
+          window.showToast('✅ Copied to clipboard!', 'success');
+        } else {
         alert('✅ Copied to clipboard!');
+        }
       } catch (err) {
         console.error('Failed to copy:', err);
+        if (window.showToast) {
+          window.showToast('Failed to copy. Please copy manually.', 'error');
+        } else {
         alert('Failed to copy. Please copy manually.');
+        }
       }
       document.body.removeChild(textarea);
     }
 
     // Send Luna via Phantom wallet - creates transaction and asks user to sign
     // Make it a global function so it can be called from onclick
-    window.sendViaPhantom = async function(mintAddress, escrowWallet, amount) {
-      console.log('[Deposit] ========== sendViaPhantom CALLED ==========');
-      console.log('[Deposit] Parameters:', { mintAddress, escrowWallet, amount });
-      console.log('[Deposit] Wallet connected:', window.solana?.isConnected);
-      console.log('[Deposit] Wallet public key:', walletPublicKey);
-      
-      try {
+    window.sendViaPhantom = async function(mintAddress, escrowWallet, amount, decimalsOverride, burnWalletAddress, burnRateOverride) {
+      console.log('[Deposit] sendViaPhantom', { mintAddress, escrowWallet, amount, decimalsOverride, burnWalletAddress, burnRateOverride });
         if (!window.solana || !window.solana.isPhantom) {
-          alert('Phantom wallet not found. Please install Phantom wallet extension.');
-          return;
+        throw new Error('Phantom wallet not found. Please install Phantom wallet extension.');
         }
-
         if (!window.solana.isConnected) {
-          alert('Please connect your wallet first!');
-          return;
+        throw new Error('Please connect your wallet first.');
         }
-
+      if (!walletPublicKey) {
+        throw new Error('Wallet address is missing. Please reconnect.');
+      }
         if (!mintAddress || !escrowWallet || !amount || amount <= 0) {
-          alert('Missing or invalid parameters. Please refresh the page and try again.');
-          console.error('[Deposit] Missing or invalid parameters:', { mintAddress, escrowWallet, amount });
-          return;
-        }
+        throw new Error('Missing parameters. Please try again.');
+      }
 
-        console.log('[Deposit] Starting transaction creation...');
-        // Show loading message
-        const depositStatus = document.getElementById('depositStatus');
-        if (depositStatus) {
-          depositStatus.innerHTML = `
-            <div style="color: #00ffff; font-size: 0.9em;">
-              <div style="margin-bottom: 10px; color: #ffff00; font-weight: bold;">⏳ Preparing transaction... Please wait...</div>
-            </div>
-          `;
-        }
-
-        // Wait for libraries to load
-        await new Promise(resolve => setTimeout(resolve, 1500));
-
-        // Check if libraries are available
-        let Connection, PublicKey, Transaction, TransactionInstruction;
-
-        // Try to get Solana Web3.js from various possible locations
-        if (typeof window.solanaWeb3 !== 'undefined') {
-          ({ Connection, PublicKey, Transaction, TransactionInstruction } = window.solanaWeb3);
-        } else if (typeof solanaWeb3 !== 'undefined') {
-          ({ Connection, PublicKey, Transaction, TransactionInstruction } = solanaWeb3);
-        } else {
-          throw new Error('Solana Web3.js library not loaded. Please refresh the page (Ctrl+F5).');
+      const lib = window.solanaWeb3 || window.solana?.solanaWeb3 || window.solana?.web3 || window.solana?.solanaWeb3;
+      if (!lib) {
+        throw new Error('Solana Web3.js library not loaded. Please refresh the page.');
         }
         
-        // Verify TransactionInstruction is available
-        if (!TransactionInstruction) {
-          throw new Error('TransactionInstruction not found in Solana Web3.js library. Please refresh the page (Ctrl+F5).');
-        }
+      const {
+        PublicKey,
+        Transaction,
+        TransactionInstruction,
+        SystemProgram,
+      } = lib;
 
-        // Try to get SPL Token library from various possible locations
-        let splTokenLib = null;
-        const possibleNames = ['splToken', 'spl', 'SPLToken', 'SPL', 'spl_token'];
-        
-        for (const name of possibleNames) {
-          if (typeof window[name] !== 'undefined') {
-            splTokenLib = window[name];
-            console.log(`[Deposit] Found SPL Token library as window.${name}`);
-            break;
-          }
+      const payerPublicKey = new PublicKey(walletPublicKey);
+      const mintPublicKey = new PublicKey(mintAddress);
+      const escrowPublicKey = new PublicKey(escrowWallet);
+      const burnWallet = burnWalletAddress || depositConfig.burnWallet || null;
+      const burnWalletPublicKey = burnWallet ? new PublicKey(burnWallet) : null;
+
+      const TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
+      const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
+      const SYS_PROGRAM_ID = SystemProgram.programId;
+      const RENT_SYSVAR_ID = new PublicKey('SysvarRent111111111111111111111111111111111');
+
+      const decimals = typeof decimalsOverride === 'number' ? decimalsOverride : 9;
+      const multiplier = Math.pow(10, decimals);
+      const grossRawAmount = BigInt(Math.round(Number(amount) * multiplier));
+      if (grossRawAmount <= 0n) {
+        throw new Error('Invalid deposit amount');
+      }
+      const burnRateValue = typeof burnRateOverride === 'number' && burnRateOverride >= 0
+        ? Math.min(burnRateOverride, 0.5)
+        : (typeof currentBurnRate === 'number' ? currentBurnRate : 0.03);
+      let burnAmountUi = burnWalletPublicKey ? Number((amount * burnRateValue).toFixed(6)) : 0;
+      if (burnAmountUi > amount) {
+        burnAmountUi = amount;
+      }
+      const netAmountUi = Number((amount - burnAmountUi).toFixed(6));
+      if (netAmountUi <= 0) {
+        throw new Error('Deposit amount is too small after burn deduction.');
+      }
+      const burnRawAmount = burnWalletPublicKey ? BigInt(Math.round(burnAmountUi * multiplier)) : 0n;
+      const netRawAmount = grossRawAmount - burnRawAmount;
+      if (netRawAmount <= 0n) {
+        throw new Error('Calculated deposit amount is invalid.');
+      }
+
+      const findAta = (owner) => {
+        const ownerKey = new PublicKey(owner);
+        return PublicKey.findProgramAddressSync(
+          [ownerKey.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mintPublicKey.toBuffer()],
+          ASSOCIATED_TOKEN_PROGRAM_ID
+        )[0];
+      };
+
+      const userTokenAccount = findAta(walletPublicKey);
+      const escrowTokenAccount = findAta(escrowWallet);
+      const burnTokenAccount = burnWalletPublicKey ? findAta(burnWalletPublicKey) : null;
+
+      const instructions = [];
+      function writeBigUInt64LE(value) {
+        const buffer = new Uint8Array(8);
+        let temp = BigInt(value);
+        for (let i = 0; i < 8; i++) {
+          buffer[i] = Number(temp & 0xffn);
+          temp >>= 8n;
         }
-        
-        if (!splTokenLib && typeof splToken !== 'undefined') {
-          splTokenLib = splToken;
-          console.log('[Deposit] Found SPL Token library as global splToken');
-        }
-        
-        if (!splTokenLib) {
-          // Last attempt: check if it's attached to solanaWeb3
-          if (typeof window.solanaWeb3 !== 'undefined' && window.solanaWeb3.splToken) {
-            splTokenLib = window.solanaWeb3.splToken;
-            console.log('[Deposit] Found SPL Token library in solanaWeb3.splToken');
-          }
-        }
-        
-        // If SPL Token library not found, create instructions manually using Solana Web3.js
-        if (!splTokenLib) {
-          console.log('[Deposit] SPL Token library not found, creating instructions manually...');
-          
-          // Create SPL token transfer instruction manually
-          const TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
-          const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
-          
-          const fromPublicKey = new PublicKey(walletPublicKey);
-          const toPublicKey = new PublicKey(escrowWallet);
-          const mintPublicKey = new PublicKey(mintAddress);
-          
-          // Use default decimals (6) since RPC endpoints are failing
-          // Most SPL tokens use 6 decimals
-          const decimals = 6;
-          console.log('[Deposit] Using default token decimals:', decimals);
-          
-          // Convert amount to raw token amount
-          const rawAmount = BigInt(Math.floor(amount * Math.pow(10, decimals)));
-          console.log('[Deposit] Raw amount:', rawAmount.toString());
-          
-          // Helper function to find associated token address (synchronous)
-          function findAssociatedTokenAddressSync(mint, owner) {
-            const mintPubkey = new PublicKey(mint);
-            const ownerPubkey = new PublicKey(owner);
-            
-            // Derive ATA address using PDA
-            const seeds = [
-              ownerPubkey.toBuffer(),
-              TOKEN_PROGRAM_ID.toBuffer(),
-              mintPubkey.toBuffer()
-            ];
-            
-            const [ata] = PublicKey.findProgramAddressSync(seeds, ASSOCIATED_TOKEN_PROGRAM_ID);
-            return ata;
-          }
-          
-          // Get associated token addresses
-          console.log('[Deposit] Finding associated token addresses...');
-          const fromTokenAccount = findAssociatedTokenAddressSync(mintAddress, walletPublicKey);
-          const toTokenAccount = findAssociatedTokenAddressSync(mintAddress, escrowWallet);
-          console.log('[Deposit] From token account:', fromTokenAccount.toString());
-          console.log('[Deposit] To token account:', toTokenAccount.toString());
-          
-          // Helper function to write BigInt as little-endian 64-bit unsigned integer
-          function writeBigUInt64LE(value, buffer, offset = 0) {
-            // Convert BigInt to little-endian bytes
-            for (let i = 0; i < 8; i++) {
-              buffer[offset + i] = Number((value >> BigInt(i * 8)) & BigInt(0xff));
-            }
-            return offset + 8;
-          }
-          
-          // Create transaction
-          const transaction = new Transaction();
-          
-          // Always create associated token account instruction (Phantom will handle if it already exists)
-          console.log('[Deposit] Adding create associated token account instruction...');
-          const SYSTEM_PROGRAM_ID = new PublicKey('11111111111111111111111111111111');
-          const createATAInstruction = new TransactionInstruction({
-            keys: [
-              { pubkey: fromPublicKey, isSigner: true, isWritable: true },
-              { pubkey: toTokenAccount, isSigner: false, isWritable: true },
-              { pubkey: toPublicKey, isSigner: false, isWritable: false },
-              { pubkey: mintPublicKey, isSigner: false, isWritable: false },
-              { pubkey: SYSTEM_PROGRAM_ID, isSigner: false, isWritable: false },
-              { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-            ],
-            programId: ASSOCIATED_TOKEN_PROGRAM_ID,
-            data: new Uint8Array(0) // Empty data for create ATA instruction
-          });
-          transaction.add(createATAInstruction);
-          
-          // Create transfer instruction manually
-          // SPL Token Transfer instruction format: [instruction_type: u8, amount: u64]
-          console.log('[Deposit] Creating transfer instruction...');
-          const amountBuffer = new Uint8Array(8);
-          writeBigUInt64LE(rawAmount, amountBuffer, 0);
-          
-          // Concatenate instruction type (3 = Transfer) with amount
-          const transferData = new Uint8Array(9); // 1 byte for instruction type + 8 bytes for amount
-          transferData[0] = 3; // Transfer instruction type
-          transferData.set(amountBuffer, 1);
-          
-          const transferInstruction = new TransactionInstruction({
-            keys: [
-              { pubkey: fromTokenAccount, isSigner: false, isWritable: true },
-              { pubkey: toTokenAccount, isSigner: false, isWritable: true },
-              { pubkey: fromPublicKey, isSigner: true, isWritable: false },
-            ],
+        return buffer;
+      }
+
+      const transferNet = new Uint8Array(9);
+      transferNet[0] = 3;
+      transferNet.set(writeBigUInt64LE(netRawAmount), 1);
+
+      instructions.push(
+        new TransactionInstruction({
+          programId: TOKEN_PROGRAM_ID,
+          keys: [
+            { pubkey: userTokenAccount, isSigner: false, isWritable: true },
+            { pubkey: escrowTokenAccount, isSigner: false, isWritable: true },
+            { pubkey: payerPublicKey, isSigner: true, isWritable: false }
+          ],
+          data: transferNet
+        })
+      );
+
+      if (burnWalletPublicKey && burnRawAmount > 0n) {
+        const transferBurn = new Uint8Array(9);
+        transferBurn[0] = 3;
+        transferBurn.set(writeBigUInt64LE(burnRawAmount), 1);
+        instructions.push(
+          new TransactionInstruction({
             programId: TOKEN_PROGRAM_ID,
-            data: transferData
-          });
-          
-          transaction.add(transferInstruction);
-          
-          // Phantom wallet requires recentBlockhash
-          // Try to get blockhash from Phantom's request method or Connection
-          console.log('[Deposit] Getting blockhash from Phantom...');
-          
-          let blockhash = null;
-          let lastValidBlockHeight = null;
-          
-          // Try to get blockhash using Phantom's request method
+            keys: [
+              { pubkey: userTokenAccount, isSigner: false, isWritable: true },
+              { pubkey: burnTokenAccount, isSigner: false, isWritable: true },
+              { pubkey: payerPublicKey, isSigner: true, isWritable: false }
+            ],
+            data: transferBurn
+        })
+      );
+      }
+
+      const transaction = new Transaction();
+      instructions.forEach((ix) => transaction.add(ix));
+
+      const { blockhash, lastValidBlockHeight } = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/deposit/blockhash`)
+        .then(res => res.json())
+        .catch(() => ({}));
+
+      if (blockhash) {
+        transaction.recentBlockhash = blockhash;
+        transaction.lastValidBlockHeight = lastValidBlockHeight;
+      }
+
+      transaction.feePayer = payerPublicKey;
+
+      const { signature } = await window.solana.signAndSendTransaction(transaction);
+      console.log('[Deposit] Transaction sent:', signature);
+      return signature;
+    };
+
+    async function verifyDepositWithRetry(wallet, signature, onAttemptUpdate, maxAttempts = VERIFY_MAX_ATTEMPTS, delayMs = VERIFY_RETRY_DELAY_MS) {
+      const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+      let lastError = 'Verification failed.';
+
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        if (typeof onAttemptUpdate === 'function') {
           try {
-            const blockhashResponse = await window.solana.request({
-              method: 'getLatestBlockhash',
-              params: [{ commitment: 'finalized' }]
-            });
-            
-            if (blockhashResponse && blockhashResponse.value) {
-              blockhash = blockhashResponse.value.blockhash;
-              lastValidBlockHeight = blockhashResponse.value.lastValidBlockHeight;
-              console.log('[Deposit] Got blockhash from Phantom:', blockhash.substring(0, 16) + '...');
-            }
-          } catch (blockhashErr) {
-            console.warn('[Deposit] Failed to get blockhash from Phantom request, trying Connection...', blockhashErr);
-            
-            // Fallback: Try to use Connection with Phantom's RPC
-            try {
-              const phantomConnection = new Connection('https://api.mainnet-beta.solana.com', 'confirmed');
-              const { blockhash: bh, lastValidBlockHeight: lvbh } = await phantomConnection.getLatestBlockhash('finalized');
-              blockhash = bh;
-              lastValidBlockHeight = lvbh;
-              console.log('[Deposit] Got blockhash from Connection:', blockhash.substring(0, 16) + '...');
-            } catch (connErr) {
-              console.warn('[Deposit] Failed to get blockhash from Connection:', connErr);
-              // If all else fails, use a placeholder - Phantom might replace it
-              blockhash = '11111111111111111111111111111111';
-              console.warn('[Deposit] Using placeholder blockhash, Phantom will replace it');
-            }
+            onAttemptUpdate(attempt, maxAttempts);
+          } catch (err) {
+            console.warn('[Deposit] verifyDepositWithRetry callback error:', err);
           }
-          
-          if (blockhash) {
-            transaction.recentBlockhash = blockhash;
-            transaction.feePayer = fromPublicKey;
-            if (lastValidBlockHeight) {
-              transaction.lastValidBlockHeight = lastValidBlockHeight;
-            }
-            console.log('[Deposit] Transaction prepared with blockhash, requesting signature from Phantom...');
-          } else {
-            throw new Error('Failed to get blockhash. Please try again.');
-          }
-          
-          // Update status
-          if (depositStatus) {
-            depositStatus.innerHTML = `
-              <div style="color: #00ffff; font-size: 0.9em;">
-                <div style="margin-bottom: 10px; color: #ffff00; font-weight: bold;">⏳ Please approve transaction in Phantom wallet popup...</div>
-              </div>
-            `;
-          }
-          
-          // Use Phantom's signAndSendTransaction
-          console.log('[Deposit] Calling Phantom signAndSendTransaction (will show popup)...');
-          const signed = await window.solana.signAndSendTransaction(transaction);
-          const signature = signed.signature;
-          console.log('[Deposit] Transaction sent! Signature:', signature);
-          
-          // Update status
-          if (depositStatus) {
-            depositStatus.innerHTML = `
-              <div style="color: #00ffff; font-size: 0.9em;">
-                <div style="margin-bottom: 10px; color: #00ff00; font-weight: bold;">✅ Transaction sent! Waiting for confirmation...</div>
-              </div>
-            `;
-          }
-          
-          // Transaction is sent, Phantom will handle confirmation
-          console.log('[Deposit] Transaction will be confirmed by Phantom wallet.');
-          
-          alert(`✅ Transaction successful!\n\nTransaction: ${signature}\n\nAmount: ${formatNumber(amount)} Luna sent to escrow wallet.\n\nSOL transaction fee was automatically deducted from your wallet.`);
-          
-          // Refresh status
-          setTimeout(async () => {
-            await checkDepositStatus();
-            await checkLunaBalance();
-          }, 2000);
-          
-          return;
-        }
-        
-        // If SPL Token library is available, use it
-        const {
-          getAssociatedTokenAddressSync,
-          createTransferInstruction,
-          createAssociatedTokenAccountInstruction,
-          TOKEN_PROGRAM_ID
-        } = splTokenLib;
-
-        const connection = new Connection('https://api.mainnet-beta.solana.com', 'confirmed');
-        const fromPublicKey = new PublicKey(walletPublicKey);
-        const toPublicKey = new PublicKey(escrowWallet);
-        const mintPublicKey = new PublicKey(mintAddress);
-
-        // Get token decimals
-        const mintInfo = await connection.getParsedAccountInfo(mintPublicKey);
-        if (!mintInfo.value) {
-          throw new Error('Failed to get token information. Please check the token mint address.');
-        }
-        const decimals = mintInfo.value.data?.parsed?.info?.decimals || 6;
-
-        // Convert amount to raw token amount
-        const rawAmount = BigInt(Math.floor(amount * Math.pow(10, decimals)));
-
-        // Get associated token addresses
-        const fromTokenAccount = getAssociatedTokenAddressSync(mintPublicKey, fromPublicKey);
-        const toTokenAccount = getAssociatedTokenAddressSync(mintPublicKey, toPublicKey);
-
-        // Create transaction
-        const transaction = new Transaction();
-
-        // Check if recipient token account exists
-        const toTokenAccountInfo = await connection.getAccountInfo(toTokenAccount);
-        if (!toTokenAccountInfo) {
-          // Create associated token account first
-          transaction.add(
-            createAssociatedTokenAccountInstruction(
-              fromPublicKey,
-              toTokenAccount,
-              toPublicKey,
-              mintPublicKey
-            )
-          );
         }
 
-        // Add transfer instruction
-        transaction.add(
-          createTransferInstruction(
-            fromTokenAccount,
-            toTokenAccount,
-            fromPublicKey,
-            rawAmount,
-            [],
-            TOKEN_PROGRAM_ID
-          )
+        let response;
+        try {
+          response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/deposit/verify`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ wallet, signature }),
+          });
+        } catch (networkErr) {
+          lastError = networkErr.message || 'Network error while verifying deposit.';
+          if (attempt < maxAttempts) {
+            await delay(delayMs);
+            continue;
+          }
+          throw new Error(lastError);
+        }
+
+        let data = {};
+        try {
+          data = await response.json();
+        } catch (parseErr) {
+          console.warn('[Deposit] Failed to parse verify response JSON:', parseErr);
+        }
+
+        if (response.ok && data.ok) {
+          return data;
+        }
+
+        const message = data.error || data.message || 'Verification failed.';
+        lastError = message;
+        const isPending =
+          response.status === 400 &&
+          /not found|not confirmed|pending/i.test(message);
+
+        if (isPending && attempt < maxAttempts) {
+          console.warn(`[Deposit] Verification pending (attempt ${attempt}/${maxAttempts}): ${message}`);
+          await delay(delayMs);
+          continue;
+        }
+
+        throw new Error(lastError);
+      }
+
+      throw new Error(lastError || 'Verification timed out. Please try again.');
+    }
+
+    function getPendingWithdrawal() {
+      try {
+        const raw = localStorage.getItem(PENDING_WITHDRAW_KEY);
+        return raw ? JSON.parse(raw) : null;
+      } catch (error) {
+        console.warn('[Withdraw] Failed to parse pending withdrawal record:', error);
+        return null;
+      }
+    }
+
+    function savePendingWithdrawal(payload) {
+      try {
+        localStorage.setItem(PENDING_WITHDRAW_KEY, JSON.stringify(payload));
+      } catch (error) {
+        console.warn('[Withdraw] Failed to save pending withdrawal record:', error);
+      }
+    }
+
+    function clearPendingWithdrawal() {
+      localStorage.removeItem(PENDING_WITHDRAW_KEY);
+    }
+
+    async function confirmWithdrawalWithRetry(wallet, signature, onAttemptUpdate, maxAttempts = WITHDRAW_VERIFY_MAX_ATTEMPTS, delayMs = WITHDRAW_VERIFY_DELAY_MS) {
+      const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+      let lastError = 'Failed to confirm withdrawal.';
+
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        if (typeof onAttemptUpdate === 'function') {
+          try {
+            onAttemptUpdate(attempt, maxAttempts);
+          } catch (err) {
+            console.warn('[Withdraw] confirmWithdrawalWithRetry callback failed:', err);
+          }
+        }
+
+        let response;
+        try {
+          response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/withdraw`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ wallet, signature }),
+          });
+        } catch (networkErr) {
+          lastError = networkErr.message || lastError;
+          if (attempt < maxAttempts) {
+            await delay(delayMs);
+            continue;
+          }
+          throw new Error(lastError);
+        }
+
+        let data = {};
+        try {
+          data = await response.json();
+        } catch (parseErr) {
+          console.warn('[Withdraw] Failed to parse withdrawal confirmation response:', parseErr);
+        }
+
+        if (response.ok && data?.ok) {
+          return data;
+        }
+
+        const message = data.error || data.message || lastError;
+        lastError = message;
+        const isPending =
+          response.status === 400 &&
+          /not found|not confirmed|pending/i.test(message);
+
+        if (response.status === 404 && /no active deposit/i.test(message)) {
+          return { ok: true, alreadyFinalized: true };
+        }
+
+        if (isPending && attempt < maxAttempts) {
+          await delay(delayMs);
+          continue;
+        }
+
+        break;
+      }
+
+      throw new Error(lastError);
+    }
+
+    async function resumePendingWithdrawalIfNeeded(context = 'auto') {
+      const pending = getPendingWithdrawal();
+      if (!pending || !pending.signature || pending.wallet !== walletPublicKey) {
+        return false;
+      }
+      if (!walletConnected || pendingWithdrawalProcessing) {
+        return false;
+      }
+
+      pendingWithdrawalProcessing = true;
+      const withdrawBtn = document.getElementById('withdrawBtn');
+      const depositStatus = document.getElementById('depositStatus');
+
+      try {
+        await confirmWithdrawalWithRetry(
+          walletPublicKey,
+          pending.signature,
+          (attempt, total) => {
+            if (withdrawBtn) {
+              withdrawBtn.disabled = true;
+              withdrawBtn.textContent = `Finalizing pending withdrawal... (${attempt}/${total})`;
+            }
+            if (depositStatus) {
+              depositStatus.innerHTML = `
+                <div style="color: #00ffff; font-size: 0.9em;">
+                  Finalizing pending withdrawal... (${attempt}/${total})
+                </div>
+              `;
+            }
+          }
         );
 
-        // Get recent blockhash
-        const { blockhash } = await connection.getLatestBlockhash();
-        transaction.recentBlockhash = blockhash;
-        transaction.feePayer = fromPublicKey;
-
-        // Update status
-        if (depositStatus) {
-          depositStatus.innerHTML = `
-            <div style="color: #00ffff; font-size: 0.9em;">
-              <div style="margin-bottom: 10px; color: #ffff00; font-weight: bold;">⏳ Please approve transaction in Phantom wallet popup...</div>
-            </div>
-          `;
-        }
-
-        // Sign and send transaction via Phantom
-        const signed = await window.solana.signAndSendTransaction(transaction);
-        console.log('[Deposit] Transaction signed and sent:', signed.signature);
-        
-        // Update status
-        if (depositStatus) {
-          depositStatus.innerHTML = `
-            <div style="color: #00ffff; font-size: 0.9em;">
-              <div style="margin-bottom: 10px; color: #00ff00; font-weight: bold;">✅ Transaction sent! Waiting for confirmation...</div>
-            </div>
-          `;
-        }
-        
-        // Wait for confirmation
-        await connection.confirmTransaction(signed.signature, 'confirmed');
-        
-        alert(`✅ Transaction successful!\n\nTransaction: ${signed.signature}\n\nAmount: ${formatNumber(amount)} Luna sent to escrow wallet.\n\nSOL transaction fee was automatically deducted from your wallet.`);
-        
-        // Refresh status
-        setTimeout(async () => {
+        clearPendingWithdrawal();
+        await checkDepositStatus();
+        await checkLunaBalance();
+        return true;
+      } catch (error) {
+        console.warn(`[Withdraw] Pending finalize (${context}) failed:`, error);
+        if (/no active deposit/i.test(error.message || '')) {
+          clearPendingWithdrawal();
           await checkDepositStatus();
-          await checkLunaBalance();
-        }, 2000);
-      } catch (txError) {
-        console.error('[Deposit] Transaction error:', txError);
-        
-        // Show error message to user
-        const depositStatus = document.getElementById('depositStatus');
-        if (depositStatus) {
-          depositStatus.innerHTML = `
-            <div style="color: #00ffff; font-size: 0.9em;">
-              <div style="margin-bottom: 10px; padding: 10px; background: rgba(255, 0, 0, 0.1); border: 2px solid #ff0000; border-radius: 8px; color: #ff0000; font-weight: bold;">
-                ❌ Transaction failed: ${txError.message || 'Unknown error'}
-              </div>
-              <div style="margin-bottom: 10px; padding: 15px; background: rgba(0, 0, 0, 0.5); border: 2px solid #00ffff; border-radius: 8px;">
-                <div style="margin-bottom: 10px; font-weight: bold; color: #00ffff;">📤 Please send ${formatNumber(amount)} Luna manually to Escrow Wallet:</div>
-                <div style="font-family: monospace; font-size: 0.85em; word-break: break-all; margin-bottom: 15px; padding: 10px; background: rgba(0, 0, 0, 0.7); border: 1px solid #00ffff; border-radius: 6px; color: #00ffff;">
-                  ${escrowWallet}
-                </div>
-                <button onclick="copyToClipboard('${escrowWallet}')" style="width: 100%; padding: 10px 15px; background: linear-gradient(135deg, rgba(0, 255, 255, 0.3), rgba(0, 255, 255, 0.3)); border: 2px solid #00ffff; border-radius: 6px; color: #00ffff; cursor: pointer; font-family: 'Courier New', monospace; font-size: 0.9em; font-weight: bold; margin-bottom: 10px;">📋 Copy Address</button>
-                <div style="padding: 10px; background: rgba(0, 255, 0, 0.1); border: 1px solid #00ff00; border-radius: 6px; font-size: 0.85em; color: #00ff00;">
-                  <strong>📝 Step-by-step instructions:</strong><br>
-                  1. Open Phantom wallet extension<br>
-                  2. Click "Send" button<br>
-                  3. Select "Luna" token from the token list<br>
-                  4. Enter amount: ${formatNumber(amount)} Luna<br>
-                  5. Paste the escrow address above<br>
-                  6. Click "Send" and confirm transaction<br>
-                  7. Phantom will automatically deduct SOL for transaction fee
-                </div>
-              </div>
-            </div>
-          `;
         }
-        
-        alert(`Transaction failed: ${txError.message}\n\nPlease send Luna manually through Phantom wallet.`);
+        return false;
+      } finally {
+        pendingWithdrawalProcessing = false;
+        if (withdrawBtn) {
+          withdrawBtn.disabled = false;
+          withdrawBtn.textContent = '💸 Withdraw Luna';
+        }
       }
-    };
+    }
 
     // Wallet Connection
     // Note: handleConnectWalletClick is already declared in <head> section
 
     async function setupWalletConnection() {
       console.log('[Deposit] Setting up wallet connection...');
+      
+      // Reset connection state first to ensure clean state
+      isConnecting = false;
+      
       const connectBtn = document.getElementById('connectWalletBtn');
       const disconnectBtn = document.getElementById('disconnectWalletBtn');
       const walletInfo = document.getElementById('walletInfo');
@@ -1206,6 +2139,7 @@
               
               walletPublicKey = resp.publicKey.toString();
               walletConnected = true;
+              isConnecting = false; // Reset connection flag
               
               console.log('[Deposit] ✅ Phantom wallet popup confirmed, wallet connected via fallback!');
               
@@ -1282,6 +2216,7 @@
               alert('Please install Phantom wallet extension!\n\nDownload: https://phantom.app/');
             };
           }
+          hideWalletInfoFixed();
           return;
         }
 
@@ -1307,18 +2242,107 @@
           console.warn('[Deposit] connectBtnFixed not found when enabling!');
         }
         
-        const connectHandler = async () => {
+        const connectHandler = async (e) => {
+          // Prevent multiple connection attempts (like pump.fun) - CHECK FIRST
+          if (isConnecting) {
+            console.log('[Deposit] ⚠️ Connection already in progress, ignoring click');
+            if (e) {
+              e.preventDefault();
+              e.stopPropagation();
+              e.stopImmediatePropagation();
+            }
+            return;
+          }
+          
+          // Set flag IMMEDIATELY to prevent multiple clicks (like pump.fun)
+          isConnecting = true;
+          
+          // Get buttons first
+          const connectBtn = document.getElementById('connectWalletBtn');
+          const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
+          
+          // Disable buttons IMMEDIATELY to prevent multiple clicks
+          if (connectBtn) {
+            connectBtn.disabled = true;
+            connectBtn.style.cursor = 'not-allowed';
+            connectBtn.textContent = '⏳ Connecting...';
+          }
+          if (connectBtnFixed) {
+            connectBtnFixed.disabled = true;
+            connectBtnFixed.style.cursor = 'not-allowed';
+            connectBtnFixed.textContent = '⏳ Connecting...';
+          }
+          
+          // Check if wallet is actually connected (verify with Phantom)
+          const isActuallyConnected = window.solana && window.solana.isPhantom && window.solana.isConnected;
+          
+          // Prevent if already connected (verify both flags and actual connection)
+          if (walletConnected && walletPublicKey && isActuallyConnected) {
+            console.log('[Deposit] ⚠️ Wallet already connected, ignoring click');
+            isConnecting = false;
+            if (connectBtn) {
+              connectBtn.disabled = false;
+              connectBtn.style.cursor = 'pointer';
+              connectBtn.textContent = '🔗 Connect Phantom Wallet';
+            }
+            if (connectBtnFixed) {
+              connectBtnFixed.disabled = false;
+              connectBtnFixed.style.cursor = 'pointer';
+              connectBtnFixed.textContent = '🔗 Connect Phantom Wallet';
+            }
+            return;
+          }
+          
+          // Reset state if flags are wrong (wallet not actually connected)
+          if ((walletConnected || walletPublicKey) && !isActuallyConnected) {
+            console.log('[Deposit] ⚠️ State mismatch detected - resetting connection state');
+            walletConnected = false;
+            walletPublicKey = null;
+          }
+          
           try {
             console.log('[Deposit] Connect button clicked');
+            if (connectBtn) {
+              connectBtn.disabled = true;
+              connectBtn.style.cursor = 'not-allowed';
+              connectBtn.textContent = '⏳ Connecting...';
+            }
+            if (connectBtnFixed) {
+              connectBtnFixed.disabled = true;
+              connectBtnFixed.style.cursor = 'not-allowed';
+              connectBtnFixed.textContent = '⏳ Connecting...';
+            }
             
             if (!window.solana || !window.solana.isPhantom) {
               alert('⚠️ Phantom wallet not found!\n\nPlease install Phantom wallet extension:\nhttps://phantom.app/\n\nAfter installing, refresh this page.');
+              isConnecting = false;
+              if (connectBtn) {
+                connectBtn.disabled = false;
+                connectBtn.style.cursor = 'pointer';
+                connectBtn.textContent = '🔗 Connect Phantom Wallet';
+              }
+              if (connectBtnFixed) {
+                connectBtnFixed.disabled = false;
+                connectBtnFixed.style.cursor = 'pointer';
+                connectBtnFixed.textContent = '🔗 Connect Phantom Wallet';
+              }
               return;
             }
             
             // Additional check: verify Phantom is ready
             if (typeof window.solana.connect !== 'function') {
               alert('⚠️ Phantom wallet extension is not ready!\n\nPlease:\n1. Make sure Phantom wallet is unlocked\n2. Refresh this page\n3. Try again');
+              isConnecting = false;
+              if (connectBtn) {
+                connectBtn.disabled = false;
+                connectBtn.style.cursor = 'pointer';
+                connectBtn.textContent = '🔗 Connect Phantom Wallet';
+              }
+              if (connectBtnFixed) {
+                connectBtnFixed.disabled = false;
+                connectBtnFixed.style.cursor = 'pointer';
+                connectBtnFixed.textContent = '🔗 Connect Phantom Wallet';
+              }
               return;
             }
 
@@ -1327,6 +2351,7 @@
               console.log('[Deposit] ✅ Wallet already connected - using existing connection');
               walletPublicKey = window.solana.publicKey.toString();
               walletConnected = true;
+              isConnecting = false; // Reset connection flag
               
               // Get existing connect time or set new one
               let connectTimestamp = parseInt(localStorage.getItem('phantomConnectTime') || '0');
@@ -1489,7 +2514,20 @@
             }
             
             walletConnected = true;
+            isConnecting = false; // Reset connection flag
             console.log('[Deposit] ✅ Authentication complete! Wallet is now authenticated and persistent.');
+            if (window.phantomHelper) {
+              window.phantomHelper.saveState({ publicKey: walletPublicKey, hasSignature: true });
+              if (typeof window.phantomHelper.clearForceDisconnect === 'function') {
+                window.phantomHelper.clearForceDisconnect();
+              }
+            }
+            if (window.phantomHelper) {
+              window.phantomHelper.saveState({ publicKey: walletPublicKey, hasSignature: true });
+              if (typeof window.phantomHelper.clearForceDisconnect === 'function') {
+                window.phantomHelper.clearForceDisconnect();
+              }
+            }
             
             // Store wallet address with connect time
             localStorage.setItem('phantomWalletAddress', walletPublicKey);
@@ -1569,7 +2607,30 @@
             }
           } catch (err) {
             console.error('[Deposit] Wallet connection error:', err);
-            alert('Failed to connect wallet: ' + err.message);
+            isConnecting = false; // Reset connection flag on error
+            
+            // Re-enable buttons on error
+            const connectBtn = document.getElementById('connectWalletBtn');
+            const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
+            if (connectBtn) {
+              connectBtn.disabled = false;
+              connectBtn.style.cursor = 'pointer';
+              connectBtn.textContent = '🔗 Connect Phantom Wallet';
+            }
+            if (connectBtnFixed) {
+              connectBtnFixed.disabled = false;
+              connectBtnFixed.style.cursor = 'pointer';
+              connectBtnFixed.textContent = '🔗 Connect Phantom Wallet';
+            }
+            
+            // Only show alert if it's not a user cancellation
+            if (!err.message.includes('User rejected') && !err.message.includes('User cancelled') && !err.message.includes('User closed')) {
+              if (window.showToast) {
+          window.showToast('Failed to connect wallet: ' + err.message, 'error');
+        } else {
+              alert('Failed to connect wallet: ' + err.message);
+        }
+            }
           }
         };
         
@@ -1580,62 +2641,15 @@
         // Fixed button is already set up at the beginning of setupWalletConnection()
         // No need to set it up again here
         
-        // Set up fixed disconnect button
-        const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
-        if (disconnectBtnFixed) {
-          disconnectBtnFixed.addEventListener('click', async () => {
-            try {
-              if (window.solana && window.solana.isConnected) {
-                await window.solana.disconnect();
-              }
-            } catch (error) {
-              console.error('[Deposit] Wallet disconnect error:', error);
-            }
-          });
-        }
+        // (Fixed disconnect button handlers are attached later with the shared disconnect handler)
       } catch (error) {
         console.error('[Deposit] Error in setupWalletConnection:', error);
       }
 
       // Setup disconnect button (container)
-      const disconnectHandler = () => {
+      const disconnectHandler = async () => {
         try {
-          if (window.solana && window.solana.isConnected) {
-            window.solana.disconnect();
-          }
-          
-          // Clear signature when disconnected (like pump.fun - must sign again on reconnect)
-          localStorage.removeItem('walletSignature');
-          console.log('[Deposit] Wallet disconnected - signature cleared. Must sign again on next connect.');
-          
-          stopBalanceUpdate();
-          walletConnected = false;
-          walletPublicKey = null;
-          playerBalance = 0;
-          const connectBtnAfter = document.getElementById('connectWalletBtn');
-          if (connectBtnAfter) connectBtnAfter.classList.remove('hidden');
-          if (disconnectBtn) disconnectBtn.classList.add('hidden');
-          if (walletInfo) walletInfo.classList.add('hidden');
-          const depositSection = document.getElementById('depositSection');
-          if (depositSection) depositSection.classList.add('hidden');
-          
-          // Update fixed buttons
-          const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
-          const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
-          const walletInfoFixed = document.getElementById('walletInfoFixed');
-          if (connectBtnFixed) connectBtnFixed.classList.remove('hidden');
-          if (disconnectBtnFixed) {
-            disconnectBtnFixed.classList.add('hidden');
-            disconnectBtnFixed.style.display = 'none';
-            disconnectBtnFixed.style.visibility = 'hidden';
-            disconnectBtnFixed.style.opacity = '0';
-          }
-          if (walletInfoFixed) {
-            walletInfoFixed.classList.add('hidden');
-            walletInfoFixed.style.display = 'none';
-            walletInfoFixed.style.visibility = 'hidden';
-            walletInfoFixed.style.opacity = '0';
-          }
+          await performWalletDisconnect({ reason: 'user-action' });
         } catch (err) {
           console.error('[Deposit] Wallet disconnect error:', err);
         }
@@ -1656,6 +2670,7 @@
         window.solana.on('connect', async () => {
           walletPublicKey = window.solana.publicKey.toString();
           walletConnected = true;
+          isConnecting = false; // Reset connection flag
           connectBtn.classList.add('hidden');
           disconnectBtn.classList.remove('hidden');
           walletInfo.textContent = `Wallet: ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}`;
@@ -1674,50 +2689,18 @@
         });
 
         window.solana.on('disconnect', () => {
-          // Clear signature when disconnected (like pump.fun - must sign again on reconnect)
-          localStorage.removeItem('walletSignature');
-          console.log('[Deposit] Wallet disconnected - signature cleared. Must sign again on next connect.');
-          
-          stopBalanceUpdate();
-          walletPublicKey = null;
-          walletConnected = false;
-          playerBalance = 0;
-          connectBtn.classList.remove('hidden');
-          if (disconnectBtn) disconnectBtn.classList.add('hidden');
-          if (walletInfo) walletInfo.classList.add('hidden');
-          const depositSection = document.getElementById('depositSection');
-          if (depositSection) depositSection.classList.add('hidden');
-          
-          // Update fixed buttons
-          const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
-          const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
-          const walletInfoFixed = document.getElementById('walletInfoFixed');
-          if (connectBtnFixed) connectBtnFixed.classList.remove('hidden');
-          if (disconnectBtnFixed) {
-            disconnectBtnFixed.classList.add('hidden');
-            disconnectBtnFixed.style.display = 'none';
-            disconnectBtnFixed.style.visibility = 'hidden';
-            disconnectBtnFixed.style.opacity = '0';
-          }
-          if (walletInfoFixed) {
-            walletInfoFixed.classList.add('hidden');
-            walletInfoFixed.style.display = 'none';
-            walletInfoFixed.style.visibility = 'hidden';
-            walletInfoFixed.style.opacity = '0';
-          }
-          
-          // Show wallet required message and hide deposit section
-          const walletRequiredMessage = document.getElementById('walletRequiredMessage');
-          const infoBox = document.getElementById('infoBox');
-          // depositSection already declared above, reuse it
-          if (walletRequiredMessage) walletRequiredMessage.classList.remove('hidden');
-          if (infoBox) infoBox.classList.add('hidden');
-          if (depositSection) depositSection.classList.add('hidden');
+          performWalletDisconnect({
+            skipProviderDisconnect: true,
+            reason: 'provider-event',
+          }).catch((err) => {
+            console.error('[Deposit] Provider disconnect handling failed:', err);
+          });
         });
 
         if (window.solana.isConnected) {
           walletPublicKey = window.solana.publicKey.toString();
           walletConnected = true;
+          isConnecting = false; // Reset connection flag
           connectBtn.classList.add('hidden');
           disconnectBtn.classList.remove('hidden');
           
@@ -1782,7 +2765,7 @@
       }
 
       try {
-        const response = await fetch(`${API_BASE}/luna/rps/balance?wallet=${walletPublicKey}`);
+        const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/rps/balance?wallet=${walletPublicKey}`);
         const data = await response.json();
         
         if (!data.ok) {
@@ -1809,12 +2792,14 @@
     }
 
     function startBalanceUpdate() {
+      if (!isPageVisible) return;
+      
       if (balanceUpdateInterval) {
         clearInterval(balanceUpdateInterval);
       }
       
       balanceUpdateInterval = setInterval(async () => {
-        if (walletConnected && walletPublicKey) {
+        if (walletConnected && walletPublicKey && isPageVisible) {
           await checkLunaBalance();
         }
       }, 15000);
@@ -1830,86 +2815,151 @@
     // Deposit/Withdraw System
     async function checkDepositStatus() {
       const depositSection = document.getElementById('depositSection');
-      
+      const manualWithdrawSection = document.getElementById('manualWithdrawSection');
+      const manualWithdrawInput = document.getElementById('manualWithdrawSignatureInput');
+
       if (!walletConnected || !walletPublicKey) {
         if (depositSection) depositSection.classList.add('hidden');
+        if (manualWithdrawSection) manualWithdrawSection.classList.add('hidden');
+        if (manualWithdrawInput) manualWithdrawInput.value = '';
         return;
       }
-      
-      // Show deposit section when wallet is connected
+
       if (depositSection) depositSection.classList.remove('hidden');
 
+      const depositStatus = document.getElementById('depositStatus');
+      const depositForm = document.getElementById('depositForm');
+      const withdrawBtn = document.getElementById('withdrawBtn');
+
       try {
-        const response = await fetch(`${API_BASE}/luna/deposit/status?wallet=${walletPublicKey}`);
+        const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/deposit/status?wallet=${walletPublicKey}`);
         const data = await response.json();
+        if (typeof data.burnRate === 'number') {
+          currentBurnRate = data.burnRate;
+          updateDepositFeeRateDisplay();
+        }
+        if (data.dynamicMin || typeof data.minDeposit === 'number') {
+          const dynamicInfo = data.dynamicMin || {
+            amount: data.minDeposit,
+            usd: data.minDepositUsd,
+            source: data.minDepositSource,
+            updatedAt: data.minDepositUpdatedAt,
+            priceUsd: data.priceUsd,
+            marketCap: data.marketCap,
+            volume24h: data.volume24h,
+            liquidity: data.liquidityUsd,
+          };
+          applyDynamicRequirement(dynamicInfo);
+        } else {
+          enforceLockedDepositAmount();
+          updateDynamicRequirementCard();
+        }
+        if (data.escrowWallet) depositConfig.escrowWallet = data.escrowWallet;
+        if (data.mint) depositConfig.mint = data.mint;
+        if (typeof data.minDeposit === 'number') depositConfig.minDeposit = data.minDeposit;
+        if (typeof data.mintDecimals === 'number') depositConfig.mintDecimals = data.mintDecimals;
+        if (data.burnWallet) depositConfig.burnWallet = data.burnWallet;
 
-        const depositStatus = document.getElementById('depositStatus');
-        const depositForm = document.getElementById('depositForm');
-        const withdrawBtn = document.getElementById('withdrawBtn');
+        const localPending = getPendingWithdrawal();
+        const hasLocalPending = Boolean(localPending && localPending.wallet === walletPublicKey);
 
-        if (!depositSection) return;
-
-        if (data.ok && data.hasDeposit) {
-          // Show deposit form for additional deposits
-          depositForm.style.display = 'block';
-          withdrawBtn.style.display = 'block';
+        if (data.ok && data.hasDeposit && data.deposit) {
+          if (depositForm) depositForm.style.display = 'none';
+          if (withdrawBtn) withdrawBtn.style.display = 'block';
+          const hasServerPending = Boolean(data.deposit.pendingWithdrawIntent);
+          const showManual = hasServerPending || hasLocalPending;
+          if (manualWithdrawSection) {
+            manualWithdrawSection.classList.toggle('hidden', !showManual);
+          }
 
           const deposit = data.deposit;
-          // Get escrow wallet from API or use default
-          const escrowWallet = data.escrowWallet || 'FLMbMZXn6d5mWf6EWFAeVFcV4w7ioZ6PZAWSp8wxK4RU';
+          const daysElapsed = Number(deposit.daysSinceDeposit) || 0;
+          const depositedAmount = formatNumber(deposit.depositAmount || deposit.amount || 0);
+          const days = daysElapsed.toFixed(1);
+          const feeDisplay = deposit.feePercentageDisplay || '3% fee';
+          const grossAmountDisplay = formatNumber(deposit.grossAmount || deposit.depositAmount || 0);
+          const burnedAmountDisplay = formatNumber(
+            deposit.burnAmount != null
+              ? deposit.burnAmount
+              : (deposit.grossAmount || 0) - (deposit.depositAmount || 0)
+          );
+          const signature = deposit.txSignature || 'N/A';
+          const tierCountdownHtml = renderTierCountdown(daysElapsed);
+          const lockedRequirement = Number(deposit.minRequirement || deposit.depositAmount || depositConfig.minDeposit);
+          const lockedRequirementUsdValue =
+            typeof deposit.minRequirementUsd === 'number'
+              ? deposit.minRequirementUsd
+              : Number.isFinite(Number(deposit.minRequirementUsd))
+                ? Number(deposit.minRequirementUsd)
+                : null;
+          const lockedRequirementUsdText = Number.isFinite(lockedRequirementUsdValue)
+            ? ` (~${formatUsdValue(lockedRequirementUsdValue)})`
+            : '';
+          const lockedRequirementDisplay = `${formatNumberDetailed(lockedRequirement)} Luna${lockedRequirementUsdText}`;
+          const isGrandfathered = lockedRequirement < (dynamicRequirementState.amount || depositConfig.minDeposit);
           
           depositStatus.innerHTML = `
             <div style="color: #00ffff; font-size: 0.9em;">
               <div style="margin-bottom: 10px; padding: 10px; background: rgba(0, 255, 0, 0.1); border: 1px solid #00ff00; border-radius: 8px;">
-                <div style="margin-bottom: 5px;"><strong>💰 Deposited:</strong> ${formatNumber(deposit.amount)} Luna</div>
-                <div style="margin-bottom: 5px;"><strong>📅 Days:</strong> ${deposit.daysSinceDeposit.toFixed(1)} days</div>
-                <div style="margin-bottom: 5px;"><strong>💸 Betting Fee:</strong> ${deposit.feePercentageDisplay}</div>
-                ${deposit.daysSinceDeposit >= 6 ? '<div style="color: #00ff00;">✅ Maximum discount reached!</div>' : 
-                  deposit.daysSinceDeposit >= 3 ? '<div style="color: #ffff00;">⏳ Keep depositing for 1% fee!</div>' : 
-                  '<div style="color: #ffff00;">⏳ Keep depositing for lower fees!</div>'}
+                <div style="margin-bottom: 5px;"><strong>💰 Deposited (net):</strong> ${depositedAmount} Luna</div>
+                <div style="margin-bottom: 5px;"><strong>💾 Gross Sent:</strong> ${grossAmountDisplay} Luna</div>
+                <div style="margin-bottom: 5px;"><strong>🔥 Burned:</strong> ${burnedAmountDisplay} Luna (${formatBurnRate()})</div>
+                <div style="margin-bottom: 5px;"><strong>🔒 Locked Requirement:</strong> ${lockedRequirementDisplay}</div>
+                <div style="margin-bottom: 5px;"><strong>📅 Days:</strong> ${days} days</div>
+                <div style="margin-bottom: 5px;"><strong>💸 Betting Fee:</strong> ${feeDisplay}</div>
+                ${isGrandfathered ? '<div style="color: #7bffcb; margin-bottom: 5px;">Grandfathered: this minimum stays even if the dynamic requirement increases.</div>' : ''}
+                ${daysElapsed >= 15
+                  ? '<div style="color: #00ff00;">✅ Maximum discount reached!</div>'
+                  : daysElapsed >= 10
+                    ? '<div style="color: #00ffff;">⏳ Keep depositing for 0.5% fee!</div>'
+                    : daysElapsed >= 5
+                      ? '<div style="color: #ffff00;">⏳ Keep depositing for 1% fee!</div>'
+                      : '<div style="color: #ffff00;">⏳ Keep depositing for lower fees!</div>'}
+                ${tierCountdownHtml}
               </div>
-              
               <div style="margin-top: 15px; padding: 15px; background: rgba(0, 0, 0, 0.5); border: 2px solid #00ffff; border-radius: 8px;">
-                <div style="margin-bottom: 10px; font-weight: bold; color: #00ffff;">📤 Send Luna to Escrow Wallet:</div>
-                <div style="font-family: monospace; font-size: 0.85em; word-break: break-all; margin-bottom: 10px; padding: 10px; background: rgba(0, 0, 0, 0.7); border: 1px solid #00ffff; border-radius: 6px; color: #00ffff;">
-                  ${escrowWallet}
+                <div style="margin-bottom: 10px; font-weight: bold; color: #00ffff;">📜 Transaction Signature:</div>
+                <div style="font-family: monospace; font-size: 0.85em; word-break: break-all; margin-bottom: 15px; padding: 10px; background: rgba(0,0,0,0.7); border: 1px solid #00ffff; border-radius: 6px; color: #00ffff;">
+                  ${signature}
                 </div>
-                <button onclick="copyToClipboard('${escrowWallet}')" style="width: 100%; padding: 10px 15px; background: linear-gradient(135deg, rgba(0, 255, 255, 0.3), rgba(0, 255, 255, 0.3)); border: 2px solid #00ffff; border-radius: 6px; color: #00ffff; cursor: pointer; font-family: 'Courier New', monospace; font-size: 0.9em; font-weight: bold; margin-bottom: 10px;">📋 Copy Address</button>
-                <button onclick="console.log('Button clicked!'); if (typeof window.sendViaPhantom === 'function') { window.sendViaPhantom('${lunaMintAddress || ''}', '${escrowWallet}', ${deposit.amount || 0}); } else { alert('Function not loaded. Please refresh the page.'); }" style="width: 100%; padding: 10px 15px; background: linear-gradient(135deg, rgba(147, 51, 234, 0.5), rgba(147, 51, 234, 0.5)); border: 2px solid #9333ea; border-radius: 6px; color: #ffffff; cursor: pointer; font-family: 'Courier New', monospace; font-size: 0.9em; font-weight: bold; margin-bottom: 10px;">👻 Try Send via Phantom (may not work if library not loaded)</button>
-                <div style="margin-top: 10px; padding: 10px; background: rgba(255, 255, 0, 0.1); border: 1px solid #ffff00; border-radius: 6px; font-size: 0.85em; color: #ffff00;">
-                  ⚠️ <strong>Important:</strong> You need SOL in your wallet to pay for transaction fees. Phantom will automatically deduct SOL for the transaction fee when you send Luna.
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                  <button onclick="copyToClipboard('${signature}')" style="padding: 10px 15px; background: linear-gradient(135deg, rgba(0, 255, 255, 0.3), rgba(0, 255, 255, 0.3)); border: 2px solid #00ffff; border-radius: 6px; color: #00ffff; cursor: pointer; font-family: 'Courier New', monospace; font-size: 0.9em; font-weight: bold;">📋 Copy</button>
+                  ${signature !== 'N/A' ? `<a href="https://solscan.io/tx/${signature}" target="_blank" rel="noopener noreferrer" style="padding: 10px 15px; background: linear-gradient(135deg, rgba(255, 165, 0, 0.3), rgba(255, 165, 0, 0.3)); border: 2px solid #ffa500; border-radius: 6px; color: #ffa500; cursor: pointer; font-family: 'Courier New', monospace; font-size: 0.9em; font-weight: bold; text-align: center; text-decoration: none; display: block;">🔍 View on Solscan</a>` : ''}
                 </div>
-                <div style="margin-top: 10px; padding: 10px; background: rgba(0, 255, 0, 0.1); border: 1px solid #00ff00; border-radius: 6px; font-size: 0.85em; color: #00ff00;">
-                  💡 <strong>How to send manually:</strong> Open Phantom wallet → Click "Send" → Select Luna token → Enter amount → Paste escrow address above → Confirm transaction
-                </div>
+                ${signature !== 'N/A' ? '<div style="font-size: 0.8em; color: #7bffcb; margin-top: 10px; text-align: center;">✅ Verified on-chain: Click to view full transaction details</div>' : ''}
               </div>
             </div>
           `;
         } else {
-          depositForm.style.display = 'block';
-          withdrawBtn.style.display = 'none';
+          if (withdrawBtn) withdrawBtn.style.display = 'none';
+          if (manualWithdrawSection) manualWithdrawSection.classList.add('hidden');
+          if (manualWithdrawInput) manualWithdrawInput.value = '';
+          if (!hasLocalPending) {
+            clearPendingWithdrawal();
+          }
 
-          if (playerBalance < 150000) {
+          const minDepositDisplay = `${formatNumberDetailed(depositConfig.minDeposit)} Luna${dynamicRequirementState.usd ? ` (~${formatUsdValue(dynamicRequirementState.usd)})` : ''}`;
+          const currentBalanceDisplay = `${formatNumberDetailed(playerBalance)} Luna`;
+          if (playerBalance < depositConfig.minDeposit) {
             depositStatus.innerHTML = `
               <div style="color: #ff0000; font-size: 0.9em;">
-                ❌ You need at least 150,000 Luna to deposit.<br>
-                Current: ${formatNumber(playerBalance)} Luna
+                ❌ You need at least ${minDepositDisplay} to deposit.<br>
+                Current: ${currentBalanceDisplay}
               </div>
             `;
-            depositForm.style.display = 'none';
+            if (depositForm) depositForm.style.display = 'none';
           } else {
+            if (depositForm) depositForm.style.display = 'block';
             depositStatus.innerHTML = `
               <div style="color: #00ffff; font-size: 0.9em;">
-                ✅ You can deposit Luna to reduce Betting Mode fees!<br>
-                Deposit for 3 days → 2% fee, 6 days → 1% fee (default: 3%)
+                ✅ Ready to deposit. Minimum: ${minDepositDisplay}<br>
+                Depositing for 5 days → 2% fee, 10 days → 1% fee, 15 days → 0.5% fee (default: ${formatBurnRate()})
               </div>
             `;
           }
         }
       } catch (error) {
         console.error('[Deposit] Error checking deposit status:', error);
-        const depositStatus = document.getElementById('depositStatus');
-        if (depositSection) depositSection.classList.remove('hidden');
         if (depositStatus) {
           depositStatus.innerHTML = `
             <div style="color: #ff0000; font-size: 0.9em;">
@@ -1917,117 +2967,165 @@
             </div>
           `;
         }
+        if (withdrawBtn) withdrawBtn.style.display = 'none';
+        if (manualWithdrawSection) manualWithdrawSection.classList.add('hidden');
+        if (manualWithdrawInput) manualWithdrawInput.value = '';
+        if (depositForm) depositForm.style.display = playerBalance >= depositConfig.minDeposit ? 'block' : 'none';
+      } finally {
+        await resumePendingWithdrawalIfNeeded('status');
+        fetchBurnStats();
       }
     }
 
     function setupDepositSystem() {
       const depositBtn = document.getElementById('depositBtn');
       const withdrawBtn = document.getElementById('withdrawBtn');
+      const manualWithdrawBtn = document.getElementById('manualWithdrawFinalizeBtn');
+      const manualWithdrawInput = document.getElementById('manualWithdrawSignatureInput');
 
-      if (depositBtn) {
+      if (depositBtn && !depositListenerAttached) {
+        depositListenerAttached = true;
         depositBtn.addEventListener('click', async () => {
           if (!walletConnected || !walletPublicKey) {
             alert('Please connect your wallet first!');
             return;
           }
 
-          const amount = parseFloat(document.getElementById('depositAmount').value);
-          if (!amount || amount <= 0) {
+          const amountValue = parseFloat(document.getElementById('depositAmount').value);
+          if (!Number.isFinite(amountValue) || amountValue <= 0) {
+            if (window.showToast) {
+              window.showToast('Please enter a valid deposit amount!', 'warning');
+            } else {
             alert('Please enter a valid deposit amount!');
-            return;
-          }
-
-          if (playerBalance < 150000) {
-            alert(`You need at least 150,000 Luna to deposit. Current: ${formatNumber(playerBalance)} Luna`);
-            return;
-          }
-
-          try {
-            depositBtn.disabled = true;
-            depositBtn.textContent = 'Processing...';
-
-            // First, get escrow wallet address
-            depositBtn.textContent = 'Getting escrow address...';
-            
-            const escrowResponse = await fetch(`${API_BASE}/luna/deposit/status?wallet=${walletPublicKey}`);
-            const escrowData = await escrowResponse.json();
-            const escrowWallet = escrowData.deposit?.escrowWallet || 'FLMbMZXn6d5mWf6EWFAeVFcV4w7ioZ6PZAWSp8wxK4RU';
-            
-            // Get Luna mint address
-            if (!lunaMintAddress) {
-              const contractResponse = await fetch(`${API_BASE}/luna/rps/contract-address`);
-              const contractData = await contractResponse.json();
-              if (contractData.ok && contractData.contractAddress) {
-                lunaMintAddress = contractData.contractAddress;
-              } else {
-                throw new Error('Failed to get Luna token address');
-              }
             }
+            return;
+          }
+
+          if (amountValue < depositConfig.minDeposit) {
+            const requiredText = `${formatNumberDetailed(depositConfig.minDeposit)} Luna${dynamicRequirementState.usd ? ` (~${formatUsdValue(dynamicRequirementState.usd)})` : ''}`;
+            if (window.showToast) {
+              window.showToast(`Minimum deposit is ${requiredText}.`, 'warning');
+            } else {
+              alert(`Minimum deposit is ${requiredText}.`);
+            }
+            return;
+          }
+
+          if (playerBalance < depositConfig.minDeposit) {
+            const requiredText = `${formatNumberDetailed(depositConfig.minDeposit)} Luna${dynamicRequirementState.usd ? ` (~${formatUsdValue(dynamicRequirementState.usd)})` : ''}`;
+            if (window.showToast) {
+              window.showToast(`You need at least ${requiredText}. Current: ${formatNumberDetailed(playerBalance)} Luna`, 'warning');
+            } else {
+              alert(`You need at least ${requiredText}. Current: ${formatNumberDetailed(playerBalance)} Luna`);
+            }
+            return;
+          }
+
+      try {
+            const btnText = depositBtn.querySelector('.btn-text');
+            const btnLoading = depositBtn.querySelector('.btn-loading');
+            depositBtn.disabled = true;
+            if (btnText) btnText.classList.add('hidden');
+            if (btnLoading) btnLoading.classList.remove('hidden');
             
-            // Record deposit first
-            depositBtn.textContent = 'Recording deposit...';
-            
-            const response = await fetch(`${API_BASE}/luna/deposit`, {
+            const initResponse = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/deposit/init`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                wallet: walletPublicKey,
-                amount: amount,
-              }),
+              body: JSON.stringify({ wallet: walletPublicKey, amount: amountValue }),
             });
-            
-            const data = await response.json();
-            
-            if (data.ok) {
-              // Show escrow wallet address with "Send via Phantom" button
-              const depositStatus = document.getElementById('depositStatus');
-              if (depositStatus) {
-                depositStatus.innerHTML = `
-                  <div style="color: #00ffff; font-size: 0.9em;">
-                    <div style="margin-bottom: 10px; color: #00ff00; font-weight: bold;">✅ Deposit recorded! Please send ${formatNumber(amount)} Luna to escrow wallet.</div>
-                    <div style="margin-bottom: 10px; padding: 15px; background: rgba(0, 0, 0, 0.5); border: 2px solid #00ffff; border-radius: 8px;">
-                      <div style="margin-bottom: 10px; font-weight: bold; color: #00ffff;">📤 Escrow Wallet Address:</div>
-                      <div style="font-family: monospace; font-size: 0.85em; word-break: break-all; margin-bottom: 15px; padding: 10px; background: rgba(0, 0, 0, 0.7); border: 1px solid #00ffff; border-radius: 6px; color: #00ffff;">
-                        ${data.deposit.escrowWallet}
-                      </div>
-                      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <button onclick="copyToClipboard('${data.deposit.escrowWallet}')" style="flex: 1; min-width: 150px; padding: 10px 15px; background: linear-gradient(135deg, rgba(0, 255, 255, 0.3), rgba(0, 255, 255, 0.3)); border: 2px solid #00ffff; border-radius: 6px; color: #00ffff; cursor: pointer; font-family: 'Courier New', monospace; font-size: 0.9em; font-weight: bold;">📋 Copy Address</button>
-                        <button onclick="sendViaPhantom('${lunaMintAddress}', '${data.deposit.escrowWallet}', ${amount})" style="flex: 1; min-width: 150px; padding: 10px 15px; background: linear-gradient(135deg, rgba(147, 51, 234, 0.5), rgba(147, 51, 234, 0.5)); border: 2px solid #9333ea; border-radius: 6px; color: #ffffff; cursor: pointer; font-family: 'Courier New', monospace; font-size: 0.9em; font-weight: bold;">👻 Send via Phantom</button>
-                      </div>
-                    </div>
-                    <div style="margin-top: 10px; padding: 10px; background: rgba(255, 255, 0, 0.1); border: 1px solid #ffff00; border-radius: 6px; font-size: 0.85em; color: #ffff00;">
-                      ⚠️ <strong>Important:</strong> You need SOL in your wallet to pay for transaction fees. Phantom will automatically deduct SOL for the transaction fee when you send Luna.
-                    </div>
-                    <div style="margin-top: 10px; font-size: 0.85em; opacity: 0.8;">Note: ${data.note}</div>
-                  </div>
-                `;
+            const initData = await initResponse.json();
+            if (!initData.ok) {
+              throw new Error(initData.error || initData.message || 'Failed to initialize deposit');
+            }
+
+            depositConfig.escrowWallet = initData.escrowWallet || depositConfig.escrowWallet;
+            depositConfig.mint = initData.mint || depositConfig.mint;
+            if (typeof initData.mintDecimals === 'number') {
+              depositConfig.mintDecimals = initData.mintDecimals;
+            }
+            if (initData.burnWallet) {
+              depositConfig.burnWallet = initData.burnWallet;
+            }
+            if (typeof initData.burnRate === 'number') {
+              currentBurnRate = initData.burnRate;
+              updateDepositFeeRateDisplay();
+            }
+            if (initData.dynamicMin || typeof initData.minDeposit === 'number') {
+              const dynamicInfo = initData.dynamicMin || {
+                amount: initData.minDeposit,
+                usd: initData.minDepositUsd,
+                source: initData.minDepositSource,
+                updatedAt: initData.minDepositUpdatedAt,
+                priceUsd: initData.priceUsd,
+                marketCap: initData.marketCap,
+                volume24h: initData.volume24h,
+                liquidity: initData.liquidityUsd,
+              };
+              applyDynamicRequirement(dynamicInfo);
+            }
+            enforceLockedDepositAmount();
+
+            if (!depositConfig.mint || !depositConfig.escrowWallet) {
+              throw new Error('Missing mint or escrow information. Please try again.');
+            }
+
+            if (btnLoading) {
+              btnLoading.innerHTML = '<span class="loading-spinner"></span> Waiting for Phantom...';
+            }
+            const signature = await sendViaPhantom(
+              depositConfig.mint,
+              depositConfig.escrowWallet,
+              amountValue,
+              depositConfig.mintDecimals,
+              depositConfig.burnWallet,
+              currentBurnRate
+            );
+
+            if (!signature) {
+              throw new Error('Transaction was cancelled.');
               }
-              
-              // Hide deposit form
-              const depositForm = document.getElementById('depositForm');
-              if (depositForm) depositForm.style.display = 'none';
-              
+
+            if (btnLoading) {
+              btnLoading.innerHTML = '<span class="loading-spinner"></span> Verifying...';
+            }
+            const verifyData = await verifyDepositWithRetry(
+              walletPublicKey,
+              signature,
+              (attempt, total) => {
+                if (btnLoading) {
+                  btnLoading.innerHTML = `<span class="loading-spinner"></span> Verifying... (${attempt}/${total})`;
+                }
+              }
+            );
+
+            if (window.showToast) {
+              window.showToast(`Deposit complete! Transaction: ${signature}`, 'success', 6000);
+            } else {
+            alert(`Deposit complete! Transaction: ${signature}`);
+            }
               document.getElementById('depositAmount').value = '';
-              
-              // Refresh status after a delay
-              setTimeout(async () => {
                 await checkDepositStatus();
                 await checkLunaBalance();
-              }, 2000);
-            } else {
-              alert('Failed to deposit: ' + (data.message || data.error));
-            }
-          } catch (error) {
-            console.error('[Deposit] Error:', error);
-            alert('Failed to deposit: ' + error.message);
-          } finally {
-            depositBtn.disabled = false;
-            depositBtn.textContent = '💾 Deposit Luna';
-          }
+                fetchBurnStats(true);
+      } catch (error) {
+        console.error('[Deposit] Error:', error);
+        if (window.showToast) {
+          window.showToast('Failed to deposit: ' + (error.message || error), 'error');
+        } else {
+        alert('Failed to deposit: ' + (error.message || error));
+        }
+      } finally {
+        const btnText = depositBtn.querySelector('.btn-text');
+        const btnLoading = depositBtn.querySelector('.btn-loading');
+        depositBtn.disabled = false;
+        if (btnText) btnText.classList.remove('hidden');
+        if (btnLoading) btnLoading.classList.add('hidden');
+      }
         });
       }
 
-      if (withdrawBtn) {
+      if (withdrawBtn && !withdrawListenerAttached) {
+        withdrawListenerAttached = true;
         withdrawBtn.addEventListener('click', async () => {
           if (!walletConnected || !walletPublicKey) {
             alert('Please connect your wallet first!');
@@ -2039,35 +3137,300 @@
           }
 
           try {
+            const btnText = withdrawBtn.querySelector('.btn-text');
+            const btnLoading = withdrawBtn.querySelector('.btn-loading');
             withdrawBtn.disabled = true;
-            withdrawBtn.textContent = 'Processing...';
+            if (btnText) btnText.classList.add('hidden');
+            if (btnLoading) btnLoading.classList.remove('hidden');
 
-            const response = await fetch(`${API_BASE}/luna/withdraw`, {
+            const prepareResponse = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/deposit/withdraw/init`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                wallet: walletPublicKey,
-              }),
+              body: JSON.stringify({ wallet: walletPublicKey }),
             });
 
-            const data = await response.json();
+            const prepareData = await prepareResponse.json();
 
-            if (data.ok) {
-              alert(`Withdrawal successful! ${formatNumber(data.withdrawal.amount)} Luna sent to your wallet.\n\nTransaction: ${data.withdrawal.signature}`);
-              await checkDepositStatus();
-              await checkLunaBalance();
-            } else {
-              alert('Failed to withdraw: ' + (data.message || data.error));
+            if (!prepareData.ok) {
+              throw new Error(prepareData.error || prepareData.message || 'Failed to prepare withdrawal transaction.');
             }
+
+            const transaction = decodeTransactionFromBase64(prepareData.transaction);
+            if (btnLoading) {
+              btnLoading.innerHTML = '<span class="loading-spinner"></span> Sign & send via Phantom...';
+            }
+
+            const signedResult = await window.solana.signAndSendTransaction(transaction);
+            const signature = typeof signedResult === 'string' ? signedResult : signedResult?.signature;
+
+            if (!signature) {
+              throw new Error('Withdrawal was cancelled or no signature was returned.');
+            }
+
+            savePendingWithdrawal({
+              wallet: walletPublicKey,
+              signature,
+              createdAt: Date.now(),
+            });
+
+            if (btnLoading) {
+              btnLoading.innerHTML = '<span class="loading-spinner"></span> Finalizing...';
+            }
+            const confirmData = await confirmWithdrawalWithRetry(
+              walletPublicKey,
+              signature,
+              (attempt, total) => {
+                if (btnLoading) {
+                  btnLoading.innerHTML = `<span class="loading-spinner"></span> Finalizing... (${attempt}/${total})`;
+                }
+              }
+            );
+
+            clearPendingWithdrawal();
+
+            const amount = confirmData.withdrawal?.amount || prepareData.amount || depositConfig.minDeposit;
+            if (window.showToast) {
+              window.showToast(`Withdrawal successful! ${formatNumber(amount)} Luna sent to your wallet.\n\nTransaction: ${signature}`, 'success', 6000);
+            } else {
+            alert(`Withdrawal successful! ${formatNumber(amount)} Luna sent to your wallet.\n\nTransaction: ${signature}`);
+            }
+            await checkDepositStatus();
+            await checkLunaBalance();
           } catch (error) {
             console.error('[Withdraw] Error:', error);
+            if (window.showToast) {
+              window.showToast('Failed to withdraw: ' + error.message, 'error');
+            } else {
             alert('Failed to withdraw: ' + error.message);
+            }
+            if (/no active deposit/i.test(error.message || '')) {
+              clearPendingWithdrawal();
+              await checkDepositStatus();
+            } else {
+              setTimeout(() => {
+                resumePendingWithdrawalIfNeeded('retry');
+              }, WITHDRAW_VERIFY_DELAY_MS);
+            }
+            await checkDepositStatus();
           } finally {
+            const btnText = withdrawBtn.querySelector('.btn-text');
+            const btnLoading = withdrawBtn.querySelector('.btn-loading');
             withdrawBtn.disabled = false;
-            withdrawBtn.textContent = '💸 Withdraw Luna';
+            if (btnText) btnText.classList.remove('hidden');
+            if (btnLoading) btnLoading.classList.add('hidden');
           }
         });
       }
+
+      if (manualWithdrawBtn && !manualWithdrawBtn.dataset.listenerAttached) {
+        manualWithdrawBtn.dataset.listenerAttached = 'true';
+        manualWithdrawBtn.addEventListener('click', async () => {
+          if (!walletConnected || !walletPublicKey) {
+            alert('Please connect your wallet first!');
+            return;
+          }
+
+          const manualSignature = (manualWithdrawInput?.value || '').trim();
+          if (!manualSignature) {
+            if (window.showToast) {
+              window.showToast('Please paste the withdrawal transaction signature.', 'warning');
+            } else {
+            alert('Please paste the withdrawal transaction signature.');
+            }
+            return;
+          }
+
+          try {
+            const btnText = manualWithdrawBtn.querySelector('.btn-text');
+            const btnLoading = manualWithdrawBtn.querySelector('.btn-loading');
+            manualWithdrawBtn.disabled = true;
+            if (btnText) btnText.classList.add('hidden');
+            if (btnLoading) btnLoading.classList.remove('hidden');
+
+            await confirmWithdrawalWithRetry(
+              walletPublicKey,
+              manualSignature,
+              (attempt, total) => {
+                if (btnLoading) {
+                  btnLoading.innerHTML = `<span class="loading-spinner"></span> Finalizing... (${attempt}/${total})`;
+                }
+              }
+            );
+
+            clearPendingWithdrawal();
+            if (manualWithdrawInput) manualWithdrawInput.value = '';
+            if (window.showToast) {
+              window.showToast(`Withdrawal finalized! Transaction: ${manualSignature}`, 'success', 6000);
+            } else {
+            alert(`Withdrawal finalized! Transaction: ${manualSignature}`);
+            }
+            await checkDepositStatus();
+            await checkLunaBalance();
+          } catch (error) {
+            console.error('[Withdraw] Manual finalize error:', error);
+            if (window.showToast) {
+              window.showToast('Failed to finalize withdrawal: ' + error.message, 'error');
+            } else {
+            alert('Failed to finalize withdrawal: ' + error.message);
+            }
+            if (/no active deposit/i.test(error.message || '')) {
+              clearPendingWithdrawal();
+              await checkDepositStatus();
+            }
+          } finally {
+            const btnText = manualWithdrawBtn.querySelector('.btn-text');
+            const btnLoading = manualWithdrawBtn.querySelector('.btn-loading');
+            manualWithdrawBtn.disabled = false;
+            if (btnText) btnText.classList.remove('hidden');
+            if (btnLoading) btnLoading.classList.add('hidden');
+          }
+        });
+      }
+    }
+
+    // Enhanced Effects Functions
+    function createParticles() {
+      const particlesContainer = document.getElementById('particles');
+      if (!particlesContainer) return;
+
+      const particleCount = 30;
+      for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.animationDelay = Math.random() * 20 + 's';
+        particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+        particlesContainer.appendChild(particle);
+      }
+    }
+
+    function initParallax() {
+      let ticking = false;
+      
+      function updateParallax() {
+        const scrolled = window.pageYOffset;
+        const hero = document.querySelector('.game-container h1');
+        const cards = document.querySelectorAll('.info-card, .burn-stats-card, .dynamic-min-requirement-card');
+        
+        if (hero) {
+          const heroSpeed = 0.2;
+          hero.style.transform = `translateY(${scrolled * heroSpeed}px)`;
+        }
+        
+        cards.forEach((card) => {
+          const rect = card.getBoundingClientRect();
+          const speed = 0.05;
+          
+          if (rect.top < window.innerHeight && rect.bottom > 0) {
+            const offset = (window.innerHeight - rect.top) * speed;
+            card.style.transform = `translateY(${offset}px)`;
+          }
+        });
+        
+        ticking = false;
+      }
+      
+      window.addEventListener('scroll', () => {
+        if (!ticking) {
+          window.requestAnimationFrame(updateParallax);
+          ticking = true;
+        }
+      });
+    }
+
+    function initScrollProgress() {
+      const progressBar = document.getElementById('scrollProgress');
+      if (!progressBar) return;
+
+      window.addEventListener('scroll', () => {
+        const windowHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        const scrolled = (window.scrollY / windowHeight) * 100;
+        progressBar.style.transform = `scaleX(${scrolled / 100})`;
+      });
+    }
+
+    function initCursorTrail() {
+      let trail = [];
+      const trailLength = 15;
+      
+      // Remove existing listener if any
+      if (window.cursorTrailHandler) {
+        document.removeEventListener('mousemove', window.cursorTrailHandler);
+      }
+
+      window.cursorTrailHandler = (e) => {
+        // Don't create trail if neon is off
+        if (document.body.classList.contains('neon-off')) {
+          return;
+        }
+        
+        const trailDot = document.createElement('div');
+        trailDot.className = 'cursor-trail';
+        trailDot.style.left = e.clientX + 'px';
+        trailDot.style.top = e.clientY + 'px';
+        document.body.appendChild(trailDot);
+
+        trail.push(trailDot);
+        if (trail.length > trailLength) {
+          const oldDot = trail.shift();
+          if (oldDot && oldDot.parentNode) {
+            oldDot.parentNode.removeChild(oldDot);
+          }
+        }
+
+        setTimeout(() => {
+          if (trailDot && trailDot.parentNode) {
+            trailDot.parentNode.removeChild(trailDot);
+          }
+        }, 500);
+      };
+      
+      document.addEventListener('mousemove', window.cursorTrailHandler);
+    }
+
+    function initSparkles() {
+      const gameContainer = document.querySelector('.game-container');
+      if (!gameContainer) return;
+
+      setInterval(() => {
+        const sparkle = document.createElement('div');
+        sparkle.style.position = 'absolute';
+        sparkle.style.width = '4px';
+        sparkle.style.height = '4px';
+        sparkle.style.background = '#00ffff';
+        sparkle.style.borderRadius = '50%';
+        sparkle.style.boxShadow = '0 0 10px #00ffff, 0 0 20px #00ffff';
+        sparkle.style.left = Math.random() * 100 + '%';
+        sparkle.style.top = Math.random() * 100 + '%';
+        sparkle.style.pointerEvents = 'none';
+        sparkle.style.zIndex = '999';
+        sparkle.style.animation = 'sparkleFade 1s ease-out forwards';
+        gameContainer.style.position = 'relative';
+        gameContainer.appendChild(sparkle);
+
+        setTimeout(() => {
+          if (sparkle.parentNode) {
+            sparkle.parentNode.removeChild(sparkle);
+          }
+        }, 1000);
+      }, 500);
+    }
+
+    function initSmoothScroll() {
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute('href'));
+          if (target) {
+            const offset = 120;
+            const targetPosition = target.getBoundingClientRect().top + window.pageYOffset - offset;
+            window.scrollTo({
+              top: targetPosition,
+              behavior: 'smooth'
+            });
+          }
+        });
+      });
     }
 
     // Neon Toggle System
@@ -2092,40 +3455,123 @@
           body.classList.remove('neon-off');
           neonToggle.textContent = '💡 Neon: ON';
           localStorage.setItem('neonEnabled', 'true');
+          createParticles();
+          initCursorTrail();
         } else {
           body.classList.add('neon-off');
           neonToggle.textContent = '💡 Neon: OFF';
           localStorage.setItem('neonEnabled', 'false');
+          // Stop effects when turning neon off
+          const particles = document.getElementById('particles');
+          if (particles) {
+            particles.innerHTML = '';
+          }
+          // Remove all cursor trail elements
+          document.querySelectorAll('.cursor-trail').forEach(trail => {
+            if (trail.parentNode) {
+              trail.parentNode.removeChild(trail);
+            }
+          });
         }
       });
     }
 
-    // Load Luna mint address on page load
-    async function loadLunaMintAddress() {
+    // Sound Effects System for Navigation
+    const navAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playNavSound(frequency, duration, type = 'sine', volume = 0.3) {
       try {
-        const response = await fetch(`${API_BASE}/luna/rps/contract-address`);
-        const data = await response.json();
-        if (data.ok && data.contractAddress) {
-          lunaMintAddress = data.contractAddress;
+        if (navAudioContext.state === 'suspended') {
+          navAudioContext.resume().catch(() => {});
         }
-      } catch (error) {
-        console.error('[Deposit] Failed to load Luna mint address:', error);
+        const oscillator = navAudioContext.createOscillator();
+        const gainNode = navAudioContext.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(navAudioContext.destination);
+        oscillator.frequency.value = frequency;
+        oscillator.type = type;
+        gainNode.gain.setValueAtTime(volume, navAudioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, navAudioContext.currentTime + duration);
+        oscillator.start(navAudioContext.currentTime);
+        oscillator.stop(navAudioContext.currentTime + duration);
+      } catch (err) {
+        console.error('[Deposit] Sound error:', err);
       }
+    }
+
+    function playNavClickSound() {
+      playNavSound(600, 0.1, 'sine', 0.25);
+    }
+
+    function initNavigationSounds() {
+      const navLinks = document.querySelectorAll('#modeNavigation a');
+      navLinks.forEach(link => {
+        const targetHref = link.href;
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          playNavClickSound();
+          setTimeout(() => {
+            window.location.href = targetHref;
+          }, 180);
+        });
+      });
     }
 
     // Initialize
     document.addEventListener('DOMContentLoaded', async () => {
       console.log('[Deposit] DOMContentLoaded - Initializing...');
+      
+      // Cleanup on page unload
+      window.addEventListener('beforeunload', cleanupAll);
+      hideWalletInfoFixed();
       initNeonToggle();
+      initNavigationSounds();
+      
+      // Initialize enhanced effects (respect neon toggle)
+      const neonEnabled = localStorage.getItem('neonEnabled') !== 'false';
+      if (neonEnabled) {
+        createParticles();
+        initCursorTrail();
+      }
+      initParallax();
+      initScrollProgress();
+      initSparkles();
+      initSmoothScroll();
+      
+      enforceLockedDepositAmount();
+      updateDynamicRequirementCard();
+      prefetchDynamicRequirement();
+      await fetchCompetitionEndTime(true);
+      fetchBurnStats(true);
+      setInterval(() => {
+        fetchBurnStats();
+      }, BURN_STATS_REFRESH_INTERVAL);
       
       // Wait a bit to ensure all elements are ready
       setTimeout(() => {
         setupWalletConnection();
+        initFormValidation();
+        initTooltips();
+        initKeyboardShortcuts();
       }, 100);
-      await loadLunaMintAddress();
       
       // Check if wallet already connected OR has valid signature (like pump.fun)
       const storedSignature = localStorage.getItem('walletSignature');
+      const forceDisconnected = window.phantomHelper?.hasForceDisconnect?.()
+        || !!localStorage.getItem('phantomForceDisconnect');
+      const autoConnected = forceDisconnected
+        ? false
+        : await attemptPhantomAutoConnect(handleAutoConnectedWallet);
+      
+      if (autoConnected) {
+        console.log('[Deposit] ✅ Wallet auto-connected successfully');
+        return;
+      }
+      
+      if (forceDisconnected) {
+        console.log('[Deposit] Force disconnect flag active. Waiting for manual wallet connection.');
+        return;
+      }
       
       if (window.solana && window.solana.isPhantom) {
         // Case 1: Wallet is already connected
@@ -2141,6 +3587,12 @@
                 console.log('[Deposit] ✅ Persistent connection found - using existing authenticated connection');
                 walletPublicKey = currentWallet;
                 walletConnected = true;
+                if (window.phantomHelper && typeof window.phantomHelper.saveState === 'function') {
+                  window.phantomHelper.saveState({ publicKey: walletPublicKey, hasSignature: true });
+                  if (typeof window.phantomHelper.clearForceDisconnect === 'function') {
+                    window.phantomHelper.clearForceDisconnect();
+                  }
+                }
                 
                 // Update wallet info with connect time if available
                 const walletInfoFixed = document.getElementById('walletInfoFixed');
@@ -2192,6 +3644,12 @@
           console.log('[Deposit] ✅ Wallet already connected (no signature) - using existing connection');
           walletPublicKey = currentWallet;
           walletConnected = true;
+          if (window.phantomHelper && typeof window.phantomHelper.saveState === 'function') {
+            window.phantomHelper.saveState({ publicKey: walletPublicKey, hasSignature: false });
+            if (typeof window.phantomHelper.clearForceDisconnect === 'function') {
+              window.phantomHelper.clearForceDisconnect();
+            }
+          }
           
           // Get existing connect time or set new one
           let connectTimestamp = parseInt(localStorage.getItem('phantomConnectTime') || '0');
@@ -2260,6 +3718,12 @@
                 console.log('[Deposit] ✅ Auto-reconnected with valid signature');
                 walletPublicKey = currentWallet;
                 walletConnected = true;
+                if (window.phantomHelper && typeof window.phantomHelper.saveState === 'function') {
+                  window.phantomHelper.saveState({ publicKey: walletPublicKey, hasSignature: true });
+                  if (typeof window.phantomHelper.clearForceDisconnect === 'function') {
+                    window.phantomHelper.clearForceDisconnect();
+                  }
+                }
                 
                 // Update wallet info with connect time if available
                 const walletInfoFixed = document.getElementById('walletInfoFixed');
@@ -2299,6 +3763,12 @@
                 // Still connect but without signature
                 walletPublicKey = currentWallet;
                 walletConnected = true;
+                if (window.phantomHelper && typeof window.phantomHelper.saveState === 'function') {
+                  window.phantomHelper.saveState({ publicKey: walletPublicKey, hasSignature: false });
+            if (typeof window.phantomHelper.clearForceDisconnect === 'function') {
+              window.phantomHelper.clearForceDisconnect();
+            }
+                }
                 
                 // Update UI
                 const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
@@ -2339,6 +3809,12 @@
         const currentWallet = window.solana.publicKey.toString();
         walletPublicKey = currentWallet;
         walletConnected = true;
+        if (window.phantomHelper && typeof window.phantomHelper.saveState === 'function') {
+          window.phantomHelper.saveState({ publicKey: walletPublicKey, hasSignature: false });
+                  if (typeof window.phantomHelper.clearForceDisconnect === 'function') {
+                    window.phantomHelper.clearForceDisconnect();
+                  }
+        }
         
         // Get existing connect time or set new one
         let connectTimestamp = parseInt(localStorage.getItem('phantomConnectTime') || '0');
@@ -2383,6 +3859,128 @@
         startBalanceUpdate();
         setupDepositSystem();
       }
+
+      // Initialize form validation, tooltips, and keyboard shortcuts
+      function initFormValidation() {
+        if (!window.lunaUtils) return;
+        
+        const manualWithdrawInput = document.getElementById('manualWithdrawSignatureInput');
+        if (manualWithdrawInput) {
+          const errorContainer = document.createElement('div');
+          errorContainer.className = 'error-message';
+          errorContainer.id = 'manualWithdrawSignatureError';
+          manualWithdrawInput.parentNode.insertBefore(errorContainer, manualWithdrawInput.nextSibling);
+          
+          window.lunaUtils.setupRealTimeValidation(manualWithdrawInput, [
+            { required: 'Transaction signature is required' },
+            { minLength: [32, 'Invalid transaction signature format'] },
+            { pattern: [/^[A-Za-z0-9]+$/, 'Signature must contain only alphanumeric characters'] }
+          ], {
+            errorContainer: errorContainer
+          });
+        }
+      }
+
+      function initTooltips() {
+        if (!window.lunaUtils) return;
+        
+        const depositBtn = document.getElementById('depositBtn');
+        const withdrawBtn = document.getElementById('withdrawBtn');
+        const manualWithdrawBtn = document.getElementById('manualWithdrawFinalizeBtn');
+        const connectBtn = document.getElementById('connectWalletBtnFixed') || document.getElementById('connectWalletBtn');
+        
+        if (depositBtn) {
+          window.lunaUtils.createTooltip(depositBtn, 'Deposit Luna tokens to reduce betting fees. Minimum deposit is locked at current requirement.', 'top');
+        }
+        if (withdrawBtn) {
+          window.lunaUtils.createTooltip(withdrawBtn, 'Withdraw your deposited Luna. Betting fee will return to 3%.', 'top');
+        }
+        if (manualWithdrawBtn) {
+          window.lunaUtils.createTooltip(manualWithdrawBtn, 'Finalize withdrawal using transaction signature from Solana Explorer', 'top');
+        }
+        if (connectBtn) {
+          window.lunaUtils.createTooltip(connectBtn, 'Connect your Phantom wallet to deposit or withdraw Luna', 'bottom');
+        }
+      }
+
+      function initKeyboardShortcuts() {
+        if (!window.lunaUtils) return;
+        
+        // Ctrl/Cmd + D: Focus deposit button
+        window.lunaUtils.registerShortcut('d', () => {
+          const depositBtn = document.getElementById('depositBtn');
+          if (depositBtn && !depositBtn.disabled && depositBtn.offsetParent !== null) {
+            depositBtn.focus();
+            depositBtn.click();
+          }
+        }, { ctrl: true, meta: true });
+        
+        // Ctrl/Cmd + W: Focus withdraw button
+        window.lunaUtils.registerShortcut('w', () => {
+          const withdrawBtn = document.getElementById('withdrawBtn');
+          if (withdrawBtn && !withdrawBtn.disabled && withdrawBtn.offsetParent !== null) {
+            withdrawBtn.focus();
+            if (confirm('Are you sure you want to withdraw? Your Betting Mode fee will return to 3%.')) {
+              withdrawBtn.click();
+            }
+          }
+        }, { ctrl: true, meta: true });
+        
+        // Ctrl/Cmd + K: Connect wallet
+        window.lunaUtils.registerShortcut('k', () => {
+          const connectBtn = document.getElementById('connectWalletBtnFixed') || document.getElementById('connectWalletBtn');
+          if (connectBtn && !connectBtn.disabled && connectBtn.offsetParent !== null) {
+            connectBtn.click();
+          }
+        }, { ctrl: true, meta: true });
+      }
+    });
+  </script>
+  <script>
+    // Update og:image and og:url with absolute URLs for Phantom Wallet
+    document.addEventListener('DOMContentLoaded', () => {
+      const ogImage = document.getElementById('og-image');
+      const ogUrl = document.querySelector('meta[property="og:url"]');
+      const baseUrl = window.location.origin;
+      
+      if (ogImage) {
+        ogImage.setAttribute('content', `${baseUrl}/images/logo/favicon-256x256.png`);
+      }
+      if (ogUrl) {
+        ogUrl.setAttribute('content', window.location.href);
+      }
+      
+      // Update favicon links to use absolute URLs (Phantom Wallet requirement)
+      // CRITICAL: Phantom Wallet reads favicon from browser tab, so browser tab MUST show favicon
+      document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]').forEach(link => {
+        const href = link.getAttribute('href');
+        if (href && !href.startsWith('http')) {
+          const absoluteUrl = `${baseUrl}${href}`;
+          link.setAttribute('href', absoluteUrl);
+          console.log('[Favicon] Updated favicon link:', absoluteUrl);
+        }
+      });
+      
+      // Force browser to reload favicon (important for Phantom Wallet)
+      const faviconLink = document.querySelector('link[rel="icon"][href*="favicon.ico"]');
+      if (faviconLink) {
+        const faviconUrl = faviconLink.getAttribute('href');
+        // Create new link element to force reload
+        const newLink = document.createElement('link');
+        newLink.rel = 'icon';
+        newLink.type = 'image/x-icon';
+        newLink.href = `${faviconUrl}?v=${Date.now()}`; // Add cache buster
+        document.head.appendChild(newLink);
+        console.log('[Favicon] Added favicon with cache buster:', newLink.href);
+      }
+      
+      // Verify favicon is loaded
+      setTimeout(() => {
+        const img = new Image();
+        img.onload = () => console.log('[Favicon] ✅ Favicon loaded successfully');
+        img.onerror = () => console.error('[Favicon] ❌ Failed to load favicon');
+        img.src = `${baseUrl}/favicon.ico?v=${Date.now()}`;
+      }, 1000);
     });
   </script>
 </body>

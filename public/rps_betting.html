@@ -4,7 +4,35 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Luna Rock Paper Scissors - Betting Mode</title>
+  <link rel="stylesheet" href="/css/chat.css">
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Orbitron:wght@500;600;700&display=swap');
+
+    :root {
+      --bg-primary: #030014;
+      --bg-secondary: #090024;
+      --grid-color: rgba(80, 115, 255, 0.12);
+      --neon-cyan: var(--cyber-cyan, #3ef7ff);
+      --neon-pink: var(--cyber-pink, #ff31d9);
+      --neon-purple: var(--cyber-purple, #9b65ff);
+      --accent: var(--cyber-cyan, #80ffea);
+      --text-strong: #f6fffe;
+      --text-base: rgba(246, 255, 254, 0.9);
+      --text-muted: rgba(246, 255, 254, 0.65);
+      --panel-bg: var(--panel, rgba(6, 12, 32, 0.82));
+      --panel-contrast: rgba(23, 11, 40, 0.9);
+      --glass-border: var(--panel-border, rgba(255, 255, 255, 0.15));
+      --glass-highlight: var(--panel-border-strong, rgba(255, 255, 255, 0.35));
+      --shadow-strong: 0 25px 80px rgba(3, 8, 35, 0.85);
+      --shadow-soft: 0 20px 50px rgba(0, 0, 0, 0.45);
+      --radius-xl: 28px;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
+      --transition-fast: 0.25s ease;
+      --transition-slow: 0.45s ease;
+    }
+
     * {
       margin: 0;
       padding: 0;
@@ -12,228 +40,322 @@
     }
 
     body {
-      font-family: 'Courier New', 'Monaco', monospace;
-      background: #0a0a0a;
-      background-image: 
-        radial-gradient(circle at 20% 50%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
-        linear-gradient(135deg, #0a0a0a 0%, #1a0a2e 50%, #16213e 100%);
+      font-family: 'Space Grotesk', 'Courier New', monospace;
+      min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: flex-start;
-      min-height: 100vh;
-      padding: 20px;
-      color: #00ffff;
+      padding: 40px 24px 80px;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(62, 247, 255, 0.12), transparent 55%),
+        radial-gradient(circle at 80% 0%, rgba(255, 49, 217, 0.15), transparent 60%),
+        linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));
+      color: var(--text-base);
       position: relative;
-      overflow-y: auto;
       overflow-x: hidden;
     }
-    
-    body::before {
+
+    body::before,
+    body::after {
       content: '';
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: 
-        repeating-linear-gradient(
-          0deg,
-          transparent,
-          transparent 2px,
-          rgba(0, 255, 255, 0.03) 2px,
-          rgba(0, 255, 255, 0.03) 4px
-        );
       pointer-events: none;
       z-index: 0;
     }
 
+    body::before {
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(255, 255, 255, 0.02) 2px,
+        rgba(255, 255, 255, 0.02) 4px
+      );
+      opacity: 0.4;
+      mix-blend-mode: screen;
+    }
+
+    body::after {
+      background-image:
+        linear-gradient(90deg, var(--grid-color) 1px, transparent 1px),
+        linear-gradient(0deg, var(--grid-color) 1px, transparent 1px);
+      background-size: 80px 80px;
+      opacity: 0.4;
+      filter: blur(0.5px);
+      transform: translateZ(0);
+    }
+
     .game-container {
       text-align: center;
-      padding: 40px;
-      padding-top: 100px;
-      background: rgba(10, 10, 26, 0.8);
-      border: none;
-      border-radius: 0;
-      box-shadow: 
-        0 0 20px rgba(0, 255, 255, 0.25),
-        0 0 40px rgba(0, 255, 255, 0.15),
-        inset 0 0 20px rgba(0, 255, 255, 0.05);
-      max-width: 1000px;
+      padding: 120px 48px 48px;
       width: 100%;
+      max-width: 1100px;
+      border-radius: var(--radius-xl);
+      background: linear-gradient(145deg, rgba(5, 7, 19, 0.92), rgba(12, 8, 32, 0.85));
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-strong);
+      backdrop-filter: blur(24px);
       position: relative;
       z-index: 1;
-      margin-top: 20px;
+      overflow: hidden;
     }
-    
+
     .game-container::before {
       content: '';
       position: absolute;
-      top: -2px;
-      left: -2px;
-      right: -2px;
-      bottom: -2px;
-      background: linear-gradient(45deg, #00ffff, #00ffff, #00ffff);
-      z-index: -1;
-      animation: borderGlow 3s ease-in-out infinite;
-      opacity: 0.5;
+      inset: 1px;
+      border-radius: inherit;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      pointer-events: none;
     }
-    
-    @keyframes borderGlow {
-      0%, 100% { opacity: 0.15; }
-      50% { opacity: 0.35; }
+
+    .game-container::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 10% 20%, rgba(62, 247, 255, 0.12), transparent 40%),
+        radial-gradient(circle at 90% 10%, rgba(255, 49, 217, 0.12), transparent 40%);
+      opacity: 0.6;
+      pointer-events: none;
+      z-index: -1;
     }
 
     h1 {
-      font-size: 2.5em;
-      margin-bottom: 10px;
-      color: #00ffff;
-      text-shadow: 
-        0 0 5px #00ffff,
-        0 0 10px #00ffff,
-        0 0 15px #00ffff,
-        2px 2px 4px rgba(0, 0, 0, 0.8);
-      font-weight: bold;
-      letter-spacing: 3px;
+      font-family: 'Orbitron', 'Space Grotesk', sans-serif;
+      font-size: clamp(2.2rem, 4vw, 3.2rem);
+      letter-spacing: 0.25rem;
       text-transform: uppercase;
-      animation: textGlow 2s ease-in-out infinite alternate;
-    }
-    
-    @keyframes textGlow {
-      0% { text-shadow: 0 0 5px #00ffff, 0 0 10px #00ffff, 0 0 15px #00ffff; }
-      100% { text-shadow: 0 0 10px #00ffff, 0 0 15px #00ffff, 0 0 20px #00ffff; }
+      color: var(--text-strong);
+      margin-bottom: 12px;
+      text-shadow:
+        0 0 10px rgba(62, 247, 255, 0.5),
+        0 0 25px rgba(255, 49, 217, 0.35);
+      animation: pulseGlow 3s ease-in-out infinite;
     }
 
     .subtitle {
-      font-size: 1.2em;
-      margin-bottom: 30px;
-      color: #00ffff;
-      text-shadow: 0 0 5px #00ffff;
+      font-size: 1.1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2rem;
+      color: var(--text-muted);
+      margin-bottom: 32px;
+    }
+
+    @keyframes pulseGlow {
+      0% {
+        text-shadow: 0 0 12px rgba(62, 247, 255, 0.45);
+      }
+      50% {
+        text-shadow: 0 0 25px rgba(255, 49, 217, 0.5);
+      }
+      100% {
+        text-shadow: 0 0 12px rgba(62, 247, 255, 0.45);
+      }
     }
 
     .back-link {
-      /* Removed position/left/top to allow inline styles to work */
-      color: #00ffff;
+      color: var(--text-base);
       text-decoration: none;
       padding: 10px 20px;
-      border: none;
-      border-radius: 8px;
-      transition: all 0.3s;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--glass-border);
+      background: rgba(7, 10, 30, 0.8);
+      backdrop-filter: blur(10px);
+      transition: all var(--transition-fast);
     }
 
     .back-link:hover {
-      background: rgba(0, 255, 255, 0.2);
-        box-shadow: 0 0 10px #00ffff;
+      color: var(--text-strong);
+      border-color: rgba(62, 247, 255, 0.5);
+      box-shadow: 0 0 15px rgba(62, 247, 255, 0.3);
     }
-    
-    /* Ensure mode navigation is always visible */
+
     #modeNavigation {
       position: fixed !important;
       top: 40px !important;
       left: 20px !important;
-      z-index: 99999 !important;
+      z-index: 30;
       display: flex !important;
-      visibility: visible !important;
-      opacity: 1 !important;
-    }
-    
-    #modeNavigation a {
-      display: inline-block !important;
-      visibility: visible !important;
-      opacity: 1 !important;
-      cursor: pointer !important;
-    }
-    
-    #modeNavigation a:hover {
-      box-shadow: 
-        0 0 20px currentColor,
-        0 0 40px currentColor,
-        0 0 60px currentColor,
-        inset 0 0 20px rgba(255, 255, 255, 0.1) !important;
-      transform: scale(1.05) !important;
-      text-shadow: 
-        0 0 10px currentColor,
-        0 0 20px currentColor,
-        0 0 30px currentColor !important;
-      background: rgba(0, 0, 0, 0.95) !important;
-    }
-    
-    #modeNavigation a:active {
-      box-shadow: 
-        0 0 30px currentColor,
-        0 0 60px currentColor,
-        0 0 90px currentColor,
-        inset 0 0 30px rgba(255, 255, 255, 0.2) !important;
-      transform: scale(0.98) !important;
+      gap: 10px;
+      flex-wrap: wrap;
+      pointer-events: auto !important;
     }
 
-    /* Wallet Connect Button (Fixed Position - Top Right) */
-    #walletConnectFixed {
+    #modeNavigation a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 20px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(6, 9, 28, 0.92);
+      color: var(--text-base);
+      text-decoration: none;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      font-size: 0.78rem;
+      white-space: nowrap;
+      box-shadow: 0 18px 30px rgba(0, 0, 0, 0.5);
+      transition: all var(--transition-fast);
+      text-shadow: none;
+    }
+
+    #modeNavigation a.current {
+      border-color: rgba(62, 247, 255, 0.65);
+      background: linear-gradient(120deg, rgba(62, 247, 255, 0.16), rgba(255, 49, 217, 0.18));
+      color: var(--text-strong);
+      box-shadow: 0 18px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    #modeNavigation a:hover {
+      transform: translateY(-2px) scale(1.05) !important;
+      box-shadow:
+        0 22px 38px rgba(0, 0, 0, 0.55),
+        0 0 28px rgba(62, 247, 255, 0.5),
+        0 0 55px rgba(255, 255, 255, 0.65) !important;
+      border-color: rgba(255, 255, 255, 0.85) !important;
+      background: rgba(0, 0, 0, 0.9) !important;
+      text-shadow:
+        0 0 12px currentColor,
+        0 0 22px currentColor,
+        0 0 38px rgba(255, 255, 255, 0.55) !important;
+    }
+
+    #modeNavigation a:active {
+      transform: translateY(0) scale(0.97) !important;
+      box-shadow:
+        0 12px 25px rgba(0, 0, 0, 0.55),
+        0 0 30px rgba(255, 255, 255, 0.45) !important;
+      border-color: rgba(255, 255, 255, 0.75) !important;
+    }
+
+    .wallet-connect--fixed {
       position: fixed;
-      top: 40px;
-      right: 20px;
-      z-index: 99999;
+      top: 32px;
+      right: 32px;
+      z-index: 30;
       display: flex;
       flex-direction: column;
       gap: 10px;
       align-items: flex-end;
     }
 
-    #walletConnectFixed .wallet-btn {
-      background: rgba(0, 0, 0, 0.9);
-      border: 2px solid #00ffff;
-      color: #00ffff;
-      padding: 10px 20px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-family: 'Courier New', monospace;
-      font-size: 0.9em;
-      transition: all 0.3s;
-      backdrop-filter: blur(5px);
-      white-space: nowrap;
+    .wallet-connect--fixed .wallet-btn {
+      width: auto;
+      min-width: 240px;
     }
 
-    #walletConnectFixed .wallet-btn:hover {
-      background: rgba(0, 255, 255, 0.2);
-      box-shadow: 0 0 10px #00ffff;
+    .wallet-connect--fixed .wallet-info {
+      max-width: 260px;
+      text-align: center;
     }
 
-    #walletConnectFixed .wallet-info {
-      background: rgba(0, 0, 0, 0.9);
-      border: 1px solid #00ffff;
-      color: #00ffff;
-      padding: 8px 15px;
-      border-radius: 8px;
-      font-size: 0.85em;
-      backdrop-filter: blur(5px);
-      max-width: 250px;
-      word-break: break-all;
-    }
-
-    /* Neon Toggle Button (Bottom Right) */
     #neonToggle {
       position: fixed;
-      bottom: 20px;
-      right: 20px;
-      z-index: 99999;
-      background: rgba(0, 0, 0, 0.9);
-      border: 2px solid #00ffff;
-      color: #00ffff;
-      padding: 10px 20px;
-      border-radius: 8px;
+      bottom: 28px;
+      right: 32px;
+      left: auto;
+      top: auto;
+      z-index: 20;
+      border: 1px solid var(--glass-border);
+      background: linear-gradient(120deg, rgba(7, 10, 30, 0.95), rgba(30, 8, 46, 0.9));
+      color: var(--text-strong);
+      padding: 10px 22px;
+      border-radius: var(--radius-md);
       cursor: pointer;
-      font-family: 'Courier New', monospace;
-      font-size: 0.9em;
-      transition: all 0.3s;
-      backdrop-filter: blur(5px);
+      font-family: 'Space Grotesk', 'Courier New', monospace;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      box-shadow: 0 10px 25px rgba(3, 3, 20, 0.8);
+      transition: all var(--transition-fast);
+    }
+
+    /* Enhanced Effects Styles */
+    .particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .particle {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: rgba(0, 255, 255, 0.6);
+      border-radius: 50%;
+      animation: float 20s infinite linear;
+      box-shadow: 0 0 6px rgba(0, 255, 255, 0.8);
+    }
+
+    @keyframes float {
+      0% { transform: translateY(100vh) translateX(0) rotate(0deg); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translateY(-100vh) translateX(100px) rotate(360deg); opacity: 0; }
+    }
+
+    .scroll-progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      background: linear-gradient(90deg, rgba(0, 255, 255, 0.8), rgba(255, 0, 255, 0.8), rgba(0, 255, 157, 0.8));
+      background-size: 200% 100%;
+      z-index: 10000;
+      transform-origin: left;
+      transform: scaleX(0);
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+      animation: progressGradient 3s linear infinite;
+    }
+
+    @keyframes progressGradient {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 200% 50%; }
+    }
+
+    .cursor-trail {
+      position: fixed;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(0, 255, 255, 0.6);
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+      pointer-events: none;
+      z-index: 9999;
+      animation: trailFade 0.5s ease-out forwards;
+    }
+
+    @keyframes trailFade {
+      0% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0; transform: scale(0); }
+    }
+
+    @keyframes sparkleFade {
+      0% { opacity: 1; transform: scale(1) rotate(0deg); }
+      100% { opacity: 0; transform: scale(0) rotate(360deg); }
+    }
+
+    body.neon-off .particles,
+    body.neon-off .scroll-progress,
+    body.neon-off .cursor-trail {
+      display: none !important;
     }
 
     #neonToggle:hover {
-      background: rgba(0, 255, 255, 0.2);
-        box-shadow: 0 0 10px #00ffff;
+      transform: translateY(-2px);
+      box-shadow: 0 25px 35px rgba(0, 0, 0, 0.55), 0 0 25px rgba(62, 247, 255, 0.4);
     }
 
-    /* Neon Off Styles */
     body.neon-off * {
       text-shadow: none !important;
       box-shadow: none !important;
@@ -241,195 +363,310 @@
       animation: none !important;
     }
 
-    body.neon-off .game-container::before {
-      display: none !important;
-    }
-
-    body.neon-off body::before {
-      opacity: 0.01 !important;
+    body.neon-off::before,
+    body.neon-off::after,
+    body.neon-off .game-container::after {
+      opacity: 0.05 !important;
     }
 
     .wallet-connect {
-      margin-bottom: 30px;
+      margin-bottom: 24px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .wallet-btn,
+    .create-btn,
+    .join-btn,
+    .contract-btn,
+    .dex-btn,
+    .cancel-btn {
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      font-family: 'Space Grotesk', 'Courier New', monospace;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-strong);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(120deg, rgba(62, 247, 255, 0.35), rgba(255, 49, 217, 0.2));
+      padding: 14px 28px;
+      box-shadow: 0 12px 25px rgba(0, 0, 0, 0.45);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
     }
 
     .wallet-btn {
-      background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(0, 255, 255, 0.2));
-      border: none;
-      color: #00ffff;
-      padding: 15px 30px;
-      font-size: 1.1em;
-      cursor: pointer;
-      border-radius: 8px;
-      transition: all 0.3s;
-      font-family: 'Courier New', monospace;
       margin: 5px;
+      width: auto;
     }
 
-    .wallet-btn:hover {
-      background: linear-gradient(135deg, rgba(0, 255, 255, 0.4), rgba(0, 255, 255, 0.4));
-        box-shadow: 0 0 10px #00ffff;
-      transform: scale(1.05);
+    .create-btn,
+    .join-btn,
+    .cancel-btn {
+      width: 100%;
     }
 
-    .wallet-info {
-      margin-top: 15px;
-      padding: 15px;
-      background: rgba(0, 255, 255, 0.1);
-      border: 1px solid #00ffff;
-      border-radius: 8px;
-      font-size: 0.9em;
+    .wallet-btn::after,
+    .create-btn::after,
+    .join-btn::after,
+    .contract-btn::after,
+    .dex-btn::after,
+    .cancel-btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, rgba(255, 255, 255, 0.08), transparent 60%);
+      opacity: 0;
+      transition: opacity var(--transition-fast);
+    }
+
+    .wallet-btn:hover:not(:disabled)::after,
+    .create-btn:hover:not(:disabled)::after,
+    .join-btn:hover:not(:disabled)::after,
+    .contract-btn:hover:not(:disabled)::after,
+    .dex-btn:hover:not(:disabled)::after,
+    .cancel-btn:hover:not(:disabled)::after {
+      opacity: 1;
+    }
+
+    .wallet-btn:hover:not(:disabled),
+    .create-btn:hover:not(:disabled),
+    .join-btn:hover:not(:disabled),
+    .contract-btn:hover:not(:disabled),
+    .dex-btn:hover:not(:disabled),
+    .cancel-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 18px 30px rgba(0, 0, 0, 0.55), 0 0 20px rgba(62, 247, 255, 0.25);
+    }
+
+    .wallet-btn:disabled,
+    .create-btn:disabled,
+    .join-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .wallet-info,
+    .balance-check,
+    #solBalanceDisplay,
+    #totalFeesDisplay,
+    #feeDisplay,
+    .contract-section,
+    .create-room,
+    .available-rooms,
+    .room-card,
+    .result {
+      background: var(--panel-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      backdrop-filter: blur(20px);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .wallet-info,
+    #solBalanceDisplay,
+    #totalFeesDisplay {
+      padding: 18px;
+      text-align: left;
+    }
+
+    .wallet-info strong {
+      color: var(--text-strong);
+    }
+
+    #solBalanceDisplay {
+      margin-top: 10px;
     }
 
     .balance-check {
       margin: 15px 0;
-      padding: 10px;
-      color: #00ffff;
+      padding: 12px;
+      color: var(--text-muted);
     }
 
     .betting-section {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 30px;
       margin-top: 30px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 32px;
     }
 
-    .create-room, .available-rooms {
-      background: rgba(0, 255, 255, 0.05);
-      border: none;
-      border-radius: 8px;
-      padding: 25px;
+    .create-room,
+    .available-rooms {
+      padding: 32px;
+      text-align: left;
+      position: relative;
+      overflow: hidden;
     }
 
-    .create-room h2, .available-rooms h2 {
-      color: #00ffff;
-      margin-bottom: 20px;
-      font-size: 1.5em;
-      text-shadow: 0 0 5px #00ffff;
+    .create-room::before,
+    .available-rooms::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 15% 20%, rgba(62, 247, 255, 0.18), transparent 50%);
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    .create-room h2,
+    .available-rooms h2 {
+      font-family: 'Orbitron', 'Space Grotesk', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--text-strong);
+      margin-bottom: 24px;
     }
 
     .bet-input {
       display: flex;
       flex-direction: column;
-      gap: 15px;
+      gap: 12px;
       margin-bottom: 20px;
     }
 
     .bet-input label {
-      color: #00ffff;
-      font-size: 1.1em;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      letter-spacing: 0.08em;
     }
 
-    .bet-input input {
-      background: rgba(0, 0, 0, 0.5);
-      border: none;
-      color: #00ffff;
-      padding: 12px;
-      font-size: 1.2em;
-      border-radius: 8px;
-      font-family: 'Courier New', monospace;
+    .bet-input input,
+    .contract-input {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--glass-border);
+      color: var(--text-strong);
+      padding: 14px;
+      font-size: 1.1rem;
+      border-radius: var(--radius-md);
+      font-family: 'Space Grotesk', 'Courier New', monospace;
       text-align: center;
+      letter-spacing: 0.08em;
+      backdrop-filter: blur(12px);
+      transition: box-shadow var(--transition-fast), border var(--transition-fast);
     }
 
-    .bet-input input:focus {
+    .bet-input input:focus,
+    .contract-input:focus {
       outline: none;
-      box-shadow: 0 0 15px #00ffff;
+      border-color: rgba(62, 247, 255, 0.8);
+      box-shadow: 0 0 20px rgba(62, 247, 255, 0.3);
     }
 
-    .create-btn {
-      background: linear-gradient(135deg, rgba(0, 255, 255, 0.3), rgba(0, 255, 255, 0.3));
-      border: none;
-      color: #00ffff;
-      padding: 15px 30px;
-      font-size: 1.2em;
-      cursor: pointer;
-      border-radius: 8px;
-      transition: all 0.3s;
-      font-family: 'Courier New', monospace;
-      width: 100%;
+    #feeDisplay {
+      margin-top: 10px;
+      padding: 16px;
+      color: var(--text-base);
+      text-align: left;
+      font-size: 0.95rem;
     }
 
-    .create-btn:hover:not(:disabled) {
-      background: linear-gradient(135deg, rgba(0, 255, 255, 0.5), rgba(0, 255, 255, 0.5));
-      box-shadow: 0 0 25px #00ffff;
-      transform: scale(1.05);
+    .fee-card {
+      background: var(--panel-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(16px);
     }
 
-    .create-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
+    .fee-card__note {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 6px;
     }
 
     .rooms-list {
-      max-height: 400px;
+      max-height: 420px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 15px;
+      gap: 18px;
+      padding-right: 6px;
+    }
+
+    .rooms-list::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .rooms-list::-webkit-scrollbar-thumb {
+      background: rgba(62, 247, 255, 0.5);
+      border-radius: 999px;
     }
 
     .room-card {
-      background: rgba(0, 255, 255, 0.1);
-      border: none;
-      border-radius: 8px;
-      padding: 20px;
-      transition: all 0.3s;
+      padding: 24px;
+      text-align: left;
+      transition: transform var(--transition-fast), border var(--transition-fast);
+    }
+
+    .room-card--test {
+      border-style: dashed;
+      opacity: 0.85;
+    }
+
+    .room-card--owned {
+      border-color: rgba(255, 49, 217, 0.5);
+      box-shadow: 0 0 25px rgba(255, 49, 217, 0.15);
     }
 
     .room-card:hover {
-      background: rgba(0, 255, 255, 0.2);
-        box-shadow: 0 0 10px #00ffff;
-      transform: translateX(5px);
+      transform: translateY(-4px);
+      border-color: rgba(62, 247, 255, 0.4);
     }
 
     .room-header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      gap: 12px;
+      align-items: baseline;
       margin-bottom: 10px;
     }
 
     .room-bet {
-      font-size: 1.3em;
-      color: #00ffff;
-      font-weight: bold;
-      text-shadow: 0 0 5px #00ffff;
+      font-size: 1.3rem;
+      color: var(--text-strong);
     }
 
     .room-creator {
-      font-size: 0.9em;
-      color: #00ffff;
-      opacity: 0.8;
+      font-size: 0.85rem;
+      color: var(--text-muted);
     }
 
     .room-status {
-      margin: 10px 0;
-      color: #00ffff;
+      color: var(--accent);
+      margin-bottom: 8px;
+      letter-spacing: 0.08em;
     }
 
-    .join-btn {
-      background: linear-gradient(135deg, rgba(0, 255, 255, 0.3), rgba(0, 255, 255, 0.3));
-      border: none;
-      color: #00ffff;
-      padding: 12px 25px;
-      font-size: 1.1em;
-      cursor: pointer;
-      border-radius: 8px;
-      transition: all 0.3s;
-      font-family: 'Courier New', monospace;
-      width: 100%;
-      margin-top: 10px;
+    .room-meta {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 12px;
     }
 
-    .join-btn:hover:not(:disabled) {
-      background: linear-gradient(135deg, rgba(0, 255, 255, 0.5), rgba(0, 255, 255, 0.5));
-      box-shadow: 0 0 25px #00ffff;
-      transform: scale(1.05);
+    .room-note {
+      margin: 12px 0;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
     }
 
-    .join-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
+    .cancel-btn {
+      background: linear-gradient(120deg, rgba(255, 86, 140, 0.35), rgba(255, 123, 71, 0.25));
+      border-color: rgba(255, 71, 71, 0.65);
+    }
+
+    .cancel-btn--outline {
+      background: transparent;
+      border-color: rgba(255, 84, 84, 0.7);
     }
 
     .game-area {
@@ -444,110 +681,111 @@
     .hands-container {
       display: flex;
       justify-content: space-around;
-      align-items: center;
-      margin: 40px 0;
-      gap: 30px;
+      gap: 32px;
+      margin: 50px 0 40px;
+      flex-wrap: wrap;
     }
 
     .hand {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 15px;
+      gap: 16px;
     }
 
     .hand-label {
-      font-size: 1.3em;
-      color: #00ffff;
-      text-shadow: 0 0 5px #00ffff;
-      font-weight: bold;
+      font-size: 1.15rem;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
     }
 
     .hand-icon {
       width: 150px;
       height: 150px;
+      border-radius: 50%;
+      border: 2px solid rgba(62, 247, 255, 0.35);
+      background: radial-gradient(circle, rgba(62, 247, 255, 0.08), transparent);
       display: flex;
       align-items: center;
       justify-content: center;
-      border: 3px solid #00ffff;
+      box-shadow: 0 25px 45px rgba(0, 0, 0, 0.45);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hand-icon::after {
+      content: '';
+      position: absolute;
+      inset: 0;
       border-radius: 50%;
-      background: rgba(0, 255, 255, 0.1);
-      box-shadow: 0 0 30px rgba(0, 255, 255, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: inset 0 0 15px rgba(62, 247, 255, 0.25);
     }
 
     .hand-icon img {
-      width: 120px;
-      height: 120px;
+      width: 110px;
+      height: 110px;
       object-fit: contain;
     }
 
     #playerHand img {
-      transform: scaleX(1) rotate(90deg);
+      transform: rotate(90deg);
     }
 
     #opponentHand img {
-      transform: scaleX(1) rotate(-90deg);
-    }
-    
-    .choice-btn {
-      font-size: 0; /* Remove emoji font size */
-    }
-    
-    .choice-btn img {
-      width: 80px;
-      height: 80px;
-      object-fit: contain;
-      display: block;
+      transform: rotate(-90deg);
     }
 
     .vs {
-      font-size: 2em;
-      color: #00ffff;
-      text-shadow: 0 0 10px #00ffff;
-      font-weight: bold;
+      font-size: 2.5rem;
+      color: var(--text-strong);
+      letter-spacing: 0.25em;
     }
 
     .result {
-      font-size: 2em;
-      margin: 30px 0;
-      padding: 20px;
-      background: rgba(0, 255, 255, 0.1);
-      border: none;
-      border-radius: 8px;
-      min-height: 80px;
+      margin: 0 auto 32px;
+      padding: 24px;
+      min-height: 96px;
+      font-size: 1.5rem;
       display: flex;
       align-items: center;
       justify-content: center;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
     }
 
     .player-choices {
       display: flex;
       justify-content: center;
-      gap: 30px;
-      margin: 30px 0;
+      gap: 24px;
+      flex-wrap: wrap;
     }
 
     .choice-btn {
       width: 120px;
       height: 120px;
-      border: 3px solid #00ffff;
       border-radius: 50%;
-      background: rgba(0, 255, 255, 0.1);
-      cursor: pointer;
-      transition: all 0.3s;
+      border: 2px solid rgba(62, 247, 255, 0.35);
+      background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.08), rgba(9, 12, 32, 0.85));
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 3em;
-      color: #00ffff;
+      cursor: pointer;
+      transition: transform var(--transition-fast), border var(--transition-fast);
       position: relative;
       overflow: hidden;
+      font-size: 0;
+    }
+
+    .choice-btn img {
+      width: 70px;
+      height: 70px;
+      object-fit: contain;
     }
 
     .choice-btn:hover:not(:disabled) {
-      background: rgba(0, 255, 255, 0.3);
-      box-shadow: 0 0 30px #00ffff;
-      transform: scale(1.1);
+      transform: translateY(-4px) scale(1.05);
+      border-color: rgba(255, 49, 217, 0.6);
     }
 
     .choice-btn:disabled {
@@ -556,10 +794,9 @@
     }
 
     .status {
-      margin-top: 20px;
-      font-size: 1.2em;
-      color: #00ffff;
-      min-height: 30px;
+      margin-top: 24px;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
     }
 
     .hidden {
@@ -570,56 +807,47 @@
       display: inline-block;
       width: 20px;
       height: 20px;
-      border: 3px solid rgba(255, 255, 255, 0.3);
+      border: 3px solid rgba(255, 255, 255, 0.15);
       border-radius: 50%;
-      border-top-color: white;
+      border-top-color: var(--neon-cyan);
       animation: spin 1s ease-in-out infinite;
     }
 
     @keyframes spin {
-      to { transform: rotate(360deg); }
+      to {
+        transform: rotate(360deg);
+      }
     }
 
     .empty-rooms {
       text-align: center;
-      color: #00ffff;
-      opacity: 0.6;
-      padding: 40px;
-      font-size: 1.1em;
+      padding: 60px 20px;
+      color: var(--text-muted);
+      font-size: 1rem;
     }
 
-    @media (max-width: 768px) {
-      .betting-section {
-        grid-template-columns: 1fr;
-      }
-    }
-    
     .countdown-overlay {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.8);
+      background: rgba(1, 0, 8, 0.9);
       display: flex;
       align-items: center;
       justify-content: center;
       z-index: 10000;
       pointer-events: none;
     }
-    
+
     .countdown-number {
       font-size: 15em;
       font-weight: bold;
-      color: #00ffff;
-      text-shadow: 
-        0 0 20px #00ffff,
-        0 0 40px #00ffff,
-        0 0 60px #00ffff,
-        0 0 80px #00ffff;
+      color: var(--text-strong);
+      text-shadow: 0 0 40px rgba(62, 247, 255, 0.6);
       animation: countdownPulse 0.8s ease-out;
     }
-    
+
     @keyframes countdownPulse {
       0% {
         transform: scale(0.5);
@@ -635,286 +863,346 @@
       }
     }
 
-    /* Contract Address Section */
     .contract-section {
-      background: rgba(0, 255, 255, 0.05);
-      border: 1px solid rgba(0, 255, 255, 0.3);
-      border-radius: 8px;
-      padding: 20px;
-      margin: 20px 0;
-      text-align: center;
+      margin: 25px 0;
+      padding: 24px;
+      text-align: left;
     }
 
     .contract-label {
-      font-size: 1rem;
-      color: #00ffff;
-      margin-bottom: 15px;
-      font-weight: bold;
-      text-shadow: 0 0 5px #00ffff;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 12px;
     }
 
     .contract-input-group {
       display: flex;
-      gap: 10px;
-      align-items: center;
-      justify-content: center;
       flex-wrap: wrap;
-      margin-bottom: 15px;
-    }
-
-    .contract-input {
-      background: rgba(0, 0, 0, 0.5);
-      border: 1px solid rgba(0, 255, 255, 0.3);
-      color: #00ffff;
-      padding: 12px 20px;
-      font-size: 0.9rem;
-      border-radius: 8px;
-      font-family: 'Courier New', monospace;
-      min-width: 300px;
-      max-width: 100%;
-      flex: 1;
-    }
-
-    .contract-input:focus {
-      outline: none;
-      box-shadow: 0 0 15px #00ffff;
+      gap: 12px;
     }
 
     .contract-btn {
-      padding: 12px 24px;
-      font-size: 0.9rem;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.3s;
-      font-family: 'Courier New', monospace;
-      display: flex;
-      align-items: center;
-      gap: 8px;
       white-space: nowrap;
     }
 
     .contract-btn-copy {
-      background: linear-gradient(135deg, #ff6b35, #ff8c42);
-      color: white;
-      font-weight: bold;
-    }
-
-    .contract-btn-copy:hover {
-      background: linear-gradient(135deg, #ff8c42, #ff6b35);
-      box-shadow: 0 0 15px rgba(255, 107, 53, 0.5);
-      transform: translateY(-2px);
+      background: linear-gradient(120deg, rgba(62, 247, 255, 0.35), rgba(20, 161, 218, 0.35));
     }
 
     .contract-btn-view {
-      background: linear-gradient(135deg, #1a237e, #283593);
-      color: white;
-      font-weight: bold;
-    }
-
-    .contract-btn-view:hover {
-      background: linear-gradient(135deg, #283593, #3949ab);
-      box-shadow: 0 0 15px rgba(26, 35, 126, 0.5);
-      transform: translateY(-2px);
+      background: linear-gradient(120deg, rgba(155, 101, 255, 0.45), rgba(255, 49, 217, 0.35));
     }
 
     .contract-warning {
+      margin-top: 12px;
       font-size: 0.85rem;
-      color: #00ffff;
-      opacity: 0.8;
-      margin-top: 15px;
+      color: var(--text-muted);
     }
 
-    /* X DEX Links Section */
     .dex-links {
       display: flex;
-      gap: 20px;
-      justify-content: center;
+      gap: 16px;
       flex-wrap: wrap;
-      margin: 20px 0;
+      justify-content: center;
+      margin: 24px 0 16px;
     }
 
     .dex-btn {
-      padding: 15px 30px;
-      font-size: 1.1rem;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.3s;
-      font-family: 'Courier New', monospace;
-      font-weight: bold;
-      display: flex;
-      align-items: center;
-      gap: 10px;
       text-decoration: none;
-      white-space: nowrap;
+      font-weight: 600;
+      font-size: 1rem;
     }
 
     .dex-btn-buy {
-      background: linear-gradient(135deg, #ff6b35, #ff8c42);
-      color: white;
-    }
-
-    .dex-btn-buy:hover {
-      background: linear-gradient(135deg, #ff8c42, #ff6b35);
-      box-shadow: 0 0 20px rgba(255, 107, 53, 0.6);
-      transform: translateY(-2px);
+      background: linear-gradient(120deg, rgba(255, 121, 85, 0.8), rgba(255, 79, 172, 0.7));
+      border-color: rgba(255, 121, 85, 0.5);
     }
 
     .dex-btn-community {
-      background: linear-gradient(135deg, #1a237e, #283593);
-      color: white;
+      background: linear-gradient(120deg, rgba(101, 137, 255, 0.75), rgba(155, 101, 255, 0.65));
+      border-color: rgba(101, 137, 255, 0.5);
     }
 
-    .dex-btn-community:hover {
-      background: linear-gradient(135deg, #283593, #3949ab);
-      box-shadow: 0 0 20px rgba(26, 35, 126, 0.6);
-      transform: translateY(-2px);
+    .info-card {
+      background: var(--panel-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin: 24px 0;
+      text-align: left;
+      box-shadow: var(--shadow-soft);
     }
 
-    @media (max-width: 768px) {
-      .contract-input-group {
+    .info-card__title {
+      font-size: 1.1rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-strong);
+      margin-bottom: 12px;
+    }
+
+    .info-card__timer {
+      font-family: 'Orbitron', 'Space Grotesk', sans-serif;
+      font-size: 1.6rem;
+      letter-spacing: 0.1em;
+      color: var(--text-strong);
+    }
+
+    .info-card__note {
+      margin-top: 12px;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .stats-card__row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+    }
+
+    .stats-card__headline {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .stats-card__amount {
+      font-size: 1.4rem;
+      color: var(--text-strong);
+    }
+
+    .stats-card__unit {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .stats-card__meta,
+    .stats-card__note {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-top: 8px;
+    }
+
+    .mono {
+      font-family: 'Space Grotesk', 'Courier New', monospace;
+      letter-spacing: 0.08em;
+      color: var(--text-strong);
+    }
+
+    .room-tip {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 1024px) {
+      .betting-section {
+        grid-template-columns: 1fr;
+      }
+
+      #modeNavigation {
+        position: static !important;
+        justify-content: center;
+        margin-bottom: 16px;
+        right: auto !important;
+      }
+
+      #neonToggle {
+        position: static;
+        margin: 16px auto 0;
+        display: block;
+      }
+
+      .wallet-connect--fixed {
+        position: static;
+        width: 100%;
+        align-items: stretch;
+        margin-bottom: 16px;
+      }
+
+      .wallet-connect--fixed .wallet-btn {
+        width: 100%;
+      }
+
+      .game-container {
+        padding: 100px 24px 32px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 24px 16px;
+      }
+
+      .wallet-connect {
         flex-direction: column;
       }
 
-      .contract-input {
-        min-width: 100%;
+      .contract-input-group {
+        flex-direction: column;
       }
 
       .dex-links {
         flex-direction: column;
       }
 
-      .dex-btn {
-        width: 100%;
-        justify-content: center;
+      .hand-icon {
+        width: 120px;
+        height: 120px;
+      }
+
+      .choice-btn {
+        width: 100px;
+        height: 100px;
       }
     }
+
+    /* Accessibility & Loading States */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: currentColor;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .btn-loading {
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .btn-loading.hidden {
+      display: none;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    button:disabled .btn-text {
+      opacity: 0.5;
+    }
+
+    /* Focus styles for accessibility */
+    button:focus-visible,
+    input:focus-visible,
+    a:focus-visible {
+      outline: 2px solid var(--neon-cyan);
+      outline-offset: 2px;
+    }
+
+    /* Loading skeleton */
+    .skeleton {
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.05) 100%);
+      background-size: 200% 100%;
+      animation: skeleton-loading 1.5s ease-in-out infinite;
+      border-radius: 8px;
+    }
+
+    @keyframes skeleton-loading {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
   </style>
+  <link rel="stylesheet" href="/css/cyberpunk-neon.css">
+  <link rel="stylesheet" href="/css/mobile-overrides.css">
+  <!-- Preload critical images -->
+  <link rel="preload" href="/images/hands/rock.png" as="image" />
+  <link rel="preload" href="/images/hands/paper.png" as="image" />
+  <link rel="preload" href="/images/hands/scissors.png" as="image" />
+  <script src="/js/runtime-utils.js"></script>
 </head>
-<body>
-  <div id="modeNavigation" style="position: fixed !important; top: 40px !important; left: 20px !important; display: flex !important; gap: 10px; z-index: 99999 !important; flex-wrap: wrap; pointer-events: auto !important; visibility: visible !important; opacity: 1 !important;">
-    <a href="/rps_vs_luna.html" id="vsLunaLink" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">🎮 VS Luna</a>
-    <a href="/rps_game.html" id="pvpLink" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">Play PvP! Find</a>
-    <a href="/rps_betting.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">💰 Betting Mode</a>
-    <a href="/rps_deposit.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">💾 Deposit Luna</a>
-    <a href="/group_chat.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 255, 255, 0.2) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important; box-shadow: 0 0 15px rgba(0, 255, 255, 0.5) !important;">💬 Group Chat</a>
-    <a href="/rps_leaderboard.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">🏆 Leaderboard</a>
-    <a href="/rps_stats.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">📊 Stats</a>
-    <a href="/rps_history.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">📜 Match History</a>
+<body class="cyber-page betting-page">
+  <nav id="modeNavigation" role="navigation" aria-label="Main navigation">
+    <a href="/luna_guide.html" aria-label="View game guide">📖 Guide</a>
+    <a href="/rps_vs_luna.html" id="vsLunaLink" aria-label="Play against Luna AI">🎮 VS Luna</a>
+    <a href="/rps_game.html" id="pvpLink" aria-label="Find PvP match">Play PvP! Find</a>
+    <a href="/rps_betting.html" class="highlighted current" aria-label="Betting mode (current page)" aria-current="page">💰 Betting Mode</a>
+    <a href="/rps_deposit.html" aria-label="Deposit Luna tokens">💾 Deposit Luna</a>
+    <a href="/group_chat.html" aria-label="Group chat">💬 Group Chat</a>
+    <a href="/rps_leaderboard.html" aria-label="View leaderboard">🏆 Leaderboard</a>
+    <a href="/rps_stats.html" aria-label="View statistics">📊 Stats</a>
     <!-- Notification button will be added here by JavaScript -->
+  </nav>
+
+  <div id="walletConnectFixed" class="wallet-connect wallet-connect--fixed">
+    <button id="connectWalletBtn" class="wallet-btn" aria-label="Connect Phantom Wallet">🔗 Connect Phantom Wallet</button>
+    <button id="disconnectWalletBtn" class="wallet-btn disconnect-btn hidden" aria-label="Disconnect or change wallet">🔌 Disconnect / Change Wallet</button>
+    <div id="walletInfo" class="wallet-info hidden" role="status" aria-live="polite"></div>
   </div>
 
-  <!-- Fixed Wallet Connect (Top Right) -->
-  <div id="walletConnectFixed">
-    <button id="connectWalletBtnFixed" class="wallet-btn">🔗 Connect Phantom Wallet</button>
-    <button id="disconnectWalletBtnFixed" class="wallet-btn disconnect-btn hidden">🔌 Disconnect / Change Wallet</button>
-    <div id="walletInfoFixed" class="wallet-info hidden"></div>
-  </div>
+  <button id="neonToggle" title="Toggle Neon Effects" aria-label="Toggle neon visual effects">💡 Neon: ON</button>
 
-  <!-- Neon Toggle Button (Bottom Right) -->
-  <button id="neonToggle" title="Toggle Neon Effects">💡 Neon: ON</button>
+  <!-- Floating Particles -->
+  <div class="particles" id="particles"></div>
+
+  <!-- Scroll Progress Bar -->
+  <div class="scroll-progress" id="scrollProgress"></div>
 
   <div class="game-container">
     <h1>Rock Paper Scissors</h1>
     <div class="subtitle">💰 Betting Mode - Create or Join a Room</div>
     
-    <!-- Contract Address Section -->
-    <div class="contract-section">
-      <div class="contract-label">Contract Address:</div>
-      <div class="contract-input-group">
-        <input type="text" id="contractAddress" class="contract-input" readonly value="Loading...">
-        <button class="contract-btn contract-btn-copy" onclick="copyContractAddress()">
-          <span>📋</span> Copy
-        </button>
-        <button class="contract-btn contract-btn-view" onclick="viewContractAddress()">
-          <span>🔗</span> View
-        </button>
-      </div>
-      <div class="contract-warning">Always verify the contract address before buying.</div>
-    </div>
-
-    <!-- X DEX Links Section -->
-    <div class="dex-links">
-      <a href="#" id="buyDexLink" class="dex-btn dex-btn-buy" target="_blank" onclick="openBuyDex(event)">
-        <span>⚡</span> Buy Luna
-      </a>
-      <a href="#" id="communityLink" class="dex-btn dex-btn-community" target="_blank" onclick="openCommunity(event)">
-        <span>𝕏</span> Join Community
-      </a>
-    </div>
-    
     <!-- Weekly Competition Timer -->
-    <div id="competitionTimer" style="margin: 20px 0; padding: 20px; background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(0, 255, 255, 0.2)); border: 2px solid #00ffff; border-radius: 12px; box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);">
-      <div style="font-size: 1.1em; color: #00ffff; margin-bottom: 10px; font-weight: bold; text-shadow: 0 0 10px #00ffff;">
-        🏆 Weekly Competition
-      </div>
-      <div style="font-size: 1.5em; color: #00ffff; font-weight: bold; text-shadow: 0 0 15px #00ffff; font-family: 'Courier New', monospace;">
+    <div id="competitionTimer" class="info-card competition-card">
+      <div class="info-card__title">🏆 Weekly Competition</div>
+      <div class="info-card__timer">
         <span id="timerDays">0</span>d 
         <span id="timerHours">0</span>h 
         <span id="timerMinutes">0</span>m 
         <span id="timerSeconds">0</span>s
       </div>
-      <div style="font-size: 0.9em; color: #00ffff; margin-top: 10px; opacity: 0.8;">
+      <div class="info-card__note">
         Time remaining until rewards distribution
       </div>
     </div>
 
-    <div id="walletConnect" class="wallet-connect" style="display: none;">
-      <button id="connectWalletBtn" class="wallet-btn">🔗 Connect Phantom Wallet</button>
-      <button id="disconnectWalletBtn" class="wallet-btn disconnect-btn hidden">🔌 Disconnect / Change Wallet</button>
-      <div id="walletInfo" class="wallet-info hidden"></div>
-    </div>
     <div id="balanceCheck" class="balance-check hidden">
       <span class="loading"></span> Checking balance...
     </div>
-    <div id="solBalanceDisplay" class="wallet-info hidden" style="margin-top: 10px; padding: 15px; background: rgba(0, 255, 255, 0.1); border: 1px solid #00ffff; border-radius: 8px; font-size: 0.9em; color: #00ffff;">
+    <div id="solBalanceDisplay" class="wallet-info hidden">
       <strong>💰 SOL Balance:</strong> <span id="solBalanceAmount">0.0000</span> SOL
     </div>
 
     <!-- Total Fees Display (Real-time) -->
-    <div id="totalFeesDisplay" style="margin-top: 15px; padding: 15px; background: rgba(0, 255, 255, 0.1); border: 1px solid #00ffff; border-radius: 8px; font-size: 0.9em; color: #00ffff;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+    <div id="totalFeesDisplay" class="info-card stats-card">
+      <div class="stats-card__row">
         <strong>💎 Total Fees Collected (Real-time):</strong>
-        <span id="totalFeesAmount" style="font-size: 1.2em; font-weight: bold; color: #00ffff; text-shadow: 0 0 5px #00ffff;">0.0000</span>
-        <span style="color: #00ffff; opacity: 0.8;">SOL</span>
+        <span class="stats-card__headline">
+          <span id="totalFeesAmount" class="stats-card__amount">0.0000</span>
+          <span class="stats-card__unit">SOL</span>
+        </span>
       </div>
-      <div style="font-size: 0.85em; opacity: 0.8; margin-top: 5px;">
+      <div class="stats-card__meta">
         <span id="totalFeesTransactions">0</span> transactions • Last updated: <span id="lastFeesUpdate">--</span>
       </div>
-      <div style="font-size: 0.85em; opacity: 0.7; margin-top: 5px; color: #00ffff;">
-        💡 Fees are automatically sent to: <span id="feeWalletAddress" style="font-family: monospace;">--</span>
+      <div class="stats-card__note">
+        💡 Fees are automatically sent to: <span id="feeWalletAddress" class="mono">--</span>
       </div>
-    </div>
-
-    <!-- Deposit/Withdraw Section -->
-    <div id="depositSection" class="deposit-section hidden" style="margin: 20px 0; padding: 20px; background: rgba(0, 255, 255, 0.05); border: 1px solid rgba(0, 255, 255, 0.3); border-radius: 8px;">
-      <h3 style="color: #00ffff; margin-bottom: 15px; text-shadow: 0 0 5px #00ffff;">💰 Deposit Luna (Reduce Betting Fee)</h3>
-      <div style="font-size: 0.9em; color: #00ffff; opacity: 0.8; margin-bottom: 15px;">
-        Hold 150,000+ Luna to deposit. Deposit for 3 days → 2% fee, 6 days → 1% fee (default: 3%)
-      </div>
-      
-      <!-- Deposit Status -->
-      <div id="depositStatus" style="margin-bottom: 15px; padding: 15px; background: rgba(0, 255, 255, 0.1); border-radius: 8px;">
-        <div style="color: #00ffff; font-size: 0.9em;">Checking deposit status...</div>
-      </div>
-      
-      <!-- Deposit Form -->
-      <div id="depositForm" style="display: none;">
-        <div style="margin-bottom: 15px;">
-          <label style="color: #00ffff; display: block; margin-bottom: 5px;">Deposit Amount (Luna):</label>
-          <input type="number" id="depositAmount" min="1" placeholder="Enter amount" style="width: 100%; padding: 10px; background: rgba(0, 0, 0, 0.5); border: 1px solid #00ffff; border-radius: 8px; color: #00ffff; font-family: 'Courier New', monospace; font-size: 1em;">
-          <div style="font-size: 0.85em; color: #00ffff; opacity: 0.7; margin-top: 5px;">
-            Fee: 3% (will be deducted from amount)
-          </div>
-        </div>
-        <button id="depositBtn" class="wallet-btn" style="width: 100%;">💾 Deposit Luna</button>
-      </div>
-      
-      <!-- Withdraw Button -->
-      <button id="withdrawBtn" class="wallet-btn" style="width: 100%; margin-top: 10px; display: none; background: linear-gradient(135deg, rgba(255, 0, 0, 0.3), rgba(255, 100, 100, 0.3)); border: 2px solid #ff0000; color: #ff0000;">
-        💸 Withdraw Luna
-      </button>
     </div>
 
     <div id="bettingSection" class="betting-section">
@@ -923,13 +1211,35 @@
         <h2>🎮 Create Room</h2>
         <div class="bet-input">
           <label for="betAmount">Bet Amount (Luna tokens):</label>
-          <input type="number" id="betAmount" min="1" placeholder="Enter amount" oninput="updateFeeDisplay()" />
-          <div id="feeDisplay" style="margin-top: 10px; padding: 10px; background: rgba(0, 255, 255, 0.1); border: 1px solid #00ffff; border-radius: 8px; font-size: 0.9em; color: #00ffff; display: none;">
-            <div>💰 Fee: <span id="feeAmount">0</span> SOL (<span id="feePercentageDisplay">3%</span> of bet value)</div>
-            <div style="font-size: 0.85em; opacity: 0.8; margin-top: 5px;">Bet value: <span id="betValueInSol">0</span> SOL</div>
+          <input 
+            type="number" 
+            id="betAmount" 
+            min="1" 
+            placeholder="Enter amount" 
+            oninput="updateFeeDisplay()"
+            aria-label="Bet amount in Luna tokens"
+            aria-required="true"
+            aria-describedby="betAmountHelp"
+          />
+          <div id="betAmountHelp" class="sr-only">Enter the amount of Luna tokens you want to bet (minimum 1)</div>
+          <div id="feeDisplay" class="fee-card" style="display: none;" role="status" aria-live="polite">
+            <div>💰 Fee: <span id="feeAmount">0</span> SOL (1% of bet value)</div>
+            <div class="fee-card__note">Bet value: <span id="betValueInSol">0</span> SOL</div>
           </div>
         </div>
-        <button id="createRoomBtn" class="create-btn" disabled>Create Room</button>
+        <button 
+          id="createRoomBtn" 
+          class="create-btn" 
+          disabled
+          aria-label="Create betting room"
+          aria-describedby="createRoomHelp"
+        >
+          <span class="btn-text">Create Room</span>
+          <span class="btn-loading hidden" aria-hidden="true">
+            <span class="loading-spinner"></span> Creating...
+          </span>
+        </button>
+        <div id="createRoomHelp" class="sr-only">Create a new betting room with your specified bet amount</div>
       </div>
 
       <!-- Available Rooms Section -->
@@ -938,13 +1248,11 @@
         <div id="roomsList" class="rooms-list">
           <div class="empty-rooms">Loading rooms...</div>
         </div>
-        <div style="margin-top: 20px; padding: 15px; background: rgba(0, 255, 255, 0.1); border: 1px solid #00ffff; border-radius: 8px; font-size: 0.9em; color: #00ffff;">
+        <div class="info-card room-tip">
+          ⚡ Rooms refresh automatically every few seconds. Create one to get the lobby buzzing!
         </div>
       </div>
     </div>
-
-    <!-- Referral Section Placeholder -->
-    <div id="referral-section-placeholder"></div>
 
     <!-- Game Area (shown when match starts) -->
     <div id="gameArea" class="game-area">
@@ -964,14 +1272,14 @@
 
       <div class="controls">
         <div class="player-choices">
-          <button class="choice-btn" data-choice="rock" id="rockBtn">
-            <img src="/public/images/hands/rock.png" alt="rock" />
+          <button class="choice-btn" data-choice="rock" id="rockBtn" aria-label="Choose Rock">
+            <img src="/images/hands/rock.png" alt="Rock" loading="lazy" decoding="async" />
           </button>
-          <button class="choice-btn" data-choice="paper" id="paperBtn">
-            <img src="/public/images/hands/paper.png" alt="paper" />
+          <button class="choice-btn" data-choice="paper" id="paperBtn" aria-label="Choose Paper">
+            <img src="/images/hands/paper.png" alt="Paper" loading="lazy" decoding="async" />
           </button>
-          <button class="choice-btn" data-choice="scissors" id="scissorsBtn">
-            <img src="/public/images/hands/scissors.png" alt="scissors" />
+          <button class="choice-btn" data-choice="scissors" id="scissorsBtn" aria-label="Choose Scissors">
+            <img src="/images/hands/scissors.png" alt="Scissors" loading="lazy" decoding="async" />
           </button>
         </div>
         <div id="status" class="status"></div>
@@ -980,6 +1288,9 @@
   </div>
 
   <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+  <script src="/js/utils.js"></script>
+  <script src="/js/phantom-helper.js"></script>
+  <script src="/js/toast.js"></script>
   <script>
     const API_BASE = window.location.origin;
     const TEST_MODE = false; // Using real Luna token
@@ -1016,6 +1327,7 @@
     const PRICE_CACHE_TTL = 60000; // 1 minute cache
     let walletConnected = false;
     let walletPublicKey = null;
+    let playerBalance = 0;
     let currentRoomId = null;
     let opponentWallet = null;
     let gameActive = false;
@@ -1027,10 +1339,107 @@
     let solBalanceUpdateInterval = null;
     let solBalance = 0;
     let competitionTimerInterval = null;
+    let totalFeesUpdateInterval = null;
+    let activeTimeouts = new Set();
+    let isPageVisible = !document.hidden;
+    
+    // Cleanup all intervals and timeouts
+    function cleanupAll() {
+      if (balanceUpdateInterval) {
+        clearInterval(balanceUpdateInterval);
+        balanceUpdateInterval = null;
+      }
+      if (solBalanceUpdateInterval) {
+        clearInterval(solBalanceUpdateInterval);
+        solBalanceUpdateInterval = null;
+      }
+      if (roomsRefreshInterval) {
+        clearInterval(roomsRefreshInterval);
+        roomsRefreshInterval = null;
+      }
+      if (handCycleInterval) {
+        clearInterval(handCycleInterval);
+        handCycleInterval = null;
+      }
+      if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+      }
+      if (competitionTimerInterval) {
+        clearInterval(competitionTimerInterval);
+        competitionTimerInterval = null;
+      }
+      if (totalFeesUpdateInterval) {
+        clearInterval(totalFeesUpdateInterval);
+        totalFeesUpdateInterval = null;
+      }
+      activeTimeouts.forEach(timeout => clearTimeout(timeout));
+      activeTimeouts.clear();
+    }
+    
+    // Safe setTimeout wrapper
+    function safeSetTimeout(callback, delay) {
+      const timeoutId = setTimeout(() => {
+        activeTimeouts.delete(timeoutId);
+        callback();
+      }, delay);
+      activeTimeouts.add(timeoutId);
+      return timeoutId;
+    }
+    
+    // Page visibility API
+    document.addEventListener('visibilitychange', () => {
+      isPageVisible = !document.hidden;
+      if (isPageVisible) {
+        if (walletConnected && walletPublicKey) {
+          startBalanceUpdate();
+          startSolBalanceUpdate();
+        }
+      } else {
+        stopBalanceUpdate();
+        stopSolBalanceUpdate();
+      }
+    });
+
+    function hasForceDisconnectFlag() {
+      if (window.phantomHelper && typeof window.phantomHelper.hasForceDisconnect === 'function') {
+        return window.phantomHelper.hasForceDisconnect();
+      }
+      try {
+        return !!localStorage.getItem('phantomForceDisconnect');
+      } catch (err) {
+        console.warn('[Betting] Failed to read force disconnect flag:', err);
+        return false;
+      }
+    }
+
+    function markForceDisconnectFlag(reason) {
+      if (window.phantomHelper && typeof window.phantomHelper.markForceDisconnect === 'function') {
+        window.phantomHelper.markForceDisconnect(reason);
+        return;
+      }
+      try {
+        localStorage.setItem('phantomForceDisconnect', Date.now().toString());
+      } catch (err) {
+        console.warn('[Betting] Failed to set force disconnect flag:', err);
+      }
+    }
+
+    function clearForceDisconnectFlag() {
+      if (window.phantomHelper && typeof window.phantomHelper.clearForceDisconnect === 'function') {
+        window.phantomHelper.clearForceDisconnect();
+        return;
+      }
+      try {
+        localStorage.removeItem('phantomForceDisconnect');
+      } catch (err) {
+        console.warn('[Betting] Failed to clear force disconnect flag:', err);
+      }
+    }
 
     // Sound Effects System
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    
+
     // Play sound effect
     function playSound(frequency, duration, type = 'sine', volume = 0.3) {
       try {
@@ -1062,32 +1471,141 @@
     function playWinSound() {
       // Play multiple ascending notes
       playSound(523, 0.15, 'sine', 0.3); // C
-      setTimeout(() => playSound(659, 0.15, 'sine', 0.3), 100); // E
-      setTimeout(() => playSound(784, 0.2, 'sine', 0.4), 200); // G
-      setTimeout(() => playSound(1047, 0.3, 'sine', 0.5), 350); // C (high)
+      safeSetTimeout(() => playSound(659, 0.15, 'sine', 0.3), 100); // E
+      safeSetTimeout(() => playSound(784, 0.2, 'sine', 0.4), 200); // G
+      safeSetTimeout(() => playSound(1047, 0.3, 'sine', 0.5), 350); // C (high)
     }
     
     // Lose sound (sad descending)
     function playLoseSound() {
       // Play descending notes
       playSound(523, 0.2, 'sine', 0.3); // C
-      setTimeout(() => playSound(440, 0.2, 'sine', 0.3), 150); // A
-      setTimeout(() => playSound(349, 0.3, 'sine', 0.4), 300); // F (low)
+      safeSetTimeout(() => playSound(440, 0.2, 'sine', 0.3), 150); // A
+      safeSetTimeout(() => playSound(349, 0.3, 'sine', 0.4), 300); // F (low)
     }
     
     // Tie sound (neutral)
     function playTieSound() {
       // Play a neutral tone
       playSound(440, 0.2, 'sine', 0.25); // A
-      setTimeout(() => playSound(440, 0.2, 'sine', 0.25), 200); // A again
+      safeSetTimeout(() => playSound(440, 0.2, 'sine', 0.25), 200); // A again
     }
 
     const HAND_IMAGES = {
-      rock: '/public/images/hands/rock.png',
-      paper: '/public/images/hands/paper.png',
-      scissors: '/public/images/hands/scissors.png',
-      default: '/public/images/hands/rock.png'
+      rock: '/images/hands/rock.png',
+      paper: '/images/hands/paper.png',
+      scissors: '/images/hands/scissors.png',
+      default: '/images/hands/rock.png'
     };
+
+    function resetWalletUI() {
+      const connectBtn = document.getElementById('connectWalletBtn');
+      const disconnectBtn = document.getElementById('disconnectWalletBtn');
+      const walletInfo = document.getElementById('walletInfo');
+      const balanceDisplay = document.getElementById('balanceDisplay');
+      const solBalanceDisplay = document.getElementById('solBalanceDisplay');
+      const createRoomBtn = document.getElementById('createRoomBtn');
+
+      if (connectBtn) {
+        connectBtn.classList.remove('hidden');
+        connectBtn.disabled = false;
+        connectBtn.style.cursor = 'pointer';
+        connectBtn.textContent = '🔗 Connect Phantom Wallet';
+      }
+      if (disconnectBtn) disconnectBtn.classList.add('hidden');
+      if (walletInfo) walletInfo.classList.add('hidden');
+      if (balanceDisplay) balanceDisplay.textContent = 'Not connected';
+      if (solBalanceDisplay) solBalanceDisplay.classList.add('hidden');
+      if (createRoomBtn) createRoomBtn.disabled = true;
+
+      const walletBalanceFixed = document.getElementById('walletBalanceFixed');
+      if (walletBalanceFixed) walletBalanceFixed.textContent = 'Checking...';
+
+      const roomsList = document.getElementById('roomsList');
+      if (roomsList) {
+        roomsList.innerHTML = '<div class="empty-rooms">Connect your wallet to view rooms.</div>';
+      }
+    }
+
+    async function forceDisconnect(options = {}) {
+      const {
+        skipProviderDisconnect = false,
+        reason = 'manual',
+        suppressForceFlag = false,
+      } = options;
+
+      if (!suppressForceFlag) {
+        markForceDisconnectFlag(reason);
+      }
+
+      if (
+        !skipProviderDisconnect &&
+        window.solana &&
+        typeof window.solana.disconnect === 'function' &&
+        window.solana.isConnected
+      ) {
+        try {
+          await window.solana.disconnect();
+        } catch (err) {
+          console.warn('[Betting] Provider disconnect failed:', err);
+        }
+      }
+
+      if (window.phantomHelper && typeof window.phantomHelper.clearState === 'function') {
+        window.phantomHelper.clearState();
+      }
+
+      stopBalanceUpdate();
+      stopSolBalanceUpdate();
+
+      walletConnected = false;
+      walletPublicKey = null;
+      currentRoomId = null;
+      opponentWallet = null;
+      playerBalance = 0;
+      solBalance = 0;
+
+      resetWalletUI();
+    }
+
+    async function attemptPhantomAutoConnect(handler) {
+      if (typeof handler !== 'function') {
+        return false;
+      }
+
+      if (hasForceDisconnectFlag()) {
+        return false;
+      }
+
+      let connected = false;
+
+      if (window.phantomHelper && typeof window.phantomHelper.autoConnect === 'function') {
+        try {
+          await window.phantomHelper.autoConnect({
+            onConnected: async (publicKey) => {
+              const normalized = typeof publicKey === 'string' ? publicKey : publicKey?.toString();
+              if (!normalized) {
+                return;
+              }
+              connected = true;
+              await handler(normalized, { fromAutoConnect: true });
+            },
+            onError: (err) => {
+              console.warn('[Betting] Auto-connect skipped:', err?.message || err);
+            }
+          });
+        } catch (err) {
+          console.warn('[Betting] Failed to auto-connect via helper:', err);
+        }
+      }
+
+      if (!connected && window.solana?.isConnected && window.solana.publicKey) {
+        connected = true;
+        await handler(window.solana.publicKey.toString(), { fromAutoConnect: true });
+      }
+
+      return connected;
+    }
 
     // Wallet Connection
     async function setupWalletConnection() {
@@ -1099,260 +1617,115 @@
         console.error('[Betting] connectWalletBtn not found!');
         return;
       }
-
+      
       // Check if Phantom wallet is available
       if (typeof window.solana === 'undefined' || !window.solana.isPhantom) {
         connectBtn.textContent = '⚠️ Phantom Wallet not found!';
         connectBtn.disabled = true;
         connectBtn.style.cursor = 'not-allowed';
         connectBtn.onclick = () => {
-          alert('Please install Phantom wallet extension!\n\nDownload: https://phantom.app/');
+          if (window.showToast) {
+            window.showToast('Please install Phantom wallet extension!\n\nDownload: https://phantom.app/', 'warning', 8000);
+          } else {
+            alert('Please install Phantom wallet extension!\n\nDownload: https://phantom.app/');
+          }
         };
         return;
+      }
+
+      async function handleWalletConnected(publicKey, options = {}) {
+        if (!publicKey) {
+          return;
+        }
+
+        walletPublicKey = typeof publicKey === 'string' ? publicKey : publicKey.toString();
+        walletConnected = true;
+
+        if (window.phantomHelper) {
+          window.phantomHelper.saveState({ publicKey: walletPublicKey });
+        }
+        clearForceDisconnectFlag();
+
+        connectBtn.classList.add('hidden');
+        if (disconnectBtn) disconnectBtn.classList.remove('hidden');
+        if (walletInfo) {
+          walletInfo.classList.remove('hidden');
+          const sanitizedWallet = sanitizeWalletAddress(walletPublicKey);
+          const shortWallet = sanitizedWallet.length > 16 
+            ? `${sanitizedWallet.substring(0, 8)}...${sanitizedWallet.substring(sanitizedWallet.length - 8)}`
+            : sanitizedWallet;
+          walletInfo.innerHTML = `
+            <strong>Connected:</strong> ${escapeHtml(shortWallet)}<br>
+            <strong>Balance:</strong> <span id="balanceDisplay">Checking...</span>
+          `;
+        }
+
+        await checkLunaBalance();
+        await checkSolBalance();
+        await loadRooms();
+        startBalanceUpdate();
+        startSolBalanceUpdate();
+
+        if (typeof chatManager !== 'undefined' && walletPublicKey) {
+          chatManager.init(walletPublicKey);
+          chatManager.createUI('betting_lobby', 'lobby');
+        }
       }
 
       // Enable button and add click handler
       connectBtn.disabled = false;
       connectBtn.style.cursor = 'pointer';
       
-      const connectHandler = async () => {
+      connectBtn.addEventListener('click', async (e) => {
+        if (e) {
+          e.stopPropagation(); // Prevent sound from global listeners
+        }
         try {
-          console.log('[Betting] Connect button clicked');
-          
           if (!window.solana || !window.solana.isPhantom) {
-            alert('⚠️ Phantom wallet not found!\n\nPlease install Phantom wallet extension:\nhttps://phantom.app/\n\nAfter installing, refresh this page.');
-            return;
-          }
-          
-          // Additional check: verify Phantom is ready
-          if (typeof window.solana.connect !== 'function') {
-            alert('⚠️ Phantom wallet extension is not ready!\n\nPlease:\n1. Make sure Phantom wallet is unlocked\n2. Refresh this page\n3. Try again');
-            return;
-          }
-          
-          // ALWAYS disconnect first to force popup (like pump.fun)
-          console.log('[Betting] Disconnecting wallet first to force popup...');
-          try {
-            if (window.solana.isConnected) {
-              await window.solana.disconnect();
-              console.log('[Betting] Wallet disconnected');
-            }
-            // Wait briefly to ensure disconnect is complete (reduced from 2000ms to 300ms for faster popup)
-            console.log('[Betting] Waiting 300ms to clear cached connection...');
-            await new Promise(resolve => setTimeout(resolve, 300));
-          } catch (disconnectErr) {
-            console.warn('[Betting] Error during disconnect:', disconnectErr);
-            await new Promise(resolve => setTimeout(resolve, 300));
-          }
-          
-          // Step 1: Connect wallet (like pump.fun)
-          console.log('[Betting] Step 1: Connecting wallet...');
-          console.log('[Betting] ⚠️ CONNECT POPUP SHOULD APPEAR NOW! ⚠️');
-          console.log('[Betting] If popup does NOT appear:');
-          console.log('[Betting] 1. Phantom wallet has this site in Trusted Apps');
-          console.log('[Betting] 2. Go to Phantom wallet → Settings → Trusted Apps');
-          console.log('[Betting] 3. Remove "localhost:8787" from trusted apps');
-          console.log('[Betting] 4. Refresh page and try again');
-          
-          const resp = await window.solana.connect({ onlyIfTrusted: false });
-          
-          if (!resp || !resp.publicKey) {
-            throw new Error('Connection failed: No public key returned');
-          }
-          
-          walletPublicKey = resp.publicKey.toString();
-          console.log('[Betting] ✅ Step 1 complete: Wallet connected:', walletPublicKey);
-          
-          // Step 2: Sign message to authenticate (like pump.fun)
-          try {
-            console.log('[Betting] Step 2: Requesting message signature for authentication...');
-            console.log('[Betting] ⚠️ SIGN MESSAGE POPUP SHOULD APPEAR NOW! ⚠️');
-            console.log('[Betting] This is the authentication popup (like pump.fun)');
-            console.log('[Betting] If this popup does NOT appear, Phantom wallet may have auto-approve enabled');
-            
-            // Create authentication message (like pump.fun)
-            const timestamp = Date.now();
-            const message = `Sign in to ${window.location.hostname}: ${timestamp}`;
-            const messageBytes = new TextEncoder().encode(message);
-            
-            // Request signature using request() method (Phantom wallet API)
-            let signResponse;
-            if (typeof window.solana.request === 'function') {
-              // Use request() method (recommended)
-              signResponse = await window.solana.request({
-                method: 'signMessage',
-                params: {
-                  message: messageBytes,
-                  display: 'utf8'
-                }
-              });
-            } else if (typeof window.solana.signMessage === 'function') {
-              // Fallback to signMessage() method
-              signResponse = await window.solana.signMessage(messageBytes, 'utf8');
+            if (window.showToast) {
+              window.showToast('Please install Phantom wallet extension!\n\nDownload: https://phantom.app/', 'warning', 8000);
             } else {
-              throw new Error('signMessage method not available');
+              alert('Please install Phantom wallet extension!\n\nDownload: https://phantom.app/');
             }
-            
-            // Handle different response formats
-            const signature = signResponse.signature || signResponse;
-            const signatureArray = signature instanceof Uint8Array 
-              ? Array.from(signature) 
-              : (Array.isArray(signature) ? signature : []);
-            
-            console.log('[Betting] ✅ Step 2 complete: Message signed successfully');
-            console.log('[Betting] Signature received (length):', signatureArray.length);
-            
-            // Store signature in localStorage for session
-            localStorage.setItem('walletSignature', JSON.stringify({
-              signature: signatureArray,
-              publicKey: walletPublicKey,
-              timestamp: timestamp,
-              message: message
-            }));
-            
-            console.log('[Betting] ✅ Authentication signature stored in localStorage');
-            
-          } catch (signErr) {
-            console.error('[Betting] Sign message failed:', signErr);
-            // Disconnect if sign fails
-            try {
-              await window.solana.disconnect();
-            } catch (disconnectErr) {
-              console.warn('[Betting] Error disconnecting after sign failure:', disconnectErr);
-            }
-            throw new Error('Authentication failed: Please sign the message to continue. ' + signErr.message);
+            return;
           }
           
-          walletConnected = true;
-          console.log('[Betting] ✅ Authentication complete! Wallet is now authenticated.');
-          
-          // Update container buttons
-          connectBtn.classList.add('hidden');
-          if (disconnectBtn) disconnectBtn.classList.remove('hidden');
-          if (walletInfo) {
-            walletInfo.classList.remove('hidden');
-            const sanitizedWallet = sanitizeWalletAddress(walletPublicKey);
-            const shortWallet = sanitizedWallet.length > 16 
-              ? `${sanitizedWallet.substring(0, 8)}...${sanitizedWallet.substring(sanitizedWallet.length - 8)}`
-              : sanitizedWallet;
-            walletInfo.innerHTML = `
-              <strong>Connected:</strong> ${escapeHtml(shortWallet)}<br>
-              <strong>Balance:</strong> <span id="balanceDisplay">Checking...</span>
-            `;
-          }
-          
-          // Update fixed buttons
-          const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
-          const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
-          const walletInfoFixed = document.getElementById('walletInfoFixed');
-          if (connectBtnFixed) connectBtnFixed.classList.add('hidden');
-          if (disconnectBtnFixed) {
-            disconnectBtnFixed.classList.remove('hidden');
-            disconnectBtnFixed.style.display = '';
-            disconnectBtnFixed.style.visibility = '';
-            disconnectBtnFixed.style.opacity = '';
-          }
-          if (walletInfoFixed) {
-            const sanitizedWallet = sanitizeWalletAddress(walletPublicKey);
-            const shortWallet = sanitizedWallet.length > 16 
-              ? `${sanitizedWallet.substring(0, 8)}...${sanitizedWallet.substring(sanitizedWallet.length - 8)}`
-              : sanitizedWallet;
-            walletInfoFixed.innerHTML = `
-              <div><strong>Connected:</strong> ${escapeHtml(shortWallet)}</div>
-              <div><strong>Balance:</strong> <span id="balanceDisplayFixed">Checking...</span> Luna</div>
-            `;
-            walletInfoFixed.classList.remove('hidden');
-            walletInfoFixed.style.display = '';
-            walletInfoFixed.style.visibility = '';
-            walletInfoFixed.style.opacity = '';
-          }
-          
-          await checkLunaBalance();
-          await checkSolBalance();
-          await loadRooms();
-          startBalanceUpdate(); // Start real-time balance updates
-          startSolBalanceUpdate(); // Start real-time SOL balance updates
-          setupDepositSystem(); // Setup deposit/withdraw system
-          await checkDepositStatus(); // Check deposit status
-          
-          // Update fixed balance display
-          const balanceDisplayFixed = document.getElementById('balanceDisplayFixed');
-          if (balanceDisplayFixed) {
-            balanceDisplayFixed.textContent = formatNumber(playerBalance);
-          }
-          
-          // Initialize UI components
-          if (typeof notificationManager !== 'undefined') {
-            notificationManager.init(walletPublicKey);
-          }
+          const resp = await window.solana.connect();
+          await handleWalletConnected(resp.publicKey.toString());
         } catch (err) {
           console.error('[Betting] Wallet connection error:', err);
-          alert('Failed to connect wallet: ' + err.message);
+          if (window.showToast) {
+            window.showToast('Failed to connect wallet: ' + err.message, 'error');
+          } else {
+            alert('Failed to connect wallet: ' + err.message);
+          }
         }
-      };
+      });
       
-      connectBtn.addEventListener('click', connectHandler);
-      
-      // Also set up fixed connect button
-      const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
-      if (connectBtnFixed) {
-        connectBtnFixed.addEventListener('click', connectHandler);
-      }
-
-      const disconnectHandler = () => {
+      if (disconnectBtn) {
+        disconnectBtn.addEventListener('click', async () => {
         try {
-          if (window.solana && window.solana.isConnected) {
-            window.solana.disconnect();
-          }
-          stopBalanceUpdate(); // Stop real-time balance updates
-          stopSolBalanceUpdate(); // Stop real-time SOL balance updates
-          walletConnected = false;
-          walletPublicKey = null;
-          playerBalance = 0;
-          
-          // Clear signature when disconnected (like pump.fun - must sign again on reconnect)
-          localStorage.removeItem('walletSignature');
-          console.log('[Betting] Wallet disconnected - signature cleared. Must sign again on next connect.');
-          
-          // Update container buttons
-          connectBtn.classList.remove('hidden');
-          if (disconnectBtn) disconnectBtn.classList.add('hidden');
-          if (walletInfo) walletInfo.classList.add('hidden');
-          const createBtn = document.getElementById('createRoomBtn');
-          if (createBtn) createBtn.disabled = true;
-          currentRoomId = null;
-          
-          // Update fixed buttons
-          const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
-          const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
-          const walletInfoFixed = document.getElementById('walletInfoFixed');
-          if (connectBtnFixed) connectBtnFixed.classList.remove('hidden');
-          if (disconnectBtnFixed) {
-            disconnectBtnFixed.classList.add('hidden');
-            disconnectBtnFixed.style.display = 'none';
-            disconnectBtnFixed.style.visibility = 'hidden';
-            disconnectBtnFixed.style.opacity = '0';
-          }
-          if (walletInfoFixed) {
-            walletInfoFixed.classList.add('hidden');
-            walletInfoFixed.style.display = 'none';
-            walletInfoFixed.style.visibility = 'hidden';
-            walletInfoFixed.style.opacity = '0';
-          }
+            await forceDisconnect({ reason: 'betting-user' });
         } catch (err) {
           console.error('[Betting] Wallet disconnect error:', err);
         }
-      };
-      
-      if (disconnectBtn) {
-        disconnectBtn.addEventListener('click', disconnectHandler);
+        });
       }
-      
-      // Also set up fixed disconnect button
-      const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
-      if (disconnectBtnFixed) {
-        disconnectBtnFixed.addEventListener('click', disconnectHandler);
+
+      if (window.solana && window.solana.isPhantom) {
+        window.solana.on('disconnect', () => {
+          const alreadyForced = hasForceDisconnectFlag();
+          forceDisconnect({
+            skipProviderDisconnect: true,
+            reason: 'provider-event',
+            suppressForceFlag: alreadyForced,
+          }).catch((err) => {
+            console.error('[Betting] Failed to handle provider disconnect:', err);
+          });
+        });
       }
+
+      attemptPhantomAutoConnect(handleWalletConnected);
     }
 
     async function checkLunaBalance() {
@@ -1369,7 +1742,7 @@
       try {
         // Use backend API to check balance (bypasses RPC rate limiting)
         // Backend will read mint address from .env automatically
-        const response = await fetch(`${API_BASE}/luna/rps/balance?wallet=${walletPublicKey}`);
+        const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/rps/balance?wallet=${walletPublicKey}`);
         const data = await response.json();
         
         if (!data.ok) {
@@ -1381,28 +1754,15 @@
         if (balanceDisplay) {
           balanceDisplay.textContent = formatNumber(playerBalance) + ' Luna';
         }
-        
-        // Also update fixed balance display
-        const balanceDisplayFixed = document.getElementById('balanceDisplayFixed');
-        if (balanceDisplayFixed) {
-          balanceDisplayFixed.textContent = formatNumber(playerBalance);
-        }
-        
         if (document.getElementById('createRoomBtn')) {
           document.getElementById('createRoomBtn').disabled = playerBalance < 1;
         }
-        
-        // Check deposit status after balance check
-        await checkDepositStatus();
       } catch (err) {
         console.error('[Betting] Balance check error:', err);
         if (balanceDisplay) balanceDisplay.textContent = 'Error';
         if (document.getElementById('createRoomBtn')) {
           document.getElementById('createRoomBtn').disabled = true;
         }
-        
-        // Still try to check deposit status
-        await checkDepositStatus();
       } finally {
         if (balanceCheck) balanceCheck.classList.add('hidden');
       }
@@ -1442,7 +1802,7 @@
       }
 
       try {
-        const response = await fetch(`${API_BASE}/luna/rps/sol/balance?wallet=${walletPublicKey}`);
+        const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/rps/sol/balance?wallet=${walletPublicKey}`);
         const data = await response.json();
         
         if (data.ok) {
@@ -1488,177 +1848,6 @@
       return num.toLocaleString('en-US');
     }
 
-    // Deposit/Withdraw System
-    async function checkDepositStatus() {
-      const depositSection = document.getElementById('depositSection');
-      
-      if (!walletConnected || !walletPublicKey) {
-        if (depositSection) depositSection.classList.add('hidden');
-        return;
-      }
-      
-      // Show deposit section when wallet is connected
-      if (depositSection) depositSection.classList.remove('hidden');
-
-      try {
-        const response = await fetch(`${API_BASE}/luna/deposit/status?wallet=${walletPublicKey}`);
-        const data = await response.json();
-
-        const depositStatus = document.getElementById('depositStatus');
-        const depositForm = document.getElementById('depositForm');
-        const withdrawBtn = document.getElementById('withdrawBtn');
-
-        if (!depositSection) return;
-
-        if (data.ok && data.hasDeposit) {
-          depositForm.style.display = 'none';
-          withdrawBtn.style.display = 'block';
-
-          const deposit = data.deposit;
-          depositStatus.innerHTML = `
-            <div style="color: #00ffff; font-size: 0.9em;">
-              <div style="margin-bottom: 5px;"><strong>💰 Deposited:</strong> ${formatNumber(deposit.amount)} Luna</div>
-              <div style="margin-bottom: 5px;"><strong>📅 Days:</strong> ${deposit.daysSinceDeposit.toFixed(1)} days</div>
-              <div style="margin-bottom: 5px;"><strong>💸 Betting Fee:</strong> ${deposit.feePercentageDisplay}</div>
-              ${deposit.daysSinceDeposit >= 6 ? '<div style="color: #00ff00;">✅ Maximum discount reached!</div>' : 
-                deposit.daysSinceDeposit >= 3 ? '<div style="color: #ffff00;">⏳ Keep depositing for 1% fee!</div>' : 
-                '<div style="color: #ffff00;">⏳ Keep depositing for lower fees!</div>'}
-            </div>
-          `;
-        } else {
-          depositForm.style.display = 'block';
-          withdrawBtn.style.display = 'none';
-
-          if (playerBalance < 150000) {
-            depositStatus.innerHTML = `
-              <div style="color: #ff0000; font-size: 0.9em;">
-                ❌ You need at least 150,000 Luna to deposit.<br>
-                Current: ${formatNumber(playerBalance)} Luna
-              </div>
-            `;
-            depositForm.style.display = 'none';
-          } else {
-            depositStatus.innerHTML = `
-              <div style="color: #00ffff; font-size: 0.9em;">
-                ✅ You can deposit Luna to reduce Betting Mode fees!<br>
-                Deposit for 3 days → 2% fee, 6 days → 1% fee (default: 3%)
-              </div>
-            `;
-          }
-        }
-      } catch (error) {
-        console.error('[Deposit] Error checking deposit status:', error);
-        // Keep section visible even on error, just show error message
-        const depositStatus = document.getElementById('depositStatus');
-        if (depositSection) depositSection.classList.remove('hidden');
-        if (depositStatus) {
-          depositStatus.innerHTML = `
-            <div style="color: #ff0000; font-size: 0.9em;">
-              ⚠️ Error checking deposit status. Please try again.
-            </div>
-          `;
-        }
-      }
-    }
-
-    function setupDepositSystem() {
-      const depositBtn = document.getElementById('depositBtn');
-      const withdrawBtn = document.getElementById('withdrawBtn');
-
-      if (depositBtn) {
-        depositBtn.addEventListener('click', async () => {
-          if (!walletConnected || !walletPublicKey) {
-            alert('Please connect your wallet first!');
-            return;
-          }
-
-          const amount = parseFloat(document.getElementById('depositAmount').value);
-          if (!amount || amount <= 0) {
-            alert('Please enter a valid deposit amount!');
-            return;
-          }
-
-          if (playerBalance < 150000) {
-            alert(`You need at least 150,000 Luna to deposit. Current: ${formatNumber(playerBalance)} Luna`);
-            return;
-          }
-
-          try {
-            depositBtn.disabled = true;
-            depositBtn.textContent = 'Processing...';
-
-            const response = await fetch(`${API_BASE}/luna/deposit`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                wallet: walletPublicKey,
-                amount: amount,
-              }),
-            });
-
-            const data = await response.json();
-
-            if (data.ok) {
-              alert(`Deposit recorded! Please send ${amount} Luna to the escrow wallet.\n\nEscrow Wallet: ${data.deposit.escrowWallet}\n\nNote: ${data.note}`);
-              document.getElementById('depositAmount').value = '';
-              await checkDepositStatus();
-              await checkLunaBalance();
-            } else {
-              alert('Failed to deposit: ' + (data.message || data.error));
-            }
-          } catch (error) {
-            console.error('[Deposit] Error:', error);
-            alert('Failed to deposit: ' + error.message);
-          } finally {
-            depositBtn.disabled = false;
-            depositBtn.textContent = '💾 Deposit Luna';
-          }
-        });
-      }
-
-      if (withdrawBtn) {
-        withdrawBtn.addEventListener('click', async () => {
-          if (!walletConnected || !walletPublicKey) {
-            alert('Please connect your wallet first!');
-            return;
-          }
-
-          if (!confirm('Are you sure you want to withdraw? Your Betting Mode fee will return to 3%.')) {
-            return;
-          }
-
-          try {
-            withdrawBtn.disabled = true;
-            withdrawBtn.textContent = 'Processing...';
-
-            const response = await fetch(`${API_BASE}/luna/withdraw`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                wallet: walletPublicKey,
-              }),
-            });
-
-            const data = await response.json();
-
-            if (data.ok) {
-              alert(`Withdrawal successful! ${formatNumber(data.withdrawal.amount)} Luna sent to your wallet.\n\nTransaction: ${data.withdrawal.signature}`);
-              await checkDepositStatus();
-              await checkLunaBalance();
-            } else {
-              alert('Failed to withdraw: ' + (data.message || data.error));
-            }
-          } catch (error) {
-            console.error('[Withdraw] Error:', error);
-            alert('Failed to withdraw: ' + error.message);
-          } finally {
-            withdrawBtn.disabled = false;
-            withdrawBtn.textContent = '💸 Withdraw Luna';
-          }
-        });
-      }
-    }
-
     /**
      * Fetch Luna price from backend
      */
@@ -1670,7 +1859,7 @@
       }
 
       try {
-        const response = await fetch(`${API_BASE}/luna/rps/betting/price`);
+        const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/rps/betting/price`);
         const data = await response.json();
         
         if (data.ok && data.price) {
@@ -1761,7 +1950,11 @@
         loadRooms();
         // If we're in this room, reset UI
         if (currentRoomId === message.roomId) {
-          alert('Room was cancelled.');
+          if (window.showToast) {
+            window.showToast('Room was cancelled.', 'info');
+          } else {
+            alert('Room was cancelled.');
+          }
           currentRoomId = null;
           gameActive = false;
           document.getElementById('bettingSection').classList.remove('hidden');
@@ -1771,7 +1964,11 @@
         loadRooms();
         // If we're in this room, reset UI
         if (currentRoomId === message.roomId) {
+          if (window.showToast) {
+            window.showToast('Room expired or was removed.', 'info');
+          } else {
           alert('Room expired or was removed.');
+          }
           currentRoomId = null;
           gameActive = false;
           document.getElementById('bettingSection').classList.remove('hidden');
@@ -1811,7 +2008,7 @@
       }
       
       try {
-        const response = await fetch(`${API_BASE}/luna/rps/betting/rooms`);
+        const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/rps/betting/rooms`);
         const data = await response.json();
         
         if (data.ok) {
@@ -1851,12 +2048,11 @@
             }
           ];
           roomsList.innerHTML = testRooms.map(room => {
-            const canJoin = walletConnected && playerBalance >= room.betAmount;
             const safeRoomId = escapeHtml(room.roomId);
             const safeBetAmount = escapeHtml(room.betAmount.toString());
             const safeCreator = escapeHtml(room.creator);
             return `
-              <div class="room-card" style="opacity: 0.8; border-style: dashed;">
+              <div class="room-card room-card--test">
                 <div class="room-header">
                   <div class="room-bet">💰 ${escapeHtml(formatNumber(room.betAmount))} Luna</div>
                   <div class="room-creator">${safeCreator}</div>
@@ -1864,7 +2060,7 @@
                 <div class="room-status">
                   🟡 Waiting for opponent...
                 </div>
-                <button class="join-btn" onclick="joinTestRoom('${safeRoomId}', ${safeBetAmount}, '${safeCreator}')" style="background: linear-gradient(135deg, rgba(0, 255, 255, 0.4), rgba(0, 255, 255, 0.4));">
+                <button class="join-btn" onclick="joinTestRoom('${safeRoomId}', ${safeBetAmount}, '${safeCreator}')">
                   Join Room
                 </button>
               </div>
@@ -1889,8 +2085,12 @@
           : escapeHtml(room.creator);
         const safeFee = escapeHtml(formatSol(calculateFee(room.betAmount)));
         
+        const cardClasses = ['room-card'];
+        if (isTest) cardClasses.push('room-card--test');
+        if (isMyRoom) cardClasses.push('room-card--owned');
+
         return `
-          <div class="room-card" ${isTest ? 'style="opacity: 0.8; border-style: dashed;"' : ''}>
+          <div class="${cardClasses.join(' ')}">
             <div class="room-header">
               <div class="room-bet">💰 ${escapeHtml(formatNumber(room.betAmount))} Luna</div>
               <div class="room-creator">${safeCreator}</div>
@@ -1898,7 +2098,7 @@
             <div class="room-status">
               ${room.player2 ? '🟢 Match in progress' : '🟡 Waiting for opponent...'}
             </div>
-            <div style="font-size: 0.85em; color: #00ffff; opacity: 0.7; margin-top: 5px;">
+            <div class="room-meta">
               💰 Fee: ${safeFee} SOL (1% of bet)
             </div>
             ${!isMyRoom && !room.player2 ? `
@@ -1907,13 +2107,13 @@
               </button>
             ` : ''}
             ${isMyRoom ? `
-              <div style="color: #00ffff; margin-top: 10px; margin-bottom: 10px;">Your room - Waiting for challenger...</div>
-              <button class="cancel-btn" onclick="cancelRoom('${safeRoomId}')" style="background: linear-gradient(135deg, rgba(255, 0, 0, 0.3), rgba(255, 100, 100, 0.3)); border: 2px solid #ff0000; color: #ff0000; padding: 10px 20px; border-radius: 8px; cursor: pointer; width: 100%; font-family: 'Courier New', monospace; transition: all 0.3s;">
+              <div class="room-note">Your room - Waiting for challenger...</div>
+              <button class="cancel-btn" onclick="cancelRoom('${safeRoomId}')">
                 ❌ Cancel Room
               </button>
             ` : ''}
             ${room.player2 === walletPublicKey && !room.choices?.player1 && !room.choices?.player2 ? `
-              <button class="cancel-btn" onclick="leaveRoom('${safeRoomId}')" style="background: linear-gradient(135deg, rgba(255, 0, 0, 0.3), rgba(255, 100, 100, 0.3)); border: 2px solid #ff0000; color: #ff0000; padding: 10px 20px; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 10px; font-family: 'Courier New', monospace; transition: all 0.3s;">
+              <button class="cancel-btn cancel-btn--outline" onclick="leaveRoom('${safeRoomId}')">
                 🚪 Leave Room
               </button>
             ` : ''}
@@ -1924,17 +2124,25 @@
 
     window.joinRoom = async function(roomId, betAmount) {
       if (!walletConnected || !walletPublicKey) {
+        if (window.showToast) {
+          window.showToast('Please connect your wallet first!', 'warning');
+        } else {
         alert('Please connect your wallet first!');
+        }
         return;
       }
       
       if (playerBalance < betAmount) {
+        if (window.showToast) {
+          window.showToast(`Insufficient balance! You need ${formatNumber(betAmount)} Luna tokens.`, 'warning');
+        } else {
         alert(`Insufficient balance! You need ${formatNumber(betAmount)} Luna tokens.`);
+        }
         return;
       }
       
       try {
-        const response = await fetch(`${API_BASE}/luna/rps/betting/join`, {
+        const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/rps/betting/join`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -1949,16 +2157,32 @@
           currentRoomId = roomId;
           opponentWallet = data.creator;
           const feeInSol = calculateFee(betAmount);
-          alert(`Joined room! Game starting...\n\nFee collected: ${formatSol(feeInSol)} SOL (1% of ${formatSol(lunaToSol(betAmount))} SOL)`);
+          if (window.showToast) {
+            window.showToast(`Joined room! Game starting...\n\nFee collected: ${formatSol(feeInSol)} SOL (1% of ${formatSol(lunaToSol(betAmount))} SOL)`, 'success', 6000);
+          } else {
+            alert(`Joined room! Game starting...\n\nFee collected: ${formatSol(feeInSol)} SOL (1% of ${formatSol(lunaToSol(betAmount))} SOL)`);
+          }
           
+          // Initialize chat for this room
+          if (typeof chatManager !== 'undefined' && walletPublicKey) {
+            chatManager.createUI(`betting_room_${roomId}`, 'betting');
+          }
           
           startGame();
         } else {
+          if (window.showToast) {
+          window.showToast('Failed to join room: ' + (data.message || 'Unknown error'), 'error');
+        } else {
           alert('Failed to join room: ' + (data.message || 'Unknown error'));
+        }
         }
       } catch (err) {
         console.error('[Betting] Join room error:', err);
+        if (window.showToast) {
+          window.showToast('Failed to join room: ' + err.message, 'error');
+        } else {
         alert('Failed to join room: ' + err.message);
+        }
       }
     };
 
@@ -1982,7 +2206,11 @@
             <strong>Balance:</strong> <span id="balanceDisplay">${escapeHtml(formatNumber(playerBalance))} Luna</span>
           `;
         } else {
+          if (window.showToast) {
+          window.showToast('Please connect your wallet first!', 'warning');
+        } else {
           alert('Please connect your wallet first!');
+        }
           return;
         }
       }
@@ -1990,30 +2218,55 @@
       currentRoomId = roomId;
       opponentWallet = creatorName;
       
-      alert('Joined room! Game starting...');
+      if (window.showToast) {
+        window.showToast('Joined room! Game starting...', 'success');
+      } else {
+        alert('Joined room! Game starting...');
+      }
       startGame();
     };
 
     document.getElementById('createRoomBtn').addEventListener('click', async () => {
+      const createBtn = document.getElementById('createRoomBtn');
+      const btnText = createBtn.querySelector('.btn-text');
+      const btnLoading = createBtn.querySelector('.btn-loading');
+      
       const betAmount = parseInt(document.getElementById('betAmount').value);
       
       if (!betAmount || betAmount < 1) {
+        if (window.showToast) {
+          window.showToast('Please enter a valid bet amount (minimum 1 Luna)', 'warning');
+        } else {
         alert('Please enter a valid bet amount (minimum 1 Luna)');
+        }
         return;
       }
       
       if (!walletConnected || !walletPublicKey) {
+        if (window.showToast) {
+          window.showToast('Please connect your wallet first!', 'warning');
+        } else {
         alert('Please connect your wallet first!');
+        }
         return;
       }
       
       if (playerBalance < betAmount) {
+        if (window.showToast) {
+          window.showToast(`Insufficient balance! You have ${formatNumber(playerBalance)} Luna, but need ${formatNumber(betAmount)} Luna.`, 'warning');
+        } else {
         alert(`Insufficient balance! You have ${formatNumber(playerBalance)} Luna, but need ${formatNumber(betAmount)} Luna.`);
+        }
         return;
       }
       
+      // Show loading state
+      createBtn.disabled = true;
+      if (btnText) btnText.classList.add('hidden');
+      if (btnLoading) btnLoading.classList.remove('hidden');
+      
       try {
-        const response = await fetch(`${API_BASE}/luna/rps/betting/create`, addCSRFToken({
+        const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/rps/betting/create`, addCSRFToken({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -2027,17 +2280,41 @@
         if (data.ok) {
           currentRoomId = data.roomId;
           const feeInSol = calculateFee(betAmount);
-          alert(`Room created! Waiting for challenger...\n\nFee collected: ${formatSol(feeInSol)} SOL (1% of ${formatSol(lunaToSol(betAmount))} SOL)`);
+          if (window.showToast) {
+            window.showToast(`Room created! Waiting for challenger...\n\nFee collected: ${formatSol(feeInSol)} SOL (1% of ${formatSol(lunaToSol(betAmount))} SOL)`, 'success', 6000);
+          } else {
+            alert(`Room created! Waiting for challenger...\n\nFee collected: ${formatSol(feeInSol)} SOL (1% of ${formatSol(lunaToSol(betAmount))} SOL)`);
+          }
           document.getElementById('betAmount').value = '';
           document.getElementById('feeDisplay').style.display = 'none';
           await loadRooms();
           
+          // Initialize chat for this room
+          if (typeof chatManager !== 'undefined' && walletPublicKey) {
+            chatManager.createUI(`betting_room_${data.roomId}`, 'betting');
+          }
+        } else {
+          if (window.showToast) {
+            window.showToast('Failed to create room: ' + (data.message || 'Unknown error'), 'error');
         } else {
           alert('Failed to create room: ' + (data.message || 'Unknown error'));
+          }
         }
       } catch (err) {
         console.error('[Betting] Create room error:', err);
+        if (window.showToast) {
+          window.showToast('Failed to create room: ' + err.message, 'error');
+        } else {
         alert('Failed to create room: ' + err.message);
+        }
+      } finally {
+        // Hide loading state
+        const createBtn = document.getElementById('createRoomBtn');
+        const btnText = createBtn?.querySelector('.btn-text');
+        const btnLoading = createBtn?.querySelector('.btn-loading');
+        if (createBtn) createBtn.disabled = playerBalance < 1;
+        if (btnText) btnText.classList.remove('hidden');
+        if (btnLoading) btnLoading.classList.add('hidden');
       }
     });
 
@@ -2216,7 +2493,7 @@
         } else {
           // Real room - call API
       try {
-        const response = await fetch(`${API_BASE}/luna/rps/betting/submit`, addCSRFToken({
+        const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/rps/betting/submit`, addCSRFToken({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -2229,14 +2506,22 @@
             const data = await response.json();
             
             if (!data.ok) {
+              if (window.showToast) {
+                window.showToast('Failed to submit choice: ' + (data.message || 'Unknown error'), 'error');
+              } else {
               alert('Failed to submit choice: ' + (data.message || 'Unknown error'));
+              }
               document.querySelectorAll('.choice-btn').forEach(btn => {
                 btn.disabled = false;
               });
             }
           } catch (err) {
             console.error('[Betting] Submit choice error:', err);
+            if (window.showToast) {
+              window.showToast('Failed to submit choice: ' + err.message, 'error');
+            } else {
             alert('Failed to submit choice: ' + err.message);
+            }
             document.querySelectorAll('.choice-btn').forEach(btn => {
               btn.disabled = false;
             });
@@ -2247,16 +2532,21 @@
 
     window.cancelRoom = async function(roomId) {
       if (!walletConnected || !walletPublicKey) {
+        if (window.showToast) {
+          window.showToast('Please connect your wallet first!', 'warning');
+        } else {
         alert('Please connect your wallet first!');
+        }
         return;
       }
       
+      // Use confirm for critical actions (can't easily replace with toast)
       if (!confirm('Are you sure you want to cancel this room?')) {
         return;
       }
       
       try {
-        const response = await fetch(`${API_BASE}/luna/rps/betting/cancel`, addCSRFToken({
+        const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/rps/betting/cancel`, addCSRFToken({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -2271,9 +2561,17 @@
           console.error('[Betting] Cancel room error response:', text);
           try {
             const errorData = JSON.parse(text);
+            if (window.showToast) {
+              window.showToast('Failed to cancel room: ' + (errorData.message || errorData.error || 'Unknown error'), 'error');
+            } else {
             alert('Failed to cancel room: ' + (errorData.message || errorData.error || 'Unknown error'));
+            }
           } catch (e) {
+            if (window.showToast) {
+              window.showToast('Failed to cancel room: Server returned error (Status ' + response.status + ')', 'error');
+            } else {
             alert('Failed to cancel room: Server returned error (Status ' + response.status + ')');
+            }
           }
           return;
         }
@@ -2283,14 +2581,22 @@
         if (!contentType || !contentType.includes('application/json')) {
           const text = await response.text();
           console.error('[Betting] Cancel room - non-JSON response:', text.substring(0, 100));
+          if (window.showToast) {
+            window.showToast('Failed to cancel room: Server returned invalid response', 'error');
+          } else {
           alert('Failed to cancel room: Server returned invalid response');
+          }
           return;
         }
         
         const data = await response.json();
         
         if (data.ok) {
+          if (window.showToast) {
+            window.showToast('Room cancelled successfully!', 'success');
+          } else {
           alert('Room cancelled successfully!');
+          }
           currentRoomId = null;
           gameActive = false;
           // Reset UI
@@ -2299,26 +2605,39 @@
           // Reload rooms
           await loadRooms();
         } else {
+          if (window.showToast) {
+            window.showToast('Failed to cancel room: ' + (data.message || 'Unknown error'), 'error');
+        } else {
           alert('Failed to cancel room: ' + (data.message || 'Unknown error'));
+          }
         }
       } catch (err) {
         console.error('[Betting] Cancel room error:', err);
+        if (window.showToast) {
+          window.showToast('Failed to cancel room: ' + err.message, 'error');
+        } else {
         alert('Failed to cancel room: ' + err.message);
+        }
       }
     };
 
     window.leaveRoom = async function(roomId) {
       if (!walletConnected || !walletPublicKey) {
+        if (window.showToast) {
+          window.showToast('Please connect your wallet first!', 'warning');
+        } else {
         alert('Please connect your wallet first!');
+        }
         return;
       }
       
+      // Use confirm for critical actions
       if (!confirm('Are you sure you want to leave this room?')) {
         return;
       }
       
       try {
-        const response = await fetch(`${API_BASE}/luna/rps/betting/cancel`, addCSRFToken({
+        const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/rps/betting/cancel`, addCSRFToken({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -2333,9 +2652,17 @@
           console.error('[Betting] Leave room error response:', text);
           try {
             const errorData = JSON.parse(text);
+            if (window.showToast) {
+              window.showToast('Failed to leave room: ' + (errorData.message || errorData.error || 'Unknown error'), 'error');
+            } else {
             alert('Failed to leave room: ' + (errorData.message || errorData.error || 'Unknown error'));
+            }
           } catch (e) {
+            if (window.showToast) {
+              window.showToast('Failed to leave room: Server returned error (Status ' + response.status + ')', 'error');
+            } else {
             alert('Failed to leave room: Server returned error (Status ' + response.status + ')');
+            }
           }
           return;
         }
@@ -2345,14 +2672,22 @@
         if (!contentType || !contentType.includes('application/json')) {
           const text = await response.text();
           console.error('[Betting] Leave room - non-JSON response:', text.substring(0, 100));
+          if (window.showToast) {
+            window.showToast('Failed to leave room: Server returned invalid response', 'error');
+          } else {
           alert('Failed to leave room: Server returned invalid response');
+          }
           return;
         }
         
         const data = await response.json();
         
         if (data.ok) {
+          if (window.showToast) {
+            window.showToast('Left room successfully!', 'success');
+          } else {
           alert('Left room successfully!');
+          }
           currentRoomId = null;
           gameActive = false;
           // Reset UI
@@ -2361,11 +2696,19 @@
           // Reload rooms
           await loadRooms();
         } else {
+          if (window.showToast) {
+            window.showToast('Failed to leave room: ' + (data.message || 'Unknown error'), 'error');
+        } else {
           alert('Failed to leave room: ' + (data.message || 'Unknown error'));
+          }
         }
       } catch (err) {
         console.error('[Betting] Leave room error:', err);
+        if (window.showToast) {
+          window.showToast('Failed to leave room: ' + err.message, 'error');
+        } else {
         alert('Failed to leave room: ' + err.message);
+        }
       }
     };
 
@@ -2433,36 +2776,16 @@
     }
 
     // Update fee display when bet amount changes
-    window.updateFeeDisplay = async function() {
+    window.updateFeeDisplay = function() {
       const betAmount = parseInt(document.getElementById('betAmount').value) || 0;
       const feeDisplay = document.getElementById('feeDisplay');
       
       if (betAmount > 0) {
         const betValueInSol = lunaToSol(betAmount);
-        
-        // Get current betting fee percentage based on deposit status
-        let feePercentage = 0.03; // Default 3%
-        if (walletConnected && walletPublicKey) {
-          try {
-            const response = await fetch(`${API_BASE}/luna/deposit/status?wallet=${walletPublicKey}`);
-            const data = await response.json();
-            if (data.ok && data.hasDeposit) {
-              feePercentage = data.deposit.feePercentage;
-            }
-          } catch (error) {
-            console.error('[Fee] Error getting deposit status:', error);
-            // Use default 3% on error
-          }
-        }
-        
-        const feeInSol = betValueInSol * feePercentage;
+        const feeInSol = calculateFee(betAmount);
         
         document.getElementById('betValueInSol').textContent = formatSol(betValueInSol);
         document.getElementById('feeAmount').textContent = formatSol(feeInSol);
-        const feePercentageDisplay = document.getElementById('feePercentageDisplay');
-        if (feePercentageDisplay) {
-          feePercentageDisplay.textContent = `${(feePercentage * 100).toFixed(0)}%`;
-        }
         feeDisplay.style.display = 'block';
       } else {
         feeDisplay.style.display = 'none';
@@ -2472,7 +2795,7 @@
     // Competition Timer Functions
     async function updateCompetitionTimer() {
       try {
-        const response = await fetch(`${API_BASE}/luna/rps/competition/time`);
+        const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/rps/competition/time`);
         const data = await response.json();
         
         if (data.ok && data.isActive) {
@@ -2545,10 +2868,23 @@
           body.classList.remove('neon-off');
           neonToggle.textContent = '💡 Neon: ON';
           localStorage.setItem('neonEnabled', 'true');
+          createParticles();
+          initCursorTrail();
         } else {
           body.classList.add('neon-off');
           neonToggle.textContent = '💡 Neon: OFF';
           localStorage.setItem('neonEnabled', 'false');
+          // Stop effects when turning neon off
+          const particles = document.getElementById('particles');
+          if (particles) {
+            particles.innerHTML = '';
+          }
+          // Remove all cursor trail elements
+          document.querySelectorAll('.cursor-trail').forEach(trail => {
+            if (trail.parentNode) {
+              trail.parentNode.removeChild(trail);
+            }
+          });
         }
       });
     }
@@ -2578,11 +2914,9 @@
 
 
     // Total Fees Real-time Update
-    let totalFeesUpdateInterval = null;
-    
     async function updateTotalFees() {
       try {
-        const response = await fetch(`${API_BASE}/luna/rps/betting/fees`);
+        const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/rps/betting/fees`);
         const data = await response.json();
         
         if (data.ok) {
@@ -2626,7 +2960,12 @@
       if (totalFeesUpdateInterval) {
         clearInterval(totalFeesUpdateInterval);
       }
-      totalFeesUpdateInterval = setInterval(updateTotalFees, 5000);
+      if (totalFeesUpdateInterval) clearInterval(totalFeesUpdateInterval);
+      totalFeesUpdateInterval = setInterval(() => {
+        if (isPageVisible) {
+          updateTotalFees();
+        }
+      }, 5000);
     }
     
     function stopTotalFeesUpdates() {
@@ -2641,7 +2980,7 @@
     
     async function fetchCSRFToken() {
       try {
-        const response = await fetch(`${API_BASE}/api/csrf-token`);
+        const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/api/csrf-token`);
         const data = await response.json();
         if (data.token) {
           csrfToken = data.token;
@@ -2669,10 +3008,154 @@
       return options;
     }
 
+    // Enhanced Effects Functions
+    function createParticles() {
+      const particlesContainer = document.getElementById('particles');
+      if (!particlesContainer) return;
+      const particleCount = 30;
+      for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.animationDelay = Math.random() * 20 + 's';
+        particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+        particlesContainer.appendChild(particle);
+      }
+    }
+
+    function initParallax() {
+      let ticking = false;
+      function updateParallax() {
+        const scrolled = window.pageYOffset;
+        const hero = document.querySelector('.game-container h1');
+        const cards = document.querySelectorAll('.room-card, .info-card');
+        if (hero) {
+          const heroSpeed = 0.2;
+          hero.style.transform = `translateY(${scrolled * heroSpeed}px)`;
+        }
+        cards.forEach((card) => {
+          const rect = card.getBoundingClientRect();
+          const speed = 0.05;
+          if (rect.top < window.innerHeight && rect.bottom > 0) {
+            const offset = (window.innerHeight - rect.top) * speed;
+            card.style.transform = `translateY(${offset}px)`;
+          }
+        });
+        ticking = false;
+      }
+      window.addEventListener('scroll', () => {
+        if (!ticking) {
+          window.requestAnimationFrame(updateParallax);
+          ticking = true;
+        }
+      });
+    }
+
+    function initScrollProgress() {
+      const progressBar = document.getElementById('scrollProgress');
+      if (!progressBar) return;
+      window.addEventListener('scroll', () => {
+        const windowHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        const scrolled = (window.scrollY / windowHeight) * 100;
+        progressBar.style.transform = `scaleX(${scrolled / 100})`;
+      });
+    }
+
+    function initCursorTrail() {
+      let trail = [];
+      const trailLength = 15;
+      
+      // Remove existing listener if any
+      if (window.cursorTrailHandler) {
+        document.removeEventListener('mousemove', window.cursorTrailHandler);
+          }
+          
+      window.cursorTrailHandler = (e) => {
+        // Don't create trail if neon is off
+        if (document.body.classList.contains('neon-off')) {
+          return;
+        }
+        
+        const trailDot = document.createElement('div');
+        trailDot.className = 'cursor-trail';
+        trailDot.style.left = e.clientX + 'px';
+        trailDot.style.top = e.clientY + 'px';
+        document.body.appendChild(trailDot);
+        trail.push(trailDot);
+        if (trail.length > trailLength) {
+          const oldDot = trail.shift();
+          if (oldDot && oldDot.parentNode) {
+            oldDot.parentNode.removeChild(oldDot);
+          }
+        }
+        setTimeout(() => {
+          if (trailDot && trailDot.parentNode) {
+            trailDot.parentNode.removeChild(trailDot);
+        }
+        }, 500);
+      };
+      
+      document.addEventListener('mousemove', window.cursorTrailHandler);
+    }
+
+    function initSparkles() {
+      const gameContainer = document.querySelector('.game-container');
+      if (!gameContainer) return;
+      setInterval(() => {
+        const sparkle = document.createElement('div');
+        sparkle.style.position = 'absolute';
+        sparkle.style.width = '4px';
+        sparkle.style.height = '4px';
+        sparkle.style.background = '#00ffff';
+        sparkle.style.borderRadius = '50%';
+        sparkle.style.boxShadow = '0 0 10px #00ffff, 0 0 20px #00ffff';
+        sparkle.style.left = Math.random() * 100 + '%';
+        sparkle.style.top = Math.random() * 100 + '%';
+        sparkle.style.pointerEvents = 'none';
+        sparkle.style.zIndex = '999';
+        sparkle.style.animation = 'sparkleFade 1s ease-out forwards';
+        gameContainer.style.position = 'relative';
+        gameContainer.appendChild(sparkle);
+          setTimeout(() => {
+          if (sparkle.parentNode) {
+            sparkle.parentNode.removeChild(sparkle);
+          }
+        }, 1000);
+      }, 500);
+    }
+
+    function initSmoothScroll() {
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute('href'));
+          if (target) {
+            const offset = 120;
+            const targetPosition = target.getBoundingClientRect().top + window.pageYOffset - offset;
+            window.scrollTo({
+              top: targetPosition,
+              behavior: 'smooth'
+            });
+      }
+        });
+      });
+    }
+
     // Initialize
     document.addEventListener('DOMContentLoaded', async () => {
       initNeonToggle();
       initNavigationSounds();
+      
+      // Initialize enhanced effects (respect neon toggle)
+      const neonEnabled = localStorage.getItem('neonEnabled') !== 'false';
+      if (neonEnabled) {
+        createParticles();
+        initCursorTrail();
+      }
+      initParallax();
+      initScrollProgress();
+      initSparkles();
+      initSmoothScroll();
       setupWalletConnection();
       connectWebSocket();
       // Fetch Luna price on page load
@@ -2686,137 +3169,91 @@
       // Start CSRF token management
       startCSRFTokenRefresh();
       
-      // Setup deposit system on page load
-      setupDepositSystem();
+      // Initialize form validation, tooltips, and keyboard shortcuts
+      initFormValidation();
+      initTooltips();
+      initKeyboardShortcuts();
+    });
+
+    function initFormValidation() {
+      if (!window.lunaUtils) return;
       
-      // Check if wallet already connected OR has valid signature (like pump.fun)
-      const storedSignature = localStorage.getItem('walletSignature');
+      const betAmountInput = document.getElementById('betAmount');
+      if (betAmountInput) {
+        const errorContainer = document.createElement('div');
+        errorContainer.className = 'error-message';
+        errorContainer.id = 'betAmountError';
+        betAmountInput.parentNode.insertBefore(errorContainer, betAmountInput.nextSibling);
+        
+        window.lunaUtils.setupRealTimeValidation(betAmountInput, [
+          { required: 'Bet amount is required' },
+          { number: 'Must be a valid number' },
+          { positive: 'Must be greater than 0' },
+          { min: [1, 'Minimum bet is 1 Luna'] }
+        ], {
+          errorContainer: errorContainer
+        });
+      }
+    }
+
+    function initTooltips() {
+      if (!window.lunaUtils) return;
       
-      if (window.solana && window.solana.isPhantom) {
-        // Case 1: Wallet is already connected
-        if (window.solana.isConnected && window.solana.publicKey) {
-          const currentWallet = window.solana.publicKey.toString();
-          
-          if (storedSignature) {
-            try {
-              const sigData = JSON.parse(storedSignature);
-              
-              // Verify signature is for current wallet
-              if (sigData.publicKey === currentWallet) {
-                console.log('[Betting] ✅ Persistent connection found - using existing authenticated connection');
-              } else {
-                console.log('[Betting] Signature wallet mismatch - clearing signature');
-                localStorage.removeItem('walletSignature');
-              }
-            } catch (err) {
-              console.error('[Betting] Error checking signature:', err);
-              localStorage.removeItem('walletSignature');
-            }
-          }
-          
-          walletPublicKey = currentWallet;
-          walletConnected = true;
-          await checkDepositStatus();
+      const createBtn = document.getElementById('createRoomBtn');
+      const connectBtn = document.getElementById('connectWalletBtn');
+      
+      if (createBtn) {
+        window.lunaUtils.createTooltip(createBtn, 'Create a new betting room. Minimum bet: 1 Luna. Fee: 1% of bet value.', 'top');
+      }
+      if (connectBtn) {
+        window.lunaUtils.createTooltip(connectBtn, 'Connect your Phantom wallet to play', 'bottom');
+      }
+    }
+
+    function initKeyboardShortcuts() {
+      if (!window.lunaUtils) return;
+      
+      // Ctrl/Cmd + C: Create room
+      window.lunaUtils.registerShortcut('c', () => {
+        const createBtn = document.getElementById('createRoomBtn');
+        if (createBtn && !createBtn.disabled) {
+          createBtn.focus();
+          createBtn.click();
         }
-        // Case 2: Wallet not connected but has valid signature - reconnect automatically (like pump.fun)
-        else if (storedSignature && !window.solana.isConnected) {
-          try {
-            const sigData = JSON.parse(storedSignature);
-            console.log('[Betting] ✅ Valid signature found - reconnecting automatically (like pump.fun)...');
-            
-            // Try to reconnect silently first
-            let response;
-            try {
-              response = await window.solana.connect({ onlyIfTrusted: true });
-            } catch (silentErr) {
-              // If silent connect fails, try normal connect (may show popup)
-              console.log('[Betting] Silent connect failed, trying normal connect...');
-              response = await window.solana.connect({ onlyIfTrusted: false });
-            }
-            
-            if (response && response.publicKey) {
-              const currentWallet = response.publicKey.toString();
-              
-              // Verify signature is for reconnected wallet
-              if (sigData.publicKey === currentWallet) {
-                console.log('[Betting] ✅ Auto-reconnected with valid signature');
-                walletPublicKey = currentWallet;
-                walletConnected = true;
-                
-                // Update UI
-                const connectBtn = document.getElementById('connectWalletBtn');
-                const disconnectBtn = document.getElementById('disconnectWalletBtn');
-                const walletInfo = document.getElementById('walletInfo');
-                const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
-                const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
-                const walletInfoFixed = document.getElementById('walletInfoFixed');
-                
-                if (connectBtn) connectBtn.classList.add('hidden');
-                if (disconnectBtn) disconnectBtn.classList.remove('hidden');
-                if (walletInfo) {
-                  walletInfo.textContent = `Wallet: ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}`;
-                  walletInfo.classList.remove('hidden');
-                }
-                if (connectBtnFixed) connectBtnFixed.classList.add('hidden');
-                if (disconnectBtnFixed) {
-                  disconnectBtnFixed.classList.remove('hidden');
-                  disconnectBtnFixed.style.display = '';
-                }
-                if (walletInfoFixed) {
-                  walletInfoFixed.innerHTML = `
-                    <div><strong>Connected:</strong> ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}</div>
-                    <div><strong>Balance:</strong> <span id="balanceDisplayFixed">Checking...</span> Luna</div>
-                  `;
-                  walletInfoFixed.classList.remove('hidden');
-                }
-                
-                await checkDepositStatus();
-                await checkLunaBalance();
-                startBalanceUpdate();
-              } else {
-                console.log('[Betting] Signature wallet mismatch after reconnect - clearing signature');
-                localStorage.removeItem('walletSignature');
-                // Still connect but without signature
-                walletPublicKey = currentWallet;
-                walletConnected = true;
-                
-                // Update UI
-                const connectBtn = document.getElementById('connectWalletBtn');
-                const disconnectBtn = document.getElementById('disconnectWalletBtn');
-                const walletInfo = document.getElementById('walletInfo');
-                const connectBtnFixed = document.getElementById('connectWalletBtnFixed');
-                const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
-                const walletInfoFixed = document.getElementById('walletInfoFixed');
-                
-                if (connectBtn) connectBtn.classList.add('hidden');
-                if (disconnectBtn) disconnectBtn.classList.remove('hidden');
-                if (walletInfo) {
-                  walletInfo.textContent = `Wallet: ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}`;
-                  walletInfo.classList.remove('hidden');
-                }
-                if (connectBtnFixed) connectBtnFixed.classList.add('hidden');
-                if (disconnectBtnFixed) {
-                  disconnectBtnFixed.classList.remove('hidden');
-                  disconnectBtnFixed.style.display = '';
-                }
-                if (walletInfoFixed) {
-                  walletInfoFixed.innerHTML = `
-                    <div><strong>Connected:</strong> ${walletPublicKey.substring(0, 8)}...${walletPublicKey.substring(walletPublicKey.length - 8)}</div>
-                    <div><strong>Balance:</strong> <span id="balanceDisplayFixed">Checking...</span> Luna</div>
-                  `;
-                  walletInfoFixed.classList.remove('hidden');
-                }
-                
-                await checkDepositStatus();
-                await checkLunaBalance();
-                startBalanceUpdate();
-              }
-            }
-          } catch (err) {
-            console.warn('[Betting] Auto-reconnect failed:', err);
-            // Don't clear signature - user might want to connect manually
+      }, { ctrl: true, meta: true });
+      
+      // Ctrl/Cmd + K: Connect wallet
+      window.lunaUtils.registerShortcut('k', () => {
+        const connectBtn = document.getElementById('connectWalletBtn');
+        if (connectBtn && !connectBtn.disabled) {
+          connectBtn.click();
+        }
+      }, { ctrl: true, meta: true });
+      
+      // Escape: Cancel current action
+      window.lunaUtils.registerShortcut('Escape', () => {
+        const gameArea = document.getElementById('gameArea');
+        if (gameArea && gameArea.classList.contains('active')) {
+          const cancelBtn = document.querySelector('.cancel-btn');
+          if (cancelBtn && !cancelBtn.disabled) {
+            cancelBtn.click();
           }
         }
+      });
+    }
+
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'phantomForceDisconnect' && event.newValue) {
+        if (!walletConnected && !walletPublicKey) {
+          return;
+        }
+        forceDisconnect({
+          skipProviderDisconnect: true,
+          reason: 'storage-event',
+          suppressForceFlag: true,
+        }).catch((err) => {
+          console.error('[Betting] Failed to handle global force disconnect:', err);
+        });
       }
     });
     
@@ -2826,101 +3263,18 @@
     // Load rooms on page load
     setTimeout(loadRooms, 1000);
 
-    // Load contract address from backend
-    async function loadContractAddress() {
-      try {
-        const response = await fetch(`${API_BASE}/luna/rps/contract-address`);
-        const data = await response.json();
-        
-        if (data.ok && data.contractAddress) {
-          const contractInput = document.getElementById('contractAddress');
-          if (contractInput) {
-            contractInput.value = data.contractAddress;
-          }
-          
-          // Update buy DEX link from env
-          const buyDexLink = document.getElementById('buyDexLink');
-          if (buyDexLink && data.buyLink) {
-            buyDexLink.href = data.buyLink;
-          } else if (buyDexLink) {
-            // Fallback to pump.fun if buyLink not provided
-            buyDexLink.href = `https://pump.fun/${data.contractAddress}`;
-          }
-          
-          // Update X/Twitter community link from env
-          const communityLink = document.getElementById('communityLink');
-          if (communityLink && data.xLink) {
-            communityLink.href = data.xLink;
-          }
-        }
-      } catch (error) {
-        console.error('Failed to load contract address:', error);
-        const contractInput = document.getElementById('contractAddress');
-        if (contractInput) {
-          contractInput.value = 'Error loading address';
-        }
-      }
-    }
-
-    // Copy contract address to clipboard
-    function copyContractAddress() {
-      const contractInput = document.getElementById('contractAddress');
-      if (contractInput) {
-        contractInput.select();
-        contractInput.setSelectionRange(0, 99999);
-        document.execCommand('copy');
-        
-        const btn = event.target.closest('.contract-btn-copy');
-        if (btn) {
-          const originalText = btn.innerHTML;
-          btn.innerHTML = '<span>✓</span> Copied!';
-          setTimeout(() => {
-            btn.innerHTML = originalText;
-          }, 2000);
-        }
-      }
-    }
-
-    // View contract address on Solscan
-    function viewContractAddress() {
-      const contractInput = document.getElementById('contractAddress');
-      if (contractInput && contractInput.value && contractInput.value !== 'Loading...' && contractInput.value !== 'Error loading address') {
-        window.open(`https://solscan.io/token/${contractInput.value}`, '_blank');
-      }
-    }
-
-    // Open buy DEX link
-    function openBuyDex(event) {
-      event.preventDefault();
-      const buyDexLink = document.getElementById('buyDexLink');
-      if (buyDexLink && buyDexLink.href && buyDexLink.href !== '#') {
-        window.open(buyDexLink.href, '_blank');
-      } else {
-        alert('Contract address not loaded yet. Please wait a moment and try again.');
-      }
-    }
-
-    // Open community link (X/Twitter)
-    function openCommunity(event) {
-      event.preventDefault();
-      const communityLink = document.getElementById('communityLink');
-      if (communityLink && communityLink.href && communityLink.href !== '#') {
-        window.open(communityLink.href, '_blank');
-      } else {
-        alert('Community link not loaded yet. Please wait a moment and try again.');
-      }
-    }
-
   </script>
+  <script src="/js/chat.js"></script>
   <script>
     // Initialize UI components when wallet connects
     function initializeUIComponents() {
       if (walletPublicKey) {
-        // Initialize Notification System
-        if (typeof notificationManager !== 'undefined') {
-          notificationManager.init(walletPublicKey);
+        // Initialize Chat System for betting room
+        if (typeof chatManager !== 'undefined') {
+          chatManager.init(walletPublicKey);
+          // Create chat for betting lobby
+          chatManager.createUI('betting_lobby', 'lobby');
         }
-        
       }
     }
     
@@ -2934,29 +3288,30 @@
       return result;
     };
     
-    // Disable Notifications and Chat +
-    if (typeof notificationManager !== 'undefined') {
-      notificationManager.createUI = function() {}; // Disable notifications
-    }
-    if (typeof chatManager !== 'undefined') {
-      chatManager.createUI = function() {}; // Disable chat +
-    }
-    
-    // Remove any existing notification/chat elements
+    // Initialize UI components immediately (will work with or without wallet)
     document.addEventListener('DOMContentLoaded', () => {
-      const notificationBtn = document.getElementById('notification-btn');
-      const notificationPanel = document.getElementById('notification-panel');
-      const chatContainer = document.getElementById('chat-container');
-      if (notificationBtn) notificationBtn.remove();
-      if (notificationPanel) notificationPanel.remove();
-      if (chatContainer) chatContainer.remove();
+      // Initialize Chat System (show chat even without wallet)
+      if (typeof chatManager !== 'undefined') {
+        chatManager.init(walletPublicKey || null);
+        chatManager.createUI('betting_lobby', 'lobby');
+      }
     });
     
-    // Disable initializeRoomChat function
+    // Also initialize if wallet already connected
+    if (walletPublicKey) {
+      setTimeout(() => {
+        initializeUIComponents();
+      }, 1000);
+    }
+    
+    // Initialize chat for specific betting room when room is created/joined
     window.initializeRoomChat = function(roomId) {
-      // Disabled
+      if (typeof chatManager !== 'undefined') {
+        chatManager.createUI(`betting_room_${roomId}`, 'betting');
+      }
     };
   </script>
 </body>
 </html>
+
 

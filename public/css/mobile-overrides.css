@@ -1,0 +1,142 @@
+/* Mobile-first overrides shared across Luna RPS surfaces */
+@media (max-width: 1024px) {
+  body {
+    padding: clamp(12px, 3vw, 28px);
+  }
+
+  .game-container,
+  .container,
+  .panel,
+  .info-card,
+  .stats-card,
+  .wallet-info {
+    padding: clamp(16px, 4vw, 32px) !important;
+    width: 100%;
+  }
+
+  #modeNavigation {
+    position: sticky !important;
+    top: 12px !important;
+    left: 0 !important;
+    right: 0 !important;
+    margin: 0 auto 18px !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    padding: 10px 8px;
+    gap: 10px;
+    background: rgba(5, 8, 30, 0.9);
+    border-radius: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 18px 40px rgba(3, 0, 40, 0.45);
+    backdrop-filter: blur(12px);
+    scrollbar-width: none;
+    z-index: 25;
+  }
+
+  #modeNavigation::-webkit-scrollbar {
+    display: none;
+  }
+
+  #modeNavigation a {
+    flex: 0 0 auto;
+    min-width: max-content;
+    text-align: center;
+  }
+
+  .wallet-connect,
+  .wallet-connect--fixed,
+  .wallet-info,
+  .wallet-buttons,
+  .wallet-row {
+    display: flex;
+    flex-direction: column !important;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .betting-section,
+  .stats-grid,
+  .metrics-grid,
+  .info-grid,
+  .card-grid,
+  .dual-grid,
+  .grid-2,
+  .grid-3,
+  .leaderboard-grid,
+  .group-chat-layout,
+  .deposit-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 18px;
+  }
+
+  .hands-container {
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .player-choices {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px;
+  }
+
+  .game-area,
+  .info-card,
+  .panel {
+    margin-bottom: 18px;
+  }
+
+  table,
+  .table-wrapper,
+  .data-table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+}
+
+@media (max-width: 600px) {
+  #modeNavigation {
+    gap: 8px;
+    padding: 8px 6px;
+    border-radius: 22px;
+  }
+
+  #modeNavigation a {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+  }
+
+  h1 {
+    font-size: clamp(1.4rem, 7vw, 1.9rem) !important;
+    letter-spacing: 0.25em !important;
+  }
+
+  h2 {
+    font-size: clamp(1.1rem, 5.5vw, 1.4rem) !important;
+  }
+
+  .wallet-btn,
+  button,
+  input,
+  textarea {
+    font-size: 1rem;
+    min-height: 44px;
+  }
+
+  .hand-icon {
+    width: 140px !important;
+    height: 140px !important;
+  }
+
+  .choice-btn {
+    width: 110px !important;
+    height: 110px !important;
+  }
+}
+
+
+

@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Luna Group Chat</title>
+  <link rel="stylesheet" href="/css/mobile-overrides.css">
+  <script src="/js/runtime-utils.js"></script>
   <style>
     /* Hide Notifications, Chat +, and Referral Program */
     #notification-btn,
@@ -55,6 +57,124 @@
         0 0 60px currentColor,
         0 0 90px currentColor,
         inset 0 0 30px rgba(255, 255, 255, 0.2) !important;
+    }
+
+    /* Enhanced Effects Styles */
+    .particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .glow-field {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+      mix-blend-mode: screen;
+    }
+
+    .glow-dot {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(0, 255, 255, 0.45);
+      box-shadow:
+        0 0 10px rgba(0, 255, 255, 0.8),
+        0 0 20px rgba(0, 255, 255, 0.4);
+      animation: floatUp 14s linear infinite;
+      opacity: 0;
+    }
+
+    @keyframes floatUp {
+      0% {
+        transform: translateY(100vh) scale(0.5);
+        opacity: 0;
+      }
+      10% {
+        opacity: 0.8;
+      }
+      80% {
+        opacity: 0.4;
+      }
+      100% {
+        transform: translateY(-120vh) scale(1.2);
+        opacity: 0;
+      }
+    }
+
+    .particle {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: rgba(0, 255, 255, 0.6);
+      border-radius: 50%;
+      animation: float 20s infinite linear;
+      box-shadow: 0 0 6px rgba(0, 255, 255, 0.8);
+    }
+
+    @keyframes float {
+      0% { transform: translateY(100vh) translateX(0) rotate(0deg); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translateY(-100vh) translateX(100px) rotate(360deg); opacity: 0; }
+    }
+
+    .scroll-progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      background: linear-gradient(90deg, rgba(0, 255, 255, 0.8), rgba(255, 0, 255, 0.8), rgba(0, 255, 157, 0.8));
+      background-size: 200% 100%;
+      z-index: 10000;
+      transform-origin: left;
+      transform: scaleX(0);
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+      animation: progressGradient 3s linear infinite;
+    }
+
+    @keyframes progressGradient {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 200% 50%; }
+    }
+
+    .cursor-trail {
+      position: fixed;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(0, 255, 255, 0.6);
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+      pointer-events: none;
+      z-index: 9999;
+      animation: trailFade 0.5s ease-out forwards;
+    }
+
+    @keyframes trailFade {
+      0% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0; transform: scale(0); }
+    }
+
+    @keyframes sparkleFade {
+      0% { opacity: 1; transform: scale(1) rotate(0deg); }
+      100% { opacity: 0; transform: scale(0) rotate(360deg); }
+    }
+
+    body.neon-off .particles,
+    body.neon-off .scroll-progress,
+    body.neon-off .cursor-trail {
+      display: none !important;
     }
 
     /* Tab Navigation */
@@ -305,6 +425,7 @@
       max-width: 900px;
       width: 100%;
       margin: 0 auto;
+      padding-top: 80px;
       display: flex;
       flex-direction: column;
     }
@@ -396,10 +517,13 @@
       backdrop-filter: blur(10px);
       display: flex;
       flex-direction: column;
-      height: 600px;
-      max-height: 80vh;
+      min-height: 780px;
+      height: auto;
+      max-height: none;
       overflow: hidden;
       position: relative;
+      z-index: 1;
+      pointer-events: auto;
     }
 
     .group-chat-header {
@@ -562,15 +686,6 @@
       box-shadow: 0 0 5px rgba(255, 215, 0, 0.3);
     }
 
-    .group-chat-reward-notification {
-      background: rgba(255, 215, 0, 0.2);
-      border: 1px solid rgba(255, 215, 0, 0.5);
-      border-radius: 8px;
-      padding: 8px 12px;
-      margin-top: 8px;
-      font-size: 0.9rem;
-      color: #ffd700;
-    }
 
     .group-chat-search-container {
       padding: 15px 20px;
@@ -662,6 +777,9 @@
       background: rgba(0, 0, 0, 0.3);
       border-radius: 0 0 16px 16px;
       flex-shrink: 0;
+      position: relative;
+      z-index: 10;
+      pointer-events: auto !important;
     }
 
     .group-chat-input-container input {
@@ -674,6 +792,9 @@
       font-size: 1rem;
       font-family: 'Courier New', monospace;
       transition: all 0.3s ease;
+      position: relative;
+      z-index: 11;
+      pointer-events: auto !important;
     }
 
     .group-chat-input-container input:focus {
@@ -682,9 +803,26 @@
       box-shadow: 0 0 15px #00ffff;
     }
 
-    .group-chat-input-container input:disabled {
-      opacity: 0.5;
+    .group-chat-input-container input.locked,
+    #group-chat-send-btn.locked {
+      opacity: 0.6;
+      border-style: dashed;
+      pointer-events: none !important;
       cursor: not-allowed;
+    }
+    
+    /* Ensure input and button are clickable when not locked */
+    .group-chat-input-container input:not(.locked),
+    #group-chat-send-btn:not(.locked) {
+      pointer-events: auto !important;
+    }
+    
+    .group-chat-input-container input:not(.locked):not(:disabled) {
+      cursor: text;
+    }
+    
+    #group-chat-send-btn:not(.locked):not(:disabled) {
+      cursor: pointer;
     }
 
     .group-chat-input-container input::placeholder {
@@ -702,6 +840,9 @@
       font-weight: bold;
       font-size: 1rem;
       font-family: 'Courier New', monospace;
+      position: relative;
+      z-index: 11;
+      pointer-events: auto !important;
     }
 
     #group-chat-send-btn:hover:not(:disabled) {
@@ -749,73 +890,7 @@
       display: none !important;
     }
 
-    /* Wallet Connect Button (Fixed Position - Top Right) */
-    #walletConnectFixed {
-      position: fixed;
-      top: 40px;
-      right: 20px;
-      z-index: 99999;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      align-items: flex-end;
-    }
-
-    #walletConnectFixed .wallet-btn {
-      background: rgba(0, 0, 0, 0.9);
-      border: 2px solid #00ffff;
-      color: #00ffff;
-      padding: 10px 20px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-family: 'Courier New', monospace;
-      font-size: 0.9em;
-      transition: all 0.3s;
-      backdrop-filter: blur(5px);
-      white-space: nowrap;
-    }
-
-    #walletConnectFixed .wallet-btn:hover {
-      background: rgba(0, 255, 255, 0.2);
-      box-shadow: 0 0 10px #00ffff;
-    }
-
-    #walletConnectFixed .wallet-info {
-      background: rgba(0, 0, 0, 0.9);
-      border: 1px solid #00ffff;
-      color: #00ffff;
-      padding: 8px 15px;
-      border-radius: 8px;
-      font-size: 0.85em;
-      backdrop-filter: blur(5px);
-      max-width: 250px;
-      word-break: break-all;
-    }
-
-    /* Neon Toggle Button (Bottom Right - Replaces Chat) */
-    #neonToggle {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      z-index: 99999;
-      background: rgba(0, 0, 0, 0.9);
-      border: 2px solid #00ffff;
-      color: #00ffff;
-      padding: 10px 20px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-family: 'Courier New', monospace;
-      font-size: 0.9em;
-      transition: all 0.3s;
-      backdrop-filter: blur(5px);
-      box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
-    }
-
-    #neonToggle:hover {
-      background: rgba(0, 255, 255, 0.2);
-      box-shadow: 0 0 20px #00ffff;
-    }
-
+    /* Wallet connect + neon toggle styles inherit from global theme */
     /* Neon Off Styles */
     body.neon-off * {
       text-shadow: none !important;
@@ -846,26 +921,424 @@
         max-width: 85%;
       }
 
-      #neonToggle {
-        top: 90px;
-        right: 10px;
-        font-size: 0.8em;
-        padding: 8px 15px;
+      .group-chat-container {
+        min-height: 520px;
       }
+
     }
+
+  .dynamic-requirement-card {
+    margin: 20px auto;
+    padding: 18px 24px;
+    border-radius: 20px;
+    border: 1px solid rgba(0, 255, 255, 0.2);
+    background:
+      radial-gradient(circle at 15% 15%, rgba(0, 255, 255, 0.08), transparent 55%),
+      rgba(3, 10, 24, 0.9);
+    text-align: center;
+    max-width: 520px;
+    box-shadow: 0 25px 40px rgba(0, 0, 0, 0.35);
+  }
+
+  .dynamic-requirement-card__title {
+    font-size: 0.85rem;
+    letter-spacing: 0.25em;
+    color: rgba(255, 255, 255, 0.75);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .dynamic-requirement-card__value {
+    font-size: clamp(1.6rem, 3vw, 2.3rem);
+    font-weight: 700;
+    color: #00ffff;
+    text-shadow: 0 0 25px rgba(0, 255, 255, 0.45);
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    align-items: baseline;
+  }
+
+  .dynamic-requirement-card__value .unit {
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  .dynamic-requirement-card__usd {
+    margin-top: 6px;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  .dynamic-requirement-card__meta {
+    margin-top: 10px;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.65);
+    }
+
+  .messenger-shell {
+    margin-top: 40px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .messenger-panel {
+    width: 100%;
+    max-width: 960px;
+    background: rgba(6, 12, 32, 0.85);
+    border: 1px solid rgba(0, 255, 255, 0.2);
+    border-radius: 28px;
+    box-shadow: 0 30px 120px rgba(0, 0, 0, 0.6), inset 0 0 35px rgba(0, 255, 255, 0.08);
+    backdrop-filter: blur(18px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .messenger-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 32px;
+    border-bottom: 1px solid rgba(0, 255, 255, 0.15);
+  }
+
+  .messenger-head h2 {
+    margin: 0;
+    font-size: 1.4rem;
+    letter-spacing: 0.1em;
+  }
+
+  .status-pill {
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: rgba(0, 255, 171, 0.12);
+    border: 1px solid rgba(0, 255, 171, 0.4);
+    font-size: 0.85rem;
+    color: #00ffab;
+  }
+
+  .head-actions {
+    display: flex;
+    gap: 12px;
+  }
+
+  .ghost-btn {
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    background: transparent;
+    color: #fff;
+    font-size: 0.9rem;
+    padding: 8px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .ghost-btn[aria-pressed="true"] {
+    background: rgba(0, 255, 255, 0.08);
+    border-color: rgba(0, 255, 255, 0.6);
+  }
+
+  .ghost-btn:hover {
+    border-color: rgba(255, 255, 255, 0.6);
+    transform: translateY(-1px);
+  }
+
+  .messenger-body {
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .message-thread {
+    height: 540px;
+    overflow-y: auto;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    scroll-behavior: smooth;
+  }
+
+  .message-row {
+    display: flex;
+  }
+
+  .message-row.peer {
+    justify-content: flex-start;
+  }
+
+  .message-row.self {
+    justify-content: flex-end;
+  }
+
+  .message-bubble {
+    max-width: 78%;
+    padding: 14px 18px;
+    border-radius: 22px;
+    position: relative;
+    color: #fff;
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+  }
+
+  .message-bubble.own {
+    margin-left: auto;
+    background: linear-gradient(135deg, rgba(0, 255, 171, 0.35), rgba(0, 110, 255, 0.4));
+    border-color: rgba(0, 255, 255, 0.4);
+  }
+
+  .message-bubble.other {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .bubble-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    margin-bottom: 6px;
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  .bubble-content {
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-size: 0.95rem;
+  }
+
+  .bubble-meta {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .bubble-media {
+    margin-top: 10px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+  }
+
+  .bubble-media img {
+    width: 100%;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    object-fit: cover;
+    max-height: 220px;
+  }
+
+  .attachment-link {
+    display: inline-block;
+    padding: 8px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.05);
+    color: #00ffff;
+    text-decoration: none;
+    font-size: 0.85rem;
+  }
+
+  .typing-indicator {
+    padding: 12px 32px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+  }
+
+  .typing-indicator.hidden {
+    display: none;
+  }
+
+  .composer {
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 18px 24px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .composer-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .icon-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+  }
+
+  .icon-btn:hover:not(:disabled) {
+    border-color: rgba(0, 255, 255, 0.8);
+    box-shadow: 0 0 12px rgba(0, 255, 255, 0.4);
+  }
+
+  .icon-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .attachment-preview {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 16px;
+    border: 1px dashed rgba(255, 255, 255, 0.15);
+  }
+
+  .attachment-preview.hidden {
+    display: none;
+  }
+
+  .preview-chip {
+    position: relative;
+    width: 90px;
+    height: 90px;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .preview-chip img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .preview-chip button {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    border: none;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    border-radius: 999px;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+  }
+
+  .composer-input {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+  }
+
+  .composer-input textarea {
+    flex: 1;
+    min-height: 80px;
+    max-height: 200px;
+    resize: vertical;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 18px;
+    padding: 14px 18px;
+    color: #fff;
+    font-size: 0.95rem;
+    font-family: 'Space Grotesk', 'Courier New', monospace;
+  }
+
+  .emoji-panel {
+    position: absolute;
+    bottom: 110%;
+    left: 0;
+    width: 220px;
+    background: rgba(6, 12, 32, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 16px;
+    padding: 10px;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.35);
+    z-index: 20;
+  }
+
+  .emoji-panel.hidden {
+    display: none;
+  }
+
+  .emoji-panel button {
+    border: none;
+    background: transparent;
+    font-size: 1.2rem;
+    cursor: pointer;
+  }
+
+  .emoji-wrapper {
+    position: relative;
+  }
+
+  .message-thread::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .message-thread::-webkit-scrollbar-thumb {
+    background: rgba(0, 255, 255, 0.25);
+    border-radius: 999px;
+  }
+
+  @media (max-width: 768px) {
+    .messenger-panel {
+      border-radius: 20px;
+    }
+    .message-bubble {
+      max-width: 90%;
+    }
+    .messenger-head {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .composer-input {
+      flex-direction: column;
+    }
+    .composer-input textarea {
+      width: 100%;
+    }
+    .composer-input button {
+      width: 100%;
+    }
+  }
   </style>
+  <link rel="stylesheet" href="/css/cyberpunk-neon.css">
 </head>
-<body>
+<body class="cyber-page group-chat-page">
   <!-- Navigation Bar -->
-  <div id="modeNavigation" style="position: fixed !important; top: 40px !important; left: 20px !important; display: flex !important; gap: 10px; z-index: 99999 !important; flex-wrap: wrap; pointer-events: auto !important; visibility: visible !important; opacity: 1 !important;">
-    <a href="/rps_vs_luna.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">🎮 VS Luna</a>
-    <a href="/rps_game.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">Play PvP! Find</a>
-    <a href="/rps_betting.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">💰 Betting Mode</a>
-    <a href="/rps_deposit.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">💾 Deposit Luna</a>
-    <a href="/group_chat.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 255, 255, 0.2) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important; box-shadow: 0 0 15px rgba(0, 255, 255, 0.5) !important;">💬 Group Chat</a>
-    <a href="/rps_leaderboard.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">🏆 Leaderboard</a>
-    <a href="/rps_stats.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">📊 Stats</a>
-    <a href="/rps_history.html" style="color: #00ffff !important; text-decoration: none !important; padding: 10px 20px !important; border: 2px solid #00ffff !important; border-radius: 8px !important; transition: all 0.3s; background: rgba(0, 0, 0, 0.9) !important; backdrop-filter: blur(5px); display: inline-block !important; visibility: visible !important; opacity: 1 !important;">📜 Match History</a>
+  <div id="modeNavigation">
+    <a href="/luna_guide.html">📖 Guide</a>
+    <a href="/rps_vs_luna.html">🎮 VS Luna</a>
+    <a href="/rps_game.html">Play PvP! Find</a>
+    <a href="/rps_betting.html">💰 Betting Mode</a>
+    <a href="/rps_deposit.html">💾 Deposit Luna</a>
+    <a href="/group_chat.html" class="highlighted current">💬 Group Chat</a>
+    <a href="/rps_leaderboard.html">🏆 Leaderboard</a>
+    <a href="/rps_stats.html">📊 Stats</a>
   </div>
 
   <!-- Fixed Wallet Connect (Top Right) -->
@@ -878,6 +1351,13 @@
   <!-- Neon Toggle Button (Below Wallet) -->
   <button id="neonToggle" title="Toggle Neon Effects">💡 Neon: ON</button>
 
+  <!-- Floating Particles -->
+  <div class="particles" id="particles"></div>
+  <div class="glow-field" id="glowField"></div>
+
+  <!-- Scroll Progress Bar -->
+  <div class="scroll-progress" id="scrollProgress"></div>
+
   <div class="container">
     <!-- Group Chat Tab -->
     <div id="groupChatTab" class="tab-content active">
@@ -886,9 +1366,19 @@
       <p>Chat with Luna Community members</p>
     </div>
 
+    <div id="chatDynamicRequirementCard" class="dynamic-requirement-card">
+      <div class="dynamic-requirement-card__title">Dynamic Minimum Requirement</div>
+      <div class="dynamic-requirement-card__value">
+        <span id="chatRequirementAmount">100,000</span>
+        <span class="unit">Luna</span>
+      </div>
+      <div class="dynamic-requirement-card__usd" id="chatRequirementUsd">USD value unavailable</div>
+      <div class="dynamic-requirement-card__meta" id="chatRequirementMeta">Updated -- • Source: Fallback</div>
+    </div>
+
     <div class="balance-requirement" id="balanceRequirement" style="display: none;">
-      <h3>⚠️ Minimum Balance Required: 100,000 Luna</h3>
-      <p>You need at least 100,000 Luna to send messages in Group Chat</p>
+      <h3>⚠️ Minimum Balance Required: <span id="chatRequirementHeadline">100,000 Luna</span></h3>
+      <p>You need at least this amount to send messages in Group Chat</p>
       <div style="margin-top: 15px;">
         <button id="connectWalletBtn" class="btn" style="padding: 12px 24px; background: rgba(0, 255, 255, 0.1); border: 2px solid #00ffff; border-radius: 8px; color: #00ffff; cursor: pointer; font-family: 'Courier New', monospace; font-size: 1rem;">🔗 Connect Phantom Wallet</button>
         <button id="disconnectWalletBtn" class="btn hidden" style="padding: 12px 24px; background: rgba(255, 0, 0, 0.1); border: 2px solid #ff6b6b; border-radius: 8px; color: #ff6b6b; cursor: pointer; font-family: 'Courier New', monospace; font-size: 1rem; margin-left: 10px;">🔌 Disconnect</button>
@@ -896,40 +1386,66 @@
       <div class="balance-info" id="balanceInfo" style="display: none;"></div>
     </div>
 
-    <div class="group-chat-container">
-      <div class="group-chat-header">
-        <h2>💬 Group Chat</h2>
-        <div class="online-count" id="onlineCount">Loading...</div>
-      </div>
-      
-      <div class="group-chat-search-container">
-        <input 
-          type="text" 
-          id="groupChatSearch" 
-          class="group-chat-search-input"
-          placeholder="🔍 Search messages..."
-          onkeyup="handleSearch()"
-        >
-      </div>
-      
-      <div class="group-chat-messages" id="groupChatMessages">
-        <div class="group-chat-empty">Loading messages...</div>
-      </div>
-      
-      <div class="group-chat-input-container">
-        <input 
-          type="text" 
-          id="groupChatInput" 
-          placeholder="Type a message... (requires 100,000+ Luna)" 
-          maxlength="500"
-          disabled
-        >
-        <button id="group-chat-send-btn" onclick="sendGroupMessage()" disabled>Send</button>
+    <div class="messenger-shell">
+      <div class="messenger-panel glass">
+        <div class="messenger-head">
+          <div class="head-left">
+            <h2>💬 Neon Messenger</h2>
+            <div class="status-pill" id="onlineCount">Loading...</div>
+          </div>
+          <div class="head-actions">
+            <button id="notificationToggle" class="ghost-btn" aria-pressed="false">
+              <span class="icon">🔔</span>
+              <span class="label">Notifications</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="messenger-body">
+          <div class="message-thread" id="groupChatMessages">
+            <div class="group-chat-empty">Loading messages...</div>
+          </div>
+        </div>
+
+        <div class="typing-indicator hidden" id="typingIndicator"></div>
+
+        <div class="composer">
+          <div id="attachmentPreview" class="attachment-preview hidden"></div>
+          <div class="composer-toolbar">
+            <div class="toolbar-left">
+              <button id="attachmentBtn" class="icon-btn" type="button" title="Send image">📎</button>
+              <input type="file" id="attachmentInput" accept="image/png,image/jpeg,image/gif,image/webp" multiple hidden>
+              <div class="emoji-wrapper">
+                <button id="emojiBtn" class="icon-btn" type="button" title="Emoji">😊</button>
+                <div id="emojiPanel" class="emoji-panel hidden"></div>
+              </div>
+            </div>
+            <div class="toolbar-right">
+              <button id="clearAttachmentsBtn" class="ghost-btn hidden" type="button">Clear media</button>
+            </div>
+          </div>
+          <div class="composer-input">
+            <textarea 
+              id="groupChatInput" 
+              placeholder="Type a message... (Shift+Enter for new line)" 
+              maxlength="500"
+            ></textarea>
+            <button id="group-chat-send-btn" aria-label="Send message">
+              <span class="btn-text">Send</span>
+              <span class="btn-loading hidden" aria-hidden="true">
+                <span class="loading-spinner"></span> Sending...
+              </span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
     </div>
   </div>
 
+  <script src="/js/utils.js"></script>
+  <script src="/js/phantom-helper.js"></script>
+  <script src="/js/toast.js"></script>
   <script>
     const API_BASE = window.location.origin;
 
@@ -957,7 +1473,491 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     const GROUP_CHAT_ROOM_ID = 'group_chat';
-    const MIN_BALANCE_REQUIRED = 100000;
+    const DEFAULT_CHAT_MIN_BALANCE = 100000;
+    const DYNAMIC_REQUIREMENT_CONTEXT = 'group-chat';
+    let activeTimeouts = new Set();
+    let onlineCountInterval = null;
+    let isPageVisible = !document.hidden;
+    const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
+    const ALLOWED_ATTACHMENT_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
+    let pendingAttachments = [];
+    let notificationsEnabled = localStorage.getItem('groupChatNotifications') === 'true';
+    let hasInitialHistoryLoaded = false;
+    let typingActive = false;
+    let typingStopTimer = null;
+    const QUICK_EMOJIS = ['😀','😁','😂','🤣','😊','😍','😎','🤩','😇','😉','🙌','👏','🔥','💎','💬','🚀','🌕','✨','⚡','🎉','🥳','🤖','🛸'];
+    
+    // Cleanup all intervals and timeouts
+    function cleanupAll() {
+      if (onlineCountInterval) {
+        clearInterval(onlineCountInterval);
+        onlineCountInterval = null;
+      }
+      activeTimeouts.forEach(timeout => clearTimeout(timeout));
+      activeTimeouts.clear();
+    }
+    
+    // Safe setTimeout wrapper
+    function safeSetTimeout(callback, delay) {
+      const timeoutId = setTimeout(() => {
+        activeTimeouts.delete(timeoutId);
+        callback();
+      }, delay);
+      activeTimeouts.add(timeoutId);
+      return timeoutId;
+    }
+    
+    // Page visibility API
+    document.addEventListener('visibilitychange', () => {
+      isPageVisible = !document.hidden;
+      if (isPageVisible) {
+        if (onlineCountInterval) {
+          clearInterval(onlineCountInterval);
+        }
+        onlineCountInterval = setInterval(() => {
+          if (isPageVisible) {
+            updateOnlineCount();
+          }
+        }, 10000);
+      } else {
+        if (onlineCountInterval) {
+          clearInterval(onlineCountInterval);
+          onlineCountInterval = null;
+        }
+      }
+    });
+    
+    const dynamicRequirementState = {
+      amount: DEFAULT_CHAT_MIN_BALANCE,
+      usd: null,
+      priceUsd: null,
+      marketCap: null,
+      volume24h: null,
+      liquidity: null,
+      source: 'fallback',
+      updatedAt: null,
+    };
+
+    function notifyUser(message, type = 'info') {
+      if (window.showToast) {
+        window.showToast(message, type);
+      } else {
+        alert(message);
+      }
+    }
+
+    function initMessengerControls() {
+      const attachmentBtn = document.getElementById('attachmentBtn');
+      const attachmentInput = document.getElementById('attachmentInput');
+      const clearBtn = document.getElementById('clearAttachmentsBtn');
+      const emojiBtn = document.getElementById('emojiBtn');
+      const sendBtn = document.getElementById('group-chat-send-btn');
+      const input = document.getElementById('groupChatInput');
+
+      if (attachmentBtn && attachmentInput) {
+        attachmentBtn.addEventListener('click', () => attachmentInput.click());
+        attachmentInput.addEventListener('change', handleAttachmentSelect);
+      }
+
+      if (clearBtn) {
+        clearBtn.addEventListener('click', clearPendingAttachments);
+      }
+
+      if (emojiBtn) {
+        emojiBtn.addEventListener('click', () => toggleEmojiPanel());
+        buildEmojiPanel();
+      }
+
+      if (input && !input.dataset.enterMessenger) {
+        input.addEventListener('keydown', (e) => {
+          const isEnter =
+            e.key === 'Enter' ||
+            e.code === 'Enter' ||
+            e.keyCode === 13;
+          if (isEnter && !e.shiftKey && !e.altKey && !e.ctrlKey && !e.metaKey) {
+            e.preventDefault();
+            if (!sendBtn?.disabled) {
+              sendGroupMessage();
+            }
+          }
+        });
+        input.dataset.enterMessenger = 'true';
+      }
+
+      if (sendBtn && !sendBtn.dataset.clickListener) {
+        sendBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          if (!sendBtn.disabled) {
+            sendGroupMessage();
+          }
+        });
+        sendBtn.dataset.clickListener = 'true';
+      }
+
+      if (input) {
+        input.addEventListener('input', handleTypingInput);
+      }
+
+      setupNotificationToggle();
+      renderAttachmentPreview();
+    }
+
+    function handleAttachmentSelect(event) {
+      const files = Array.from(event.target.files || []);
+      if (!files.length) return;
+      files.forEach((file) => {
+        if (!ALLOWED_ATTACHMENT_TYPES.includes(file.type)) {
+          notifyUser('Only PNG, JPG, GIF or WEBP images are allowed', 'warning');
+          return;
+        }
+        if (file.size > MAX_ATTACHMENT_BYTES) {
+          notifyUser(`"${file.name}" is larger than 5MB`, 'warning');
+          return;
+        }
+        const previewUrl = URL.createObjectURL(file);
+        pendingAttachments.push({
+          id: `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
+          file,
+          previewUrl
+        });
+      });
+      renderAttachmentPreview();
+      event.target.value = '';
+    }
+
+    function removeAttachment(id) {
+      const idx = pendingAttachments.findIndex((item) => item.id === id);
+      if (idx >= 0) {
+        const [removed] = pendingAttachments.splice(idx, 1);
+        if (removed?.previewUrl) {
+          URL.revokeObjectURL(removed.previewUrl);
+        }
+        renderAttachmentPreview();
+      }
+    }
+
+    function clearPendingAttachments() {
+      pendingAttachments.forEach((item) => {
+        if (item.previewUrl) {
+          URL.revokeObjectURL(item.previewUrl);
+        }
+      });
+      pendingAttachments = [];
+      renderAttachmentPreview();
+    }
+
+    function renderAttachmentPreview() {
+      const preview = document.getElementById('attachmentPreview');
+      const clearBtn = document.getElementById('clearAttachmentsBtn');
+      if (!preview) return;
+
+      if (!pendingAttachments.length) {
+        preview.classList.add('hidden');
+        preview.innerHTML = '';
+        if (clearBtn) clearBtn.classList.add('hidden');
+        return;
+      }
+
+      preview.innerHTML = pendingAttachments.map((item) => `
+        <div class="preview-chip" data-id="${item.id}">
+          <img src="${item.previewUrl}" alt="attachment preview">
+          <button type="button" data-remove="${item.id}">×</button>
+        </div>
+      `).join('');
+      preview.classList.remove('hidden');
+      if (clearBtn) clearBtn.classList.remove('hidden');
+
+      preview.querySelectorAll('button[data-remove]').forEach((btn) => {
+        btn.addEventListener('click', () => removeAttachment(btn.dataset.remove));
+      });
+    }
+
+    function toggleEmojiPanel(forceState) {
+      const panel = document.getElementById('emojiPanel');
+      if (!panel) return;
+      const shouldShow = typeof forceState === 'boolean' ? forceState : panel.classList.contains('hidden');
+      panel.classList.toggle('hidden', !shouldShow);
+      if (shouldShow) {
+        document.addEventListener('click', handleEmojiBlur, { capture: true, once: true });
+      }
+    }
+
+    function handleEmojiBlur(event) {
+      const panel = document.getElementById('emojiPanel');
+      const emojiBtn = document.getElementById('emojiBtn');
+      if (!panel) return;
+      if (panel.contains(event.target) || event.target === emojiBtn) {
+        document.addEventListener('click', handleEmojiBlur, { capture: true, once: true });
+        return;
+      }
+      panel.classList.add('hidden');
+    }
+
+    function buildEmojiPanel() {
+      const panel = document.getElementById('emojiPanel');
+      if (!panel || panel.dataset.ready === 'true') return;
+      panel.innerHTML = QUICK_EMOJIS.map((emoji) => `<button type="button" data-emoji="${emoji}">${emoji}</button>`).join('');
+      panel.querySelectorAll('button[data-emoji]').forEach((btn) => {
+        btn.addEventListener('click', () => insertEmoji(btn.dataset.emoji));
+      });
+      panel.dataset.ready = 'true';
+    }
+
+    function insertEmoji(emoji) {
+      const input = document.getElementById('groupChatInput');
+      if (!input) return;
+      const start = input.selectionStart ?? input.value.length;
+      const end = input.selectionEnd ?? input.value.length;
+      input.value = `${input.value.slice(0, start)}${emoji}${input.value.slice(end)}`;
+      const cursor = start + emoji.length;
+      input.selectionStart = cursor;
+      input.selectionEnd = cursor;
+      input.focus();
+      handleTypingInput();
+    }
+
+    function setupNotificationToggle() {
+      const toggle = document.getElementById('notificationToggle');
+      if (!toggle) return;
+      updateNotificationToggle();
+      toggle.addEventListener('click', async () => {
+        if (notificationsEnabled) {
+          notificationsEnabled = false;
+          localStorage.setItem('groupChatNotifications', 'false');
+          updateNotificationToggle();
+          return;
+        }
+        if (!('Notification' in window)) {
+          notifyUser('Browser notifications are not supported', 'warning');
+          return;
+        }
+        if (Notification.permission === 'granted') {
+          notificationsEnabled = true;
+          localStorage.setItem('groupChatNotifications', 'true');
+          updateNotificationToggle();
+          return;
+        }
+        const permission = await Notification.requestPermission();
+        notificationsEnabled = permission === 'granted';
+        localStorage.setItem('groupChatNotifications', notificationsEnabled ? 'true' : 'false');
+        if (!notificationsEnabled) {
+          notifyUser('Notification permission denied', 'warning');
+        }
+        updateNotificationToggle();
+      });
+    }
+
+    function updateNotificationToggle() {
+      const toggle = document.getElementById('notificationToggle');
+      if (!toggle) return;
+      toggle.setAttribute('aria-pressed', notificationsEnabled ? 'true' : 'false');
+      const icon = toggle.querySelector('.icon');
+      const label = toggle.querySelector('.label');
+      if (icon) icon.textContent = notificationsEnabled ? '🔔' : '🔕';
+      if (label) label.textContent = notificationsEnabled ? 'Notifications on' : 'Notifications off';
+    }
+
+    function maybeShowBrowserNotification(message) {
+      if (!notificationsEnabled || !('Notification' in window)) return;
+      if (Notification.permission !== 'granted') return;
+      if (!document.hidden) return;
+      if (!message || message.wallet === walletPublicKey) return;
+      const body = message.message && message.message.length
+        ? message.message
+        : (message.attachments && message.attachments.length ? 'sent an attachment' : '');
+      try {
+        new Notification('Luna Chat', {
+          body: `${message.username || 'Friend'}: ${body}`,
+          tag: `chat-${message.id}`
+        });
+      } catch (error) {
+        console.warn('[Group Chat] Notification error:', error);
+      }
+    }
+
+    function handleTypingInput() {
+      if (!walletConnected || !walletPublicKey) return;
+      if (!typingActive) {
+        typingActive = true;
+        sendTypingState(true);
+      }
+      if (typingStopTimer) {
+        clearTimeout(typingStopTimer);
+      }
+      typingStopTimer = setTimeout(() => {
+        typingActive = false;
+        sendTypingState(false);
+      }, 3000);
+    }
+
+    function sendTypingState(state) {
+      if (!ws || ws.readyState !== WebSocket.OPEN || !walletPublicKey) return;
+      try {
+        ws.send(JSON.stringify({
+          type: 'chat_typing',
+          roomId: GROUP_CHAT_ROOM_ID,
+          wallet: walletPublicKey,
+          username,
+          isTyping: state
+        }));
+      } catch (error) {
+        console.warn('[Group Chat] Typing broadcast failed:', error);
+      }
+    }
+
+    function updateTypingIndicator(users = []) {
+      const indicator = document.getElementById('typingIndicator');
+      if (!indicator) return;
+      if (!users.length) {
+        indicator.classList.add('hidden');
+        indicator.textContent = '';
+        return;
+      }
+      const names = users.map((user) => user.username || `${user.wallet.substring(0, 4)}...`).slice(0, 3);
+      const extra = users.length > 3 ? ` +${users.length - 3}` : '';
+      indicator.textContent = `${names.join(', ')} ${users.length > 1 ? 'are' : 'is'} typing...${extra}`;
+      indicator.classList.remove('hidden');
+    }
+
+    async function uploadPendingAttachments() {
+      if (!pendingAttachments.length) {
+        return [];
+      }
+      if (!walletConnected || !walletPublicKey) {
+        notifyUser('Connect wallet before sending media', 'warning');
+        throw new Error('Wallet not connected');
+      }
+      const uploads = [];
+      for (const attachment of pendingAttachments) {
+        const base64 = await readFileAsBase64(attachment.file);
+        const response = await fetch(`${API_BASE}/luna/chat/upload`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            roomId: GROUP_CHAT_ROOM_ID,
+            wallet: walletPublicKey,
+            fileName: attachment.file.name,
+            mimeType: attachment.file.type,
+            data: base64.split(',').pop()
+          })
+        });
+        const data = await response.json();
+        if (!response.ok || !data.ok) {
+          throw new Error(data.error || 'Upload failed');
+        }
+        uploads.push({
+          url: data.url,
+          mimeType: data.mimeType,
+          name: data.name || attachment.file.name,
+          size: data.size
+        });
+      }
+      return uploads;
+    }
+
+    function readFileAsBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function formatNumberDetailed(value) {
+      return Number(value || 0).toLocaleString('en-US');
+    }
+
+    function formatUsdValue(value) {
+      const amount = Number(value);
+      if (!Number.isFinite(amount)) return null;
+      return '$' + amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function formatPriceUsd(value) {
+      const price = Number(value);
+      if (!Number.isFinite(price)) return null;
+      if (price >= 0.01) return `$${price.toFixed(4)}`;
+      if (price >= 0.0001) return `$${price.toFixed(6)}`;
+      return `$${price.toExponential(2)}`;
+    }
+
+    function getCurrentMinRequirement() {
+      return Number(dynamicRequirementState.amount) || DEFAULT_CHAT_MIN_BALANCE;
+    }
+
+    function updateRequirementDisplay() {
+      const amountText = formatNumberDetailed(getCurrentMinRequirement());
+      const usdText = typeof dynamicRequirementState.usd === 'number'
+        ? `≈ ${formatUsdValue(dynamicRequirementState.usd)}`
+        : 'USD value unavailable';
+      const priceText = dynamicRequirementState.priceUsd
+        ? ` • Price ${formatPriceUsd(dynamicRequirementState.priceUsd)}`
+        : '';
+
+      const cardAmount = document.getElementById('chatRequirementAmount');
+      if (cardAmount) cardAmount.textContent = amountText;
+
+      const cardUsd = document.getElementById('chatRequirementUsd');
+      if (cardUsd) cardUsd.textContent = `${usdText}${priceText}`;
+
+      const cardMeta = document.getElementById('chatRequirementMeta');
+      if (cardMeta) {
+        const updatedAt = dynamicRequirementState.updatedAt
+          ? new Date(dynamicRequirementState.updatedAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })
+          : '--';
+        const sourceLabel = dynamicRequirementState.source === 'dexscreener' ? 'DexScreener' : 'Fallback';
+        const mcap = dynamicRequirementState.marketCap
+          ? ` • MCap ${formatUsdValue(dynamicRequirementState.marketCap)}`
+          : '';
+        const volume = dynamicRequirementState.volume24h
+          ? ` • 24h Vol ${formatUsdValue(dynamicRequirementState.volume24h)}`
+          : '';
+        cardMeta.textContent = `Updated ${updatedAt} • Source: ${sourceLabel}${mcap}${volume}`;
+      }
+
+      const headline = document.getElementById('chatRequirementHeadline');
+      if (headline) headline.textContent = `${amountText} Luna`;
+
+      const input = document.getElementById('groupChatInput');
+      if (input) {
+        input.placeholder = `Type a message... (requires ${amountText} Luna)`;
+      }
+    }
+
+    function applyDynamicRequirementData(payload = {}) {
+      if (typeof payload.amount === 'number' && Number.isFinite(payload.amount) && payload.amount > 0) {
+        dynamicRequirementState.amount = payload.amount;
+      }
+      dynamicRequirementState.usd = typeof payload.usd === 'number' ? payload.usd : null;
+      dynamicRequirementState.priceUsd = typeof payload.priceUsd === 'number' ? payload.priceUsd : null;
+      dynamicRequirementState.marketCap = typeof payload.marketCap === 'number' ? payload.marketCap : null;
+      dynamicRequirementState.volume24h = typeof payload.volume24h === 'number' ? payload.volume24h : null;
+      dynamicRequirementState.liquidity = typeof payload.liquidity === 'number' ? payload.liquidity : null;
+      dynamicRequirementState.source = payload.source || dynamicRequirementState.source || 'fallback';
+      dynamicRequirementState.updatedAt = payload.updatedAt || Date.now();
+      updateRequirementDisplay();
+    }
+
+    async function fetchDynamicRequirement(force = false) {
+      try {
+        const url = new URL(`${API_BASE}/luna/dynamic-requirement`);
+        url.searchParams.set('context', DYNAMIC_REQUIREMENT_CONTEXT);
+        if (force) {
+          url.searchParams.set('force', 'true');
+        }
+        const response = await (window.lunaUtils?.retryFetch || fetch)(url.toString());
+        const data = await response.json();
+        if (!response.ok || !data.ok) {
+          throw new Error(data.error || 'Failed to fetch requirement');
+        }
+        const requirement = data.requirement || data;
+        applyDynamicRequirementData(requirement);
+      } catch (error) {
+        console.warn('[Group Chat] Dynamic requirement fetch failed:', error);
+        updateRequirementDisplay();
+      }
+    }
 
     let walletConnected = false;
     let walletPublicKey = null;
@@ -965,6 +1965,179 @@
     let currentBalance = 0;
     let ws = null;
     let messages = [];
+
+    function setChatInputState(enabled, placeholderText) {
+      const input = document.getElementById('groupChatInput');
+      const sendBtn = document.getElementById('group-chat-send-btn');
+      const attachmentBtn = document.getElementById('attachmentBtn');
+      const emojiBtn = document.getElementById('emojiBtn');
+      const clearBtn = document.getElementById('clearAttachmentsBtn');
+
+      console.log('[Group Chat] setChatInputState called:', { enabled, placeholderText, input: !!input, sendBtn: !!sendBtn });
+
+      if (input) {
+        input.disabled = !enabled;
+        input.readOnly = !enabled;
+        input.classList.toggle('locked', !enabled);
+        // Force remove pointer-events style when enabled
+        if (enabled) {
+          input.style.pointerEvents = 'auto';
+          input.style.cursor = 'text';
+          input.style.opacity = '1';
+          input.removeAttribute('tabindex');
+          // Force remove any inline styles that might block interaction
+          input.style.userSelect = 'text';
+          input.style.webkitUserSelect = 'text';
+        } else {
+          input.style.pointerEvents = 'none';
+          input.style.cursor = 'not-allowed';
+          input.style.opacity = '0.6';
+          input.setAttribute('tabindex', '-1');
+        }
+        if (!enabled) {
+          input.dataset.locked = 'true';
+          input.blur();
+        } else {
+          delete input.dataset.locked;
+          safeSetTimeout(() => {
+            if (!input.disabled) {
+              input.focus();
+            }
+          }, 50);
+        }
+        if (placeholderText) {
+          input.placeholder = placeholderText;
+        }
+        console.log('[Group Chat] Input state updated:', { disabled: input.disabled, readOnly: input.readOnly, hasLocked: input.classList.contains('locked') });
+      }
+
+      if (sendBtn) {
+        sendBtn.disabled = !enabled;
+        sendBtn.classList.toggle('locked', !enabled);
+        // Force remove pointer-events style when enabled
+        if (enabled) {
+          sendBtn.style.pointerEvents = 'auto';
+          sendBtn.style.cursor = 'pointer';
+          sendBtn.style.opacity = '1';
+          sendBtn.removeAttribute('tabindex');
+        } else {
+          sendBtn.style.pointerEvents = 'none';
+          sendBtn.style.cursor = 'not-allowed';
+          sendBtn.style.opacity = '0.5';
+          sendBtn.setAttribute('tabindex', '-1');
+        }
+        console.log('[Group Chat] Send button state updated:', { disabled: sendBtn.disabled, hasLocked: sendBtn.classList.contains('locked'), pointerEvents: sendBtn.style.pointerEvents });
+      }
+      
+      if (attachmentBtn) {
+        attachmentBtn.disabled = !enabled;
+      }
+      if (emojiBtn) {
+        emojiBtn.disabled = !enabled;
+      }
+      if (clearBtn) {
+        clearBtn.disabled = !enabled;
+      }
+      
+      // Force ensure composer is clickable
+      const composer = document.querySelector('.composer');
+      if (composer) {
+        composer.style.pointerEvents = 'auto';
+        composer.style.zIndex = '10';
+      }
+      
+      // Also ensure messenger panel is clickable
+      const chatPanel = document.querySelector('.messenger-panel');
+      if (chatPanel) {
+        chatPanel.style.pointerEvents = 'auto';
+        chatPanel.style.zIndex = '1';
+      }
+    }
+
+    function hasForceDisconnectFlag() {
+      if (window.phantomHelper && typeof window.phantomHelper.hasForceDisconnect === 'function') {
+        return window.phantomHelper.hasForceDisconnect();
+      }
+      try {
+        return !!localStorage.getItem('phantomForceDisconnect');
+      } catch (err) {
+        console.warn('[Group Chat] Failed to read force disconnect flag:', err);
+        return false;
+      }
+    }
+
+    function markForceDisconnectFlag(reason) {
+      if (window.phantomHelper && typeof window.phantomHelper.markForceDisconnect === 'function') {
+        window.phantomHelper.markForceDisconnect(reason);
+        return;
+      }
+      try {
+        localStorage.setItem('phantomForceDisconnect', Date.now().toString());
+      } catch (err) {
+        console.warn('[Group Chat] Failed to set force disconnect flag:', err);
+      }
+    }
+
+    function clearForceDisconnectFlag() {
+      if (window.phantomHelper && typeof window.phantomHelper.clearForceDisconnect === 'function') {
+        window.phantomHelper.clearForceDisconnect();
+        return;
+      }
+      try {
+        localStorage.removeItem('phantomForceDisconnect');
+      } catch (err) {
+        console.warn('[Group Chat] Failed to clear force disconnect flag:', err);
+      }
+    }
+
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'phantomForceDisconnect' && event.newValue) {
+        if (!walletConnected && !walletPublicKey) {
+          return;
+        }
+        forceDisconnect({
+          skipProviderDisconnect: true,
+          reason: 'storage-event',
+          suppressForceFlag: true,
+        }).catch((err) => {
+          console.error('[Group Chat] Failed to handle global force disconnect:', err);
+        });
+      }
+    });
+
+    async function attemptPhantomHelperAutoConnect() {
+      if (hasForceDisconnectFlag()) {
+        return false;
+      }
+
+      if (!window.phantomHelper || typeof window.phantomHelper.autoConnect !== 'function') {
+        return false;
+      }
+
+      try {
+        const autoConnected = await window.phantomHelper.autoConnect({
+          onError: (err) => {
+            console.warn('[Group Chat] Phantom helper auto-connect skipped:', err?.message || err);
+          }
+        });
+
+        if (autoConnected) {
+          const state = typeof window.phantomHelper.getState === 'function'
+            ? window.phantomHelper.getState()
+            : null;
+          const key = window.solana?.publicKey?.toString() || state?.publicKey;
+          if (key) {
+            console.log('[Group Chat] ✅ Phantom helper auto-connect successful');
+            handleWalletConnected(key);
+            return true;
+          }
+        }
+      } catch (err) {
+        console.warn('[Group Chat] Phantom helper auto-connect failed:', err);
+      }
+
+      return false;
+    }
 
     // Prevent Notifications, Chat +, and Referral Program from showing
     if (typeof notificationManager !== 'undefined') {
@@ -978,15 +2151,127 @@
     }
 
     // Initialize function
+    // Navigation sound system
+    const navAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playNavSound(frequency, duration, type = 'sine', volume = 0.3) {
+      try {
+        if (navAudioContext.state === 'suspended') {
+          navAudioContext.resume().catch(() => {});
+        }
+        const oscillator = navAudioContext.createOscillator();
+        const gainNode = navAudioContext.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(navAudioContext.destination);
+        oscillator.frequency.value = frequency;
+        oscillator.type = type;
+        gainNode.gain.setValueAtTime(volume, navAudioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, navAudioContext.currentTime + duration);
+        oscillator.start(navAudioContext.currentTime);
+        oscillator.stop(navAudioContext.currentTime + duration);
+      } catch (err) {
+        console.error('[Group Chat] Sound error:', err);
+      }
+    }
+
+    function playNavClickSound() {
+      playNavSound(600, 0.1, 'sine', 0.25);
+    }
+
+    function initNavigationSounds() {
+      const navLinks = document.querySelectorAll('#modeNavigation a');
+      navLinks.forEach(link => {
+        const targetHref = link.href;
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          playNavClickSound();
+          safeSetTimeout(() => {
+            window.location.href = targetHref;
+          }, 180);
+        });
+      });
+    }
+
     async function initializePage() {
       console.log('[Group Chat] Initializing page...');
+      setChatInputState(false, 'Please connect Wallet');
+      updateRequirementDisplay();
+      fetchDynamicRequirement().catch((error) => console.warn('[Group Chat] Initial requirement fetch failed:', error));
+      setInterval(() => {
+        fetchDynamicRequirement().catch((error) => console.warn('[Group Chat] Requirement refresh failed:', error));
+      }, 5 * 60 * 1000);
       initWalletButtons();
       initNeonToggle();
+      initNavigationSounds();
+      initMessengerControls();
+      
+      // Initialize tooltips and keyboard shortcuts
+      initTooltips();
+      await initKeyboardShortcuts();
+    }
+
+    function initTooltips() {
+      if (!window.lunaUtils) return;
+      
+      const connectBtn = document.getElementById('connectWalletBtnFixed') || document.getElementById('connectWalletBtn');
+      if (connectBtn) {
+        window.lunaUtils.createTooltip(connectBtn, 'Connect your Phantom wallet to chat and tip', 'bottom');
+      }
+      
+      const sendBtn = document.getElementById('group-chat-send-btn');
+      if (sendBtn) {
+        window.lunaUtils.createTooltip(sendBtn, 'Send message (Enter)', 'top');
+      }
+      
+      const chatInput = document.getElementById('groupChatInput');
+      if (chatInput) {
+        window.lunaUtils.createTooltip(chatInput, 'Type your message here. Press Enter to send. Max 500 characters.', 'top');
+        
+        // Add form validation
+        const errorContainer = document.createElement('div');
+        errorContainer.className = 'error-message';
+        errorContainer.id = 'groupChatInputError';
+        errorContainer.style.cssText = 'margin-top: 4px; font-size: 0.85rem;';
+        chatInput.parentNode.insertBefore(errorContainer, chatInput.nextSibling);
+        
+        window.lunaUtils.setupRealTimeValidation(chatInput, [
+          { maxLength: [500, 'Message must be 500 characters or less'] }
+        ], {
+          errorContainer: errorContainer
+        });
+      }
+    }
+
+    async function initKeyboardShortcuts() {
+      if (!window.lunaUtils) return;
+      
+      // Ctrl/Cmd + K: Connect wallet
+      window.lunaUtils.registerShortcut('k', () => {
+        const connectBtn = document.getElementById('connectWalletBtnFixed') || document.getElementById('connectWalletBtn');
+        if (connectBtn && !connectBtn.disabled) {
+          connectBtn.click();
+        }
+      }, { ctrl: true, meta: true });
+      
+      // Ctrl/Cmd + /: Focus chat input
+      window.lunaUtils.registerShortcut('/', () => {
+        const chatInput = document.getElementById('chatInput');
+        if (chatInput && !chatInput.disabled) {
+          chatInput.focus();
+        }
+      }, { ctrl: true, meta: true });
       
       // Check if wallet already connected OR has valid signature (like pump.fun)
       const storedSignature = localStorage.getItem('walletSignature');
+      const forceDisconnected = hasForceDisconnectFlag();
+      const helperAutoConnected = forceDisconnected
+        ? false
+        : await attemptPhantomHelperAutoConnect();
+      if (helperAutoConnected) {
+        return;
+      }
       
-      if (window.solana && window.solana.isPhantom) {
+      if (!forceDisconnected && window.solana && window.solana.isPhantom) {
         // Case 1: Wallet is already connected
         if (window.solana.isConnected && window.solana.publicKey) {
           const currentWallet = window.solana.publicKey.toString();
@@ -1057,10 +2342,24 @@
             // Don't clear signature - user might want to connect manually
           }
         }
+      } else if (forceDisconnected) {
+        console.log('[Group Chat] Force disconnect flag active. Skipping auto-reconnect.');
       }
       
       connectWebSocket();
       loadMessages();
+      
+      // Initialize enhanced effects (respect neon toggle)
+      const neonEnabled = localStorage.getItem('neonEnabled') !== 'false';
+      if (neonEnabled) {
+        createParticles();
+        createGlowField();
+        initCursorTrail();
+      }
+      initParallax();
+      initScrollProgress();
+      initSparkles();
+      initSmoothScroll();
       
       // Remove any existing notification/chat/referral elements
       const notificationBtn = document.getElementById('notification-btn');
@@ -1075,13 +2374,199 @@
       
       // Enter key to send
       const input = document.getElementById('groupChatInput');
-      if (input) {
-        input.addEventListener('keypress', (e) => {
-          if (e.key === 'Enter' && !input.disabled) {
-            sendGroupMessage();
+      const sendBtn = document.getElementById('group-chat-send-btn');
+      if (input && sendBtn) {
+        // Avoid binding duplicate listeners
+        if (!input.dataset.enterListener) {
+          const enterHandler = (e) => {
+            const isEnter =
+              e.key === 'Enter' ||
+              e.code === 'Enter' ||
+              e.keyCode === 13;
+            if (isEnter && !e.shiftKey && !e.altKey && !e.ctrlKey && !e.metaKey) {
+              e.preventDefault();
+              const activeSendBtn = document.getElementById('group-chat-send-btn');
+              if (activeSendBtn && !activeSendBtn.disabled) {
+                sendGroupMessage();
+              }
+            }
+          };
+          
+          input.addEventListener('keydown', enterHandler);
+          input.addEventListener('keypress', enterHandler);
+          input.addEventListener('keyup', (e) => {
+            if ((e.key === 'Enter' || e.keyCode === 13) && !e.shiftKey) {
+              e.preventDefault();
+            }
+          });
+          input.dataset.enterListener = 'true';
+        }
+        
+        const composer = document.querySelector('.composer');
+        if (composer && !composer.dataset.focusListener) {
+          composer.addEventListener('click', (event) => {
+            if (event.target === composer && !input.disabled && !input.classList.contains('locked')) {
+              input.focus();
+            }
+          }, { passive: true });
+          composer.dataset.focusListener = 'true';
+        }
+      }
+    }
+    
+    // Enhanced Effects Functions
+    function createParticles() {
+      const particlesContainer = document.getElementById('particles');
+      if (!particlesContainer) return;
+      particlesContainer.innerHTML = '';
+      const particleCount = 30;
+      for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.animationDelay = Math.random() * 20 + 's';
+        particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+        particlesContainer.appendChild(particle);
+      }
+    }
+
+    function createGlowField() {
+      const glowField = document.getElementById('glowField');
+      if (!glowField) return;
+      glowField.innerHTML = '';
+      const dotCount = 25;
+      for (let i = 0; i < dotCount; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'glow-dot';
+        dot.style.left = Math.random() * 100 + '%';
+        dot.style.animationDelay = (Math.random() * 12) + 's';
+        dot.style.animationDuration = (10 + Math.random() * 12) + 's';
+        const size = 4 + Math.random() * 10;
+        dot.style.width = `${size}px`;
+        dot.style.height = `${size}px`;
+        const hue = 170 + Math.floor(Math.random() * 70);
+        dot.style.background = `hsla(${hue}, 90%, 60%, 0.5)`;
+        dot.style.boxShadow = `0 0 12px hsla(${hue}, 90%, 65%, 0.8), 0 0 24px hsla(${hue}, 90%, 55%, 0.4)`;
+        glowField.appendChild(dot);
+      }
+    }
+
+    function initParallax() {
+      let ticking = false;
+      function updateParallax() {
+        const scrolled = window.pageYOffset;
+        const hero = document.querySelector('.container .header h1');
+        const cards = document.querySelectorAll('.group-chat-message');
+        if (hero) {
+          const heroSpeed = 0.2;
+          hero.style.transform = `translateY(${scrolled * heroSpeed}px)`;
+        }
+        cards.forEach((card) => {
+          const rect = card.getBoundingClientRect();
+          const speed = 0.05;
+          if (rect.top < window.innerHeight && rect.bottom > 0) {
+            const offset = (window.innerHeight - rect.top) * speed;
+            card.style.transform = `translateY(${offset}px)`;
           }
         });
+        ticking = false;
       }
+      window.addEventListener('scroll', () => {
+        if (!ticking) {
+          window.requestAnimationFrame(updateParallax);
+          ticking = true;
+        }
+      });
+    }
+
+    function initScrollProgress() {
+      const progressBar = document.getElementById('scrollProgress');
+      if (!progressBar) return;
+      window.addEventListener('scroll', () => {
+        const windowHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        const scrolled = (window.scrollY / windowHeight) * 100;
+        progressBar.style.transform = `scaleX(${scrolled / 100})`;
+      });
+    }
+
+    function initCursorTrail() {
+      let trail = [];
+      const trailLength = 15;
+      
+      // Remove existing listener if any
+      if (window.cursorTrailHandler) {
+        document.removeEventListener('mousemove', window.cursorTrailHandler);
+      }
+
+      window.cursorTrailHandler = (e) => {
+        // Don't create trail if neon is off
+        if (document.body.classList.contains('neon-off')) {
+          return;
+        }
+        
+        const trailDot = document.createElement('div');
+        trailDot.className = 'cursor-trail';
+        trailDot.style.left = e.clientX + 'px';
+        trailDot.style.top = e.clientY + 'px';
+        document.body.appendChild(trailDot);
+        trail.push(trailDot);
+        if (trail.length > trailLength) {
+          const oldDot = trail.shift();
+          if (oldDot && oldDot.parentNode) {
+            oldDot.parentNode.removeChild(oldDot);
+          }
+        }
+        setTimeout(() => {
+          if (trailDot && trailDot.parentNode) {
+            trailDot.parentNode.removeChild(trailDot);
+          }
+        }, 500);
+      };
+      
+      document.addEventListener('mousemove', window.cursorTrailHandler);
+    }
+
+    function initSparkles() {
+      const container = document.querySelector('.container');
+      if (!container) return;
+      setInterval(() => {
+        const sparkle = document.createElement('div');
+        sparkle.style.position = 'absolute';
+        sparkle.style.width = '4px';
+        sparkle.style.height = '4px';
+        sparkle.style.background = '#00ffff';
+        sparkle.style.borderRadius = '50%';
+        sparkle.style.boxShadow = '0 0 10px #00ffff, 0 0 20px #00ffff';
+        sparkle.style.left = Math.random() * 100 + '%';
+        sparkle.style.top = Math.random() * 100 + '%';
+        sparkle.style.pointerEvents = 'none';
+        sparkle.style.zIndex = '999';
+        sparkle.style.animation = 'sparkleFade 1s ease-out forwards';
+        container.style.position = 'relative';
+        container.appendChild(sparkle);
+        setTimeout(() => {
+          if (sparkle.parentNode) {
+            sparkle.parentNode.removeChild(sparkle);
+          }
+        }, 1000);
+      }, 500);
+    }
+
+    function initSmoothScroll() {
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute('href'));
+          if (target) {
+            const offset = 120;
+            const targetPosition = target.getBoundingClientRect().top + window.pageYOffset - offset;
+            window.scrollTo({
+              top: targetPosition,
+              behavior: 'smooth'
+            });
+          }
+        });
+      });
     }
     
     // Initialize when DOM is ready
@@ -1113,6 +2598,9 @@
       } else {
         body.classList.remove('neon-off');
         neonToggle.textContent = '💡 Neon: ON';
+        createParticles();
+        createGlowField();
+        initCursorTrail();
       }
       
       // Remove any existing event listeners by cloning the element
@@ -1130,10 +2618,26 @@
           body.classList.remove('neon-off');
           newNeonToggle.textContent = '💡 Neon: ON';
           localStorage.setItem('neonEnabled', 'true');
+          createParticles();
+          createGlowField();
+          initCursorTrail();
         } else {
           body.classList.add('neon-off');
           newNeonToggle.textContent = '💡 Neon: OFF';
           localStorage.setItem('neonEnabled', 'false');
+          const particles = document.getElementById('particles');
+          if (particles) {
+            particles.innerHTML = '';
+          }
+          const glowField = document.getElementById('glowField');
+          if (glowField) {
+            glowField.innerHTML = '';
+          }
+          document.querySelectorAll('.cursor-trail').forEach(trail => {
+            if (trail.parentNode) {
+              trail.parentNode.removeChild(trail);
+            }
+          });
         }
       });
       
@@ -1176,7 +2680,11 @@
           connectBtn.disabled = true;
           connectBtn.style.cursor = 'not-allowed';
           connectBtn.onclick = () => {
-            alert('Please install Phantom wallet extension!\n\nDownload: https://phantom.app/');
+            if (window.showToast) {
+              window.showToast('Please install Phantom wallet extension!\n\nDownload: https://phantom.app/', 'warning', 8000);
+            } else {
+              alert('Please install Phantom wallet extension!\n\nDownload: https://phantom.app/');
+            }
           };
         }
         if (connectBtnFixed) {
@@ -1184,7 +2692,11 @@
           connectBtnFixed.disabled = true;
           connectBtnFixed.style.cursor = 'not-allowed';
           connectBtnFixed.onclick = () => {
-            alert('Please install Phantom wallet extension!\n\nDownload: https://phantom.app/');
+            if (window.showToast) {
+              window.showToast('Please install Phantom wallet extension!\n\nDownload: https://phantom.app/', 'warning', 8000);
+            } else {
+              alert('Please install Phantom wallet extension!\n\nDownload: https://phantom.app/');
+            }
           };
         }
         // Hide balance requirement box if wallet not found
@@ -1200,35 +2712,30 @@
       // This ensures Disconnect only appears after explicit Connect action
       
       // Connect button handler
-      const connectHandler = async () => {
+      const connectHandler = async (e) => {
+        if (e) {
+          e.stopPropagation(); // Prevent sound from global listeners
+        }
         try {
           console.log('[Group Chat] Connect button clicked');
           
           if (!window.solana || !window.solana.isPhantom) {
-            alert('⚠️ Phantom wallet not found!\n\nPlease install Phantom wallet extension:\nhttps://phantom.app/\n\nAfter installing, refresh this page.');
+            if (window.showToast) {
+              window.showToast('⚠️ Phantom wallet not found!\n\nPlease install Phantom wallet extension:\nhttps://phantom.app/\n\nAfter installing, refresh this page.', 'warning', 8000);
+            } else {
+              alert('⚠️ Phantom wallet not found!\n\nPlease install Phantom wallet extension:\nhttps://phantom.app/\n\nAfter installing, refresh this page.');
+            }
             return;
           }
           
           // Additional check: verify Phantom is ready
           if (typeof window.solana.connect !== 'function') {
-            alert('⚠️ Phantom wallet extension is not ready!\n\nPlease:\n1. Make sure Phantom wallet is unlocked\n2. Refresh this page\n3. Try again');
-            return;
+            if (window.showToast) {
+              window.showToast('⚠️ Phantom wallet extension is not ready!\n\nPlease:\n1. Make sure Phantom wallet is unlocked\n2. Refresh this page\n3. Try again', 'warning', 8000);
+            } else {
+              alert('⚠️ Phantom wallet extension is not ready!\n\nPlease:\n1. Make sure Phantom wallet is unlocked\n2. Refresh this page\n3. Try again');
           }
-          
-          // ALWAYS disconnect first to force popup (like pump.fun)
-          console.log('[Group Chat] Disconnecting wallet first to force popup...');
-          try {
-            if (window.solana.isConnected) {
-              await window.solana.disconnect();
-              console.log('[Group Chat] Wallet disconnected');
-            }
-            // Wait briefly to ensure disconnect is complete
-            console.log('[Group Chat] Waiting 300ms to clear cached connection...');
-            await new Promise(resolve => setTimeout(resolve, 300));
-          } catch (disconnectErr) {
-            console.warn('[Group Chat] Error during disconnect (may not be connected):', disconnectErr);
-            // Still wait even if disconnect fails
-            await new Promise(resolve => setTimeout(resolve, 300));
+          return;
           }
           
           // System like pump.fun: Always require sign message for authentication
@@ -1303,10 +2810,18 @@
           }
           
           console.log('[Group Chat] ✅ Authentication complete! Wallet is now authenticated and persistent.');
+          if (window.phantomHelper) {
+            window.phantomHelper.saveState({ publicKey: walletPublicKey, hasSignature: true });
+          }
+          clearForceDisconnectFlag();
           handleWalletConnected(walletPublicKey);
         } catch (error) {
           console.error('[Group Chat] Wallet connection error:', error);
+          if (window.showToast) {
+            window.showToast('Failed to connect Wallet: ' + error.message, 'error');
+          } else {
           alert('Failed to connect Wallet: ' + error.message);
+          }
         }
       };
       
@@ -1321,13 +2836,7 @@
       // Disconnect button (both fixed and container)
       const disconnectHandler = async () => {
         try {
-          await window.solana.disconnect();
-          
-          // Clear signature when disconnected (like pump.fun - must sign again on reconnect)
-          localStorage.removeItem('walletSignature');
-          console.log('[Group Chat] Wallet disconnected - signature cleared. Must sign again on next connect.');
-          
-          handleWalletDisconnected();
+          await forceDisconnect({ reason: 'group-chat-user' });
         } catch (error) {
           console.error('Wallet disconnect error:', error);
         }
@@ -1343,10 +2852,15 @@
       
       // Listen for wallet disconnect
       window.solana.on('disconnect', () => {
-        // Clear signature when disconnected (like pump.fun - must sign again on reconnect)
-        localStorage.removeItem('walletSignature');
-        console.log('[Group Chat] Wallet disconnected - signature cleared. Must sign again on next connect.');
-        handleWalletDisconnected();
+        console.log('[Group Chat] Wallet disconnected event received.');
+        const alreadyForced = hasForceDisconnectFlag();
+        forceDisconnect({
+          skipProviderDisconnect: true,
+          reason: 'provider-event',
+          suppressForceFlag: alreadyForced,
+        }).catch((err) => {
+          console.error('[Group Chat] Failed to handle provider disconnect:', err);
+        });
       });
     }
 
@@ -1356,6 +2870,7 @@
       walletPublicKey = publicKey;
       walletConnected = true;
       username = walletPublicKey.substring(0, 8) + '...';
+      clearForceDisconnectFlag();
       
       // Update both fixed and container buttons
       const connectBtn = document.getElementById('connectWalletBtn');
@@ -1439,13 +2954,42 @@
       showWalletRequired();
     }
 
+    async function forceDisconnect(options = {}) {
+      const {
+        skipProviderDisconnect = false,
+        reason = 'manual',
+        suppressForceFlag = false,
+      } = options;
+
+      if (!suppressForceFlag) {
+        markForceDisconnectFlag(reason);
+      }
+
+      if (!skipProviderDisconnect && window.solana && typeof window.solana.disconnect === 'function') {
+        try {
+          await window.solana.disconnect();
+        } catch (err) {
+          console.warn('[Group Chat] Failed to disconnect provider:', err);
+        }
+      }
+
+      try {
+        localStorage.removeItem('walletSignature');
+      } catch (err) {
+        console.warn('[Group Chat] Failed to clear wallet signature:', err);
+      }
+
+      if (window.phantomHelper) {
+        window.phantomHelper.clearState();
+      }
+
+      handleWalletDisconnected();
+    }
+
     // Check Luna balance
     async function checkBalance() {
       console.log('[Group Chat] checkBalance() called');
       const balanceRequirement = document.getElementById('balanceRequirement');
-      const balanceInfo = document.getElementById('balanceInfo');
-      const input = document.getElementById('groupChatInput');
-      const sendBtn = document.getElementById('group-chat-send-btn');
 
       if (!walletConnected || !walletPublicKey) {
         console.log('[Group Chat] Wallet not connected, returning');
@@ -1453,6 +2997,7 @@
         if (balanceRequirement) {
           balanceRequirement.style.display = 'none';
         }
+        setChatInputState(false, 'Please connect Wallet');
         return;
       }
 
@@ -1465,7 +3010,7 @@
 
       try {
         console.log('[Group Chat] Fetching balance from:', `${API_BASE}/luna/rps/balance?wallet=${walletPublicKey}`);
-        const response = await fetch(`${API_BASE}/luna/rps/balance?wallet=${walletPublicKey}`);
+        const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/rps/balance?wallet=${walletPublicKey}`);
         const data = await response.json();
         
         console.log('[Group Chat] Balance response:', data);
@@ -1488,19 +3033,12 @@
           balanceRequirement.style.display = 'none';
         }
         
-        if (currentBalance >= MIN_BALANCE_REQUIRED) {
+        if (currentBalance >= getCurrentMinRequirement()) {
           console.log('[Group Chat] Balance sufficient, enabling chat');
-          
-          if (input) {
-            input.disabled = false;
-            input.placeholder = 'Type a message... (or use /help for commands)';
-          }
-          if (sendBtn) sendBtn.disabled = false;
+          setChatInputState(true, 'Type a message... (or use /help for commands)');
         } else {
           console.log('[Group Chat] Balance insufficient');
-          
-          if (input) input.disabled = true;
-          if (sendBtn) sendBtn.disabled = true;
+          setChatInputState(false, `Need at least ${formatNumber(getCurrentMinRequirement())} Luna to chat`);
         }
       } catch (error) {
         console.error('[Group Chat] Balance check error:', error);
@@ -1513,27 +3051,19 @@
         if (walletBalanceFixed) {
           walletBalanceFixed.textContent = 'Error';
         }
-        if (input) input.disabled = true;
-        if (sendBtn) sendBtn.disabled = true;
+        setChatInputState(false, 'Balance check failed. Please try again');
       }
     }
 
     function showWalletRequired() {
       const balanceRequirement = document.getElementById('balanceRequirement');
-      const balanceInfo = document.getElementById('balanceInfo');
-      const input = document.getElementById('groupChatInput');
-      const sendBtn = document.getElementById('group-chat-send-btn');
 
       // Hide balance requirement box instead of showing error messages
       if (balanceRequirement) {
         balanceRequirement.style.display = 'none';
       }
       
-      if (input) {
-        input.disabled = true;
-        input.placeholder = 'Please connect Wallet';
-      }
-      if (sendBtn) sendBtn.disabled = true;
+      setChatInputState(false, 'Please connect Wallet');
     }
 
     // Connect WebSocket
@@ -1543,20 +3073,27 @@
       if (walletPublicKey) {
         wsUrl += `?wallet=${walletPublicKey}`;
       }
+      console.log('[Group Chat] Connecting to WebSocket:', wsUrl);
       ws = new WebSocket(wsUrl);
+      
+      ws.onopen = () => {
+        console.log('[Group Chat] WebSocket connected successfully');
+      };
       
       ws.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
+          console.log('[Group Chat] WebSocket message received:', msg);
           
-          if (msg.type === 'chat_message' && msg.roomId === GROUP_CHAT_ROOM_ID) {
+        if (msg.type === 'chat_message' && msg.roomId === GROUP_CHAT_ROOM_ID) {
+            console.log('[Group Chat] Adding message from WebSocket:', msg.message);
             addMessage(msg.message);
           } else if (msg.type === 'chat_reaction') {
             updateReaction(msg.messageId, msg.reactionType, msg.count, msg.active);
           } else if (msg.type === 'chat_tip') {
             updateTip(msg.messageId, msg.fromWallet, msg.amount);
-          } else if (msg.type === 'chat_reward') {
-            showRewardNotification(msg.amount, msg.reason);
+        } else if (msg.type === 'chat_typing') {
+          updateTypingIndicator(msg.users || []);
           } else if (msg.type === 'chat_online_update') {
             updateOnlineCount();
           } else if (msg.type === 'chat_command_response') {
@@ -1573,7 +3110,7 @@
 
       ws.onclose = () => {
         // Reconnect after 3 seconds
-        setTimeout(() => connectWebSocket(), 3000);
+        safeSetTimeout(() => connectWebSocket(), 3000);
       };
     }
 
@@ -1628,28 +3165,29 @@
       tipsEl.textContent = `💰 Tip: ${formatNumber(amount)} Luna`;
     }
 
-    // Show reward notification
-    function showRewardNotification(amount, reason) {
-      const notification = document.createElement('div');
-      notification.className = 'group-chat-reward-notification';
-      notification.textContent = `🎉 You received ${formatNumber(amount)} Luna! (${reason})`;
-      notification.style.cssText = 'position: fixed; top: 100px; right: 20px; z-index: 10000; padding: 15px 20px; background: rgba(255, 215, 0, 0.2); border: 2px solid rgba(255, 215, 0, 0.5); border-radius: 8px; color: #ffd700; font-weight: bold;';
-      
-      document.body.appendChild(notification);
-      setTimeout(() => notification.remove(), 5000);
-    }
-
     // Handle command response
     function handleCommandResponse(msg) {
       if (msg.command === '/stats' && msg.data) {
-        alert(`Stats:\nMessages: ${msg.data.messageCount}\nTotal Rewards: ${formatNumber(msg.data.totalRewards)} Luna`);
+        if (window.showToast) {
+          window.showToast(`Stats:\nMessages: ${msg.data.messageCount}`, 'info', 6000);
+        } else {
+        alert(`Stats:\nMessages: ${msg.data.messageCount}`);
+        }
       } else if (msg.command === '/leaderboard' && msg.data) {
         const leaderboard = msg.data.map((entry, idx) => 
           `${idx + 1}. ${entry.wallet.substring(0, 8)}... - ${entry.count} messages`
         ).join('\n');
+        if (window.showToast) {
+          window.showToast(`Leaderboard:\n${leaderboard}`, 'info', 6000);
+        } else {
         alert(`Leaderboard:\n${leaderboard}`);
+        }
       } else if (msg.message) {
+        if (window.showToast) {
+          window.showToast(msg.message, 'info');
+        } else {
         alert(msg.message);
+        }
       }
     }
 
@@ -1662,7 +3200,7 @@
         }
         
         console.log('[Group Chat] Loading messages from:', url);
-        const response = await fetch(url);
+        const response = await (window.lunaUtils?.retryFetch || fetch)(url);
         const data = await response.json();
         
         console.log('[Group Chat] Response:', data);
@@ -1672,6 +3210,7 @@
           console.log('[Group Chat] Loaded', messages.length, 'messages');
           updateMessages();
           scrollToBottom();
+          hasInitialHistoryLoaded = true;
         } else {
           console.error('[Group Chat] Failed to load messages:', data.error);
           messages = [];
@@ -1690,84 +3229,149 @@
       const sendBtn = document.getElementById('group-chat-send-btn');
       
       if (!input || !walletConnected || !walletPublicKey) {
-        alert('Please connect Wallet and check Luna balance');
+        notifyUser('Please connect Wallet and check Luna balance', 'warning');
         return;
       }
 
-      if (currentBalance < MIN_BALANCE_REQUIRED) {
-        alert(`You need at least ${formatNumber(MIN_BALANCE_REQUIRED)} Luna to send messages`);
-        await checkBalance(); // Refresh balance
+      if (currentBalance < getCurrentMinRequirement()) {
+        notifyUser(`You need at least ${formatNumber(getCurrentMinRequirement())} Luna to chat`, 'warning');
+        await checkBalance();
         return;
       }
 
-      let message = input.value.trim();
-      if (message.length === 0) return;
+      const rawValue = input.value || '';
+      const trimmedMessage = rawValue.trim();
+      const hasText = trimmedMessage.length > 0;
+      const hasAttachments = pendingAttachments.length > 0;
 
-      // Handle commands
-      if (message.startsWith('/')) {
-        const parts = message.split(' ');
+      if (!hasText && !hasAttachments) {
+        return;
+      }
+
+      // Handle commands (no attachments allowed)
+      if (hasText && trimmedMessage.startsWith('/')) {
+        if (hasAttachments) {
+          notifyUser('Commands cannot include attachments', 'warning');
+          return;
+        }
+        const parts = trimmedMessage.split(' ');
         const command = parts[0];
         const args = parts.slice(1);
         
         if (ws && ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({
             type: 'chat_command',
-            command: command,
-            args: args
+            command,
+            args
           }));
         }
         
         input.value = '';
+        sendTypingState(false);
+        typingActive = false;
         return;
       }
 
       // Disable input and button while sending
-      const originalBtnText = sendBtn.textContent;
+      const btnText = sendBtn.querySelector('.btn-text');
+      const btnLoading = sendBtn.querySelector('.btn-loading');
+      const originalBtnText = btnText ? btnText.textContent : 'Send';
       input.disabled = true;
       sendBtn.disabled = true;
-      sendBtn.textContent = 'Sending...';
+      if (btnText) btnText.classList.add('hidden');
+      if (btnLoading) btnLoading.classList.remove('hidden');
 
       try {
-        const response = await fetch(`${API_BASE}/luna/chat/send`, {
+        const uploadedAttachments = await uploadPendingAttachments();
+        const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/chat/send`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             roomId: GROUP_CHAT_ROOM_ID,
             wallet: walletPublicKey,
-            message: message,
-            username: username
+            message: hasText ? trimmedMessage : '',
+            username: username,
+            attachments: uploadedAttachments
           })
         });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          let errorData;
+          try {
+            errorData = JSON.parse(errorText);
+          } catch (e) {
+            errorData = { error: `Server error: ${response.status} ${response.statusText}` };
+          }
+          throw new Error(errorData.error || errorData.message || `Server error: ${response.status}`);
+        }
 
         const data = await response.json();
         if (data.ok) {
           input.value = '';
-          // Message will be added via WebSocket
+          clearPendingAttachments();
+          typingActive = false;
+          sendTypingState(false);
+          if (data.message) {
+            addMessage(data.message);
+          } else {
+            safeSetTimeout(() => loadMessages(), 500);
+          }
         } else {
-          alert('Failed to send message: ' + (data.error || data.message));
+          notifyUser('Failed to send message: ' + (data.error || data.message), 'error');
           if (data.error && data.error.includes('balance')) {
-            await checkBalance(); // Refresh balance if balance error
+            await checkBalance();
           }
         }
       } catch (error) {
-        console.error('Failed to send message:', error);
-        alert('Failed to send message. Please try again');
+        console.error('[Group Chat] Failed to send message:', error);
+        notifyUser('Failed to send message: ' + (error.message || 'Please try again'), 'error');
       } finally {
-        // Re-enable input and button
-        input.disabled = false;
-        sendBtn.disabled = false;
-        sendBtn.textContent = originalBtnText;
-        input.focus();
+        const finalBtnText = sendBtn.querySelector('.btn-text');
+        const finalBtnLoading = sendBtn.querySelector('.btn-loading');
+        if (finalBtnText) {
+          finalBtnText.classList.remove('hidden');
+          finalBtnText.textContent = originalBtnText;
+        }
+        if (finalBtnLoading) {
+          finalBtnLoading.classList.add('hidden');
+        }
+        
+        const canChat = walletConnected && walletPublicKey && currentBalance >= getCurrentMinRequirement();
+        setChatInputState(
+          canChat,
+          canChat
+            ? 'Type a message... (or use /help for commands)'
+            : `Need at least ${formatNumber(getCurrentMinRequirement())} Luna to chat`
+        );
+        
+        if (canChat && input) {
+          safeSetTimeout(() => {
+            input.focus();
+          }, 100);
+        }
+
+        if (typingActive) {
+          typingActive = false;
+          sendTypingState(false);
+        }
       }
     }
 
     // Add message to UI
     function addMessage(message) {
-      // Check if message already exists
-      if (messages.find(m => m.id === message.id)) {
+      if (!message || !message.id) {
+        console.warn('[Group Chat] Invalid message object:', message);
         return;
       }
       
+      // Check if message already exists
+      if (messages.find(m => m.id === message.id)) {
+        console.log('[Group Chat] Message already exists, skipping:', message.id);
+        return;
+      }
+      
+      console.log('[Group Chat] Adding message to UI:', message);
       messages.push(message);
       
       // Keep only last 100 messages
@@ -1775,8 +3379,14 @@
         messages.shift();
       }
       
+      // Sort messages by timestamp
+      messages.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+      
       updateMessages();
       scrollToBottom();
+      if (hasInitialHistoryLoaded && message.wallet !== walletPublicKey) {
+        maybeShowBrowserNotification(message);
+      }
     }
 
     // Process message content for rich media
@@ -1816,33 +3426,56 @@
         return;
       }
 
-      container.innerHTML = messages.map(msg => {
-        const badgeHtml = msg.badge ? `<span class="group-chat-message-badge" title="${msg.badge.name}">${msg.badge.emoji}</span>` : '';
-        const rewardHtml = msg.reward ? `<div class="group-chat-reward-notification">🎉 Reward: ${formatNumber(msg.reward.amount)} Luna!</div>` : '';
-        const reactionsHtml = renderReactions(msg.id, msg.reactions || {});
-        const tipsHtml = renderTips(msg.id, msg.tips || []);
-        const tipBtnHtml = msg.wallet !== walletPublicKey ? `<button class="group-chat-tip-btn" onclick="showTipDialog('${msg.id}', '${msg.wallet}')">💰 Tip</button>` : '';
-        
-        return `
-          <div class="group-chat-message ${msg.wallet === walletPublicKey ? 'own' : ''}" data-message-id="${msg.id}">
-            <div class="group-chat-message-header">
-              <span class="group-chat-username">
-                ${msg.username || (msg.wallet ? msg.wallet.substring(0, 8) + '...' : 'Guest')}
-                ${badgeHtml}
-              </span>
-              <span class="group-chat-time">${formatTime(msg.timestamp)}</span>
-            </div>
-            <div class="group-chat-message-content">${processMessageContent(msg.message)}</div>
-            ${rewardHtml}
-            ${reactionsHtml}
-            ${tipsHtml}
-            ${tipBtnHtml}
-          </div>
-        `;
-      }).join('');
+      container.innerHTML = messages.map(renderMessageBubble).join('');
       
       // Attach reaction event listeners
       attachReactionListeners();
+    }
+
+    function renderMessageBubble(msg) {
+      const isOwn = walletPublicKey && msg.wallet === walletPublicKey;
+      const badgeHtml = msg.badge ? `<span class="group-chat-message-badge" title="${msg.badge.name}">${msg.badge.emoji}</span>` : '';
+      const reactionsHtml = renderReactions(msg.id, msg.reactions || {});
+      const tipsHtml = renderTips(msg.id, msg.tips || []);
+      const tipBtnHtml = (!isOwn && msg.wallet)
+        ? `<button class="group-chat-tip-btn" onclick="showTipDialog('${msg.id}', '${msg.wallet}')">💰 Tip</button>`
+        : '';
+      const attachmentsHtml = renderAttachments(msg.attachments || []);
+
+      const metaSections = [tipsHtml, reactionsHtml, tipBtnHtml].filter(Boolean).join('');
+      const metaHtml = metaSections ? `<div class="bubble-meta">${metaSections}</div>` : '';
+
+      return `
+        <div class="message-row ${isOwn ? 'self' : 'peer'}">
+          <div class="message-bubble ${isOwn ? 'own' : 'other'}" data-message-id="${msg.id}">
+            <div class="bubble-header">
+              <span>
+                ${escapeHtml(msg.username || (msg.wallet ? `${msg.wallet.substring(0, 8)}...` : 'Guest'))}
+                ${badgeHtml}
+              </span>
+              <span>${formatTime(msg.timestamp)}</span>
+            </div>
+            ${msg.message ? `<div class="bubble-content">${processMessageContent(msg.message)}</div>` : ''}
+            ${attachmentsHtml}
+            ${metaHtml}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAttachments(list) {
+      if (!list || !list.length) {
+        return '';
+      }
+      const items = list.map((attachment) => {
+        const safeUrl = escapeHtml(attachment.url);
+        const alt = escapeHtml(attachment.name || 'attachment');
+        if (attachment.mimeType && attachment.mimeType.startsWith('image/')) {
+          return `<img src="${safeUrl}" alt="${alt}">`;
+        }
+        return `<a class="attachment-link" href="${safeUrl}" target="_blank" rel="noopener noreferrer">${alt}</a>`;
+      }).join('');
+      return `<div class="bubble-media">${items}</div>`;
     }
 
     // Render reactions
@@ -1900,18 +3533,22 @@
       ).join('');
       
       document.body.appendChild(picker);
-      setTimeout(() => picker.remove(), 5000);
+      safeSetTimeout(() => picker.remove(), 5000);
     }
 
     // Add reaction
     async function addReaction(messageId, reactionType) {
       if (!walletConnected || !walletPublicKey) {
+        if (window.showToast) {
+          window.showToast('Please connect wallet to react', 'warning');
+        } else {
         alert('Please connect wallet to react');
+        }
         return;
       }
       
       try {
-        const response = await fetch(`${API_BASE}/luna/chat/reaction`, {
+        const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/chat/reaction`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -1941,12 +3578,16 @@
     // Send tip
     async function sendTip(messageId, toWallet, amount) {
       if (!walletConnected || !walletPublicKey) {
+        if (window.showToast) {
+          window.showToast('Please connect wallet to tip', 'warning');
+        } else {
         alert('Please connect wallet to tip');
+        }
         return;
       }
       
       try {
-        const response = await fetch(`${API_BASE}/luna/chat/tip`, {
+        const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/chat/tip`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -1959,45 +3600,25 @@
         
         const data = await response.json();
         if (data.ok) {
+          if (window.showToast) {
+            window.showToast(`Tip of ${amount} Luna recorded! (Note: Actual transfer would happen via Solana transaction)`, 'success');
+          } else {
           alert(`Tip of ${amount} Luna recorded! (Note: Actual transfer would happen via Solana transaction)`);
+          }
+        } else {
+          if (window.showToast) {
+            window.showToast('Failed to send tip: ' + (data.error || 'Unknown error'), 'error');
         } else {
           alert('Failed to send tip: ' + (data.error || 'Unknown error'));
+          }
         }
       } catch (error) {
         console.error('Failed to send tip:', error);
+        if (window.showToast) {
+          window.showToast('Failed to send tip. Please try again.', 'error');
+        } else {
         alert('Failed to send tip. Please try again.');
-      }
-    }
-
-    // Handle search
-    function handleSearch() {
-      const searchTerm = document.getElementById('groupChatSearch').value.trim();
-      if (searchTerm.length === 0) {
-        updateMessages();
-        return;
-      }
-      
-      loadMessages(searchTerm);
-    }
-
-    // Load messages with search
-    async function loadMessages(searchTerm = null) {
-      try {
-        let url = `${API_BASE}/luna/chat/messages?roomId=${GROUP_CHAT_ROOM_ID}&limit=100`;
-        if (searchTerm) {
-          url += `&search=${encodeURIComponent(searchTerm)}`;
         }
-        
-        const response = await fetch(url);
-        const data = await response.json();
-        
-        if (data.ok) {
-          messages = data.messages || [];
-          updateMessages();
-          scrollToBottom();
-        }
-      } catch (error) {
-        console.error('Failed to load messages:', error);
       }
     }
 
@@ -2037,7 +3658,7 @@
       if (!onlineCount) return;
       
       try {
-        const response = await fetch(`${API_BASE}/luna/chat/online?roomId=${GROUP_CHAT_ROOM_ID}`);
+        const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/chat/online?roomId=${GROUP_CHAT_ROOM_ID}`);
         const data = await response.json();
         
         if (data.ok) {
