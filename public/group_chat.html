@@ -1392,6 +1392,7 @@
           <div class="head-left">
             <h2>💬 Neon Messenger</h2>
             <div class="status-pill" id="onlineCount">Loading...</div>
+            <div class="status-pill" id="roomIdDisplay" style="font-size: 0.7rem; opacity: 0.7; margin-left: 8px;" title="Current Room ID">Room: <span id="roomIdValue">-</span></div>
           </div>
           <div class="head-actions">
             <button id="notificationToggle" class="ghost-btn" aria-pressed="false">
@@ -2227,6 +2228,17 @@
 
     async function initializePage() {
       console.log('[Group Chat] Initializing page...');
+      console.log('[Group Chat] Room ID:', GROUP_CHAT_ROOM_ID);
+      
+      // Display room ID in UI immediately
+      const roomIdValue = document.getElementById('roomIdValue');
+      if (roomIdValue) {
+        roomIdValue.textContent = GROUP_CHAT_ROOM_ID;
+        console.log('[Group Chat] Room ID displayed in UI:', GROUP_CHAT_ROOM_ID);
+      } else {
+        console.warn('[Group Chat] Room ID display element not found!');
+      }
+      
       setChatInputState(false, 'Please connect Wallet');
       updateRequirementDisplay();
       fetchDynamicRequirement().catch((error) => console.warn('[Group Chat] Initial requirement fetch failed:', error));
@@ -3115,6 +3127,14 @@
       
       ws.onopen = () => {
         console.log('[Group Chat] WebSocket connected successfully');
+        console.log('[Group Chat] Room ID:', GROUP_CHAT_ROOM_ID);
+        console.log('[Group Chat] WebSocket URL:', wsUrl);
+        
+        // Display room ID in UI
+        const roomIdValue = document.getElementById('roomIdValue');
+        if (roomIdValue) {
+          roomIdValue.textContent = GROUP_CHAT_ROOM_ID;
+        }
       };
       
       ws.onmessage = (event) => {
