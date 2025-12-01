@@ -76,13 +76,23 @@ export function setupChatRoutes(app, dependencies) {
   // ----------------------
   
   // Initialize WebSocket connection handling (clients is shared from index.js)
-  wss.on('connection', (ws) => {
+  wss.on('connection', (ws, req) => {
+    const clientIp = req.socket.remoteAddress || 'unknown';
+    const clientUrl = req.url || 'unknown';
+    log.info(`[websocket] New client connecting from ${clientIp}, URL: ${clientUrl}`);
+    
     clients.add(ws);
-    log.info(`[websocket] Client connected. Total clients: ${clients.size}`);
+    log.info(`[websocket] Client connected. Total clients: ${clients.size}, readyState: ${ws.readyState}`);
+    
+    // Log when WebSocket becomes ready
+    ws.on('open', () => {
+      log.info(`[websocket] Client WebSocket opened. Total clients: ${clients.size}`);
+    });
     
     ws.on('message', (raw) => {
       try {
         const payload = JSON.parse(raw.toString());
+        log.debug(`[websocket] Received message from client: type=${payload?.type}`);
         if (payload?.type === 'chat_typing') {
           const { roomId, wallet, username, isTyping } = payload;
           handleTypingEvent(roomId, wallet, username, !!isTyping);
@@ -92,15 +102,26 @@ export function setupChatRoutes(app, dependencies) {
       }
     });
 
-    ws.on('close', () => {
+    ws.on('close', (code, reason) => {
       clients.delete(ws);
-      log.info(`[websocket] Client disconnected. Total clients: ${clients.size}`);
+      log.info(`[websocket] Client disconnected. Code: ${code}, Reason: ${reason?.toString() || 'none'}, Total clients: ${clients.size}`);
     });
     
     ws.on('error', (error) => {
-      log.error('[websocket] Client error:', error);
+      log.error(`[websocket] Client error: ${error.message}, Stack: ${error.stack}`);
       clients.delete(ws);
+      log.info(`[websocket] Removed client due to error. Total clients: ${clients.size}`);
     });
+    
+    // Send a test message to verify connection
+    try {
+      if (ws.readyState === 1) {
+        ws.send(JSON.stringify({ type: 'connection_test', message: 'WebSocket connected successfully' }));
+        log.debug('[websocket] Sent connection test message');
+      }
+    } catch (error) {
+      log.warn('[websocket] Failed to send connection test:', error.message);
+    }
   });
   
   /**
@@ -110,22 +131,32 @@ export function setupChatRoutes(app, dependencies) {
     const message = JSON.stringify(data);
     let sentCount = 0;
     let skippedCount = 0;
+    let errorCount = 0;
     
-    clients.forEach((client) => {
+    log.debug(`[websocket] Starting broadcast: type=${data.type}, roomId=${data.roomId || 'N/A'}, clients=${clients.size}`);
+    
+    clients.forEach((client, index) => {
       try {
         if (client.readyState === 1) { // WebSocket.OPEN
           client.send(message);
           sentCount++;
+          log.debug(`[websocket] Sent to client ${index + 1}/${clients.size}`);
         } else {
           skippedCount++;
+          log.debug(`[websocket] Skipped client ${index + 1}/${clients.size} (readyState=${client.readyState})`);
         }
       } catch (error) {
-        log.error('[websocket] Broadcast error:', error);
+        errorCount++;
+        log.error(`[websocket] Broadcast error for client ${index + 1}:`, error);
         clients.delete(client);
       }
     });
     
-    log.info(`[websocket] Broadcast ${data.type} to ${sentCount} clients (${skippedCount} skipped, ${clients.size} total)`);
+    log.info(`[websocket] Broadcast ${data.type} to ${sentCount} clients (${skippedCount} skipped, ${errorCount} errors, ${clients.size} total)`);
+    
+    if (sentCount === 0 && clients.size > 0) {
+      log.warn(`[websocket] WARNING: No clients received message! All ${clients.size} clients are not in OPEN state.`);
+    }
   }
 
   function broadcastTypingState(roomId) {
@@ -295,11 +326,14 @@ export function setupChatRoutes(app, dependencies) {
     
     // Broadcast message
     log.info(`[chat] Broadcasting message from ${wallet.substring(0, 8)}... in room ${roomId}`);
+    log.info(`[chat] Message details: id=${chatMessage.id}, wallet=${wallet.substring(0, 8)}..., text=${chatMessage.message.substring(0, 50)}...`);
+    log.info(`[chat] Total WebSocket clients: ${clients.size}`);
     broadcast({
       type: 'chat_message',
       roomId: roomId,
       message: chatMessage
     });
+    log.info(`[chat] Broadcast completed for message ${chatMessage.id}`);
     
     return chatMessage;
   }

@@ -3121,24 +3121,39 @@
         try {
           const msg = JSON.parse(event.data);
           console.log('[Group Chat] WebSocket message received:', msg);
+          console.log('[Group Chat] Message type:', msg.type, 'Room ID:', msg.roomId, 'Expected Room ID:', GROUP_CHAT_ROOM_ID);
           
-          if (msg.type === 'chat_message' && msg.roomId === GROUP_CHAT_ROOM_ID) {
-            console.log('[Group Chat] Adding message from WebSocket:', msg.message);
-            console.log('[Group Chat] Message wallet:', msg.message.wallet, 'Current wallet:', walletPublicKey);
-            addMessage(msg.message);
+          if (msg.type === 'connection_test') {
+            console.log('[Group Chat] Connection test received:', msg.message);
+            return;
+          }
+          
+          if (msg.type === 'chat_message') {
+            console.log('[Group Chat] Chat message received, roomId:', msg.roomId, 'Expected:', GROUP_CHAT_ROOM_ID);
+            if (msg.roomId === GROUP_CHAT_ROOM_ID) {
+              console.log('[Group Chat] Room ID matches! Adding message from WebSocket:', msg.message);
+              console.log('[Group Chat] Message wallet:', msg.message?.wallet, 'Current wallet:', walletPublicKey);
+              console.log('[Group Chat] Message ID:', msg.message?.id);
+              addMessage(msg.message);
+            } else {
+              console.warn('[Group Chat] Room ID mismatch! Ignoring message. Received:', msg.roomId, 'Expected:', GROUP_CHAT_ROOM_ID);
+            }
           } else if (msg.type === 'chat_reaction') {
             updateReaction(msg.messageId, msg.reactionType, msg.count, msg.active);
           } else if (msg.type === 'chat_tip') {
             updateTip(msg.messageId, msg.fromWallet, msg.amount);
-        } else if (msg.type === 'chat_typing') {
-          updateTypingIndicator(msg.users || []);
+          } else if (msg.type === 'chat_typing') {
+            updateTypingIndicator(msg.users || []);
           } else if (msg.type === 'chat_online_update') {
             updateOnlineCount();
           } else if (msg.type === 'chat_command_response') {
             handleCommandResponse(msg);
+          } else {
+            console.log('[Group Chat] Unknown message type:', msg.type);
           }
         } catch (e) {
-          console.error('WebSocket message error:', e);
+          console.error('[Group Chat] WebSocket message error:', e);
+          console.error('[Group Chat] Raw event data:', event.data);
         }
       };
 
