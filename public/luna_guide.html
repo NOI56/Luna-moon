@@ -1,0 +1,2249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LUNA MOON - Guide</title>
+  <link rel="stylesheet" href="/css/cyberpunk-neon.css">
+  <link rel="stylesheet" href="/css/mobile-overrides.css">
+  <script src="/js/runtime-utils.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Courier New', 'Monaco', monospace;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(0, 255, 255, 0.15), transparent 45%),
+        radial-gradient(circle at 85% 5%, rgba(255, 60, 172, 0.15), transparent 55%),
+        radial-gradient(circle at 70% 80%, rgba(116, 39, 255, 0.2), transparent 60%),
+        linear-gradient(135deg, #02000d 0%, #050b1f 35%, #050524 65%, #0b0140 100%);
+      background-attachment: fixed;
+      color: #00ffff;
+      position: relative;
+      overflow-x: hidden;
+      min-height: 100vh;
+      padding: 20px;
+      padding-top: 120px;
+    }
+    
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 2px,
+          rgba(0, 255, 255, 0.04) 2px,
+          rgba(0, 255, 255, 0.04) 4px
+        );
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.5;
+      mix-blend-mode: screen;
+      animation: gridDrift 20s linear infinite;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(circle at 15% 75%, rgba(0, 255, 255, 0.25), transparent 40%),
+        radial-gradient(circle at 85% 25%, rgba(255, 60, 172, 0.2), transparent 45%);
+      filter: blur(120px);
+      opacity: 0.5;
+      z-index: 0;
+      animation: auroraDrift 25s ease-in-out infinite alternate;
+    }
+
+    /* Floating Particles */
+    .particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .particle {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: rgba(0, 255, 255, 0.6);
+      border-radius: 50%;
+      animation: float 20s infinite linear;
+      box-shadow: 0 0 6px rgba(0, 255, 255, 0.8);
+    }
+
+    @keyframes float {
+      0% {
+        transform: translateY(100vh) translateX(0) rotate(0deg);
+        opacity: 0;
+      }
+      10% {
+        opacity: 1;
+      }
+      90% {
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-100vh) translateX(100px) rotate(360deg);
+        opacity: 0;
+      }
+    }
+
+    @keyframes gridDrift {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(20px); }
+    }
+
+    @keyframes auroraDrift {
+      0% { transform: translate(0, 0) rotate(0deg); }
+      100% { transform: translate(50px, 30px) rotate(5deg); }
+    }
+
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 60px;
+      padding: 60px 30px;
+      background: rgba(5, 8, 30, 0.5);
+      backdrop-filter: blur(30px) saturate(180%);
+      -webkit-backdrop-filter: blur(30px) saturate(180%);
+      border: 2px solid rgba(0, 255, 255, 0.3);
+      border-radius: 24px;
+      box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        0 0 40px rgba(0, 255, 255, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      position: relative;
+      overflow: hidden;
+      animation: heroGlow 4s ease-in-out infinite;
+      transform: translateZ(0);
+      will-change: transform;
+    }
+
+    @keyframes heroGlow {
+      0%, 100% {
+        box-shadow: 
+          0 8px 32px rgba(0, 0, 0, 0.4),
+          0 0 40px rgba(0, 255, 255, 0.1),
+          inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      }
+      50% {
+        box-shadow: 
+          0 8px 32px rgba(0, 0, 0, 0.4),
+          0 0 60px rgba(0, 255, 255, 0.25),
+          0 0 80px rgba(255, 0, 255, 0.15),
+          inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      }
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, 
+        transparent,
+        rgba(0, 255, 255, 0.8),
+        rgba(255, 0, 255, 0.8),
+        transparent
+      );
+      animation: scanLine 3s linear infinite;
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(0, 255, 255, 0.1) 0%, transparent 70%);
+      animation: rotateGlow 8s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes rotateGlow {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @keyframes scanLine {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    .hero h1 {
+      font-size: 3.5rem;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, #00ffff, #ff00ff, #00ffff, #00ff9d);
+      background-size: 300% 300%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: 
+        0 0 30px rgba(0, 255, 255, 0.5),
+        0 0 60px rgba(255, 0, 255, 0.3),
+        0 0 90px rgba(0, 255, 157, 0.2);
+      animation: gradientShift 4s ease infinite, textPulse 2s ease-in-out infinite;
+      position: relative;
+      z-index: 1;
+      filter: drop-shadow(0 0 20px rgba(0, 255, 255, 0.5));
+    }
+
+    @keyframes textPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+    }
+
+    @keyframes gradientShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    .hero p {
+      font-size: 1.2rem;
+      color: #a0ffff;
+      line-height: 1.8;
+      max-width: 800px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+      animation: fadeIn 1s ease 0.5s both;
+      text-shadow: 0 0 10px rgba(160, 255, 255, 0.3);
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .section {
+      margin: 60px 0;
+      padding: 40px;
+      background: rgba(5, 8, 30, 0.55);
+      backdrop-filter: blur(25px) saturate(180%);
+      -webkit-backdrop-filter: blur(25px) saturate(180%);
+      border: 2px solid rgba(0, 255, 255, 0.25);
+      border-radius: 24px;
+      box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        0 0 30px rgba(0, 255, 255, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      position: relative;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      opacity: 0;
+      transform: translateY(30px);
+      animation: fadeInUp 0.8s ease forwards;
+      transform: translateZ(0);
+      will-change: transform;
+    }
+
+    .section:nth-child(1) { animation-delay: 0.1s; }
+    .section:nth-child(2) { animation-delay: 0.2s; }
+    .section:nth-child(3) { animation-delay: 0.3s; }
+    .section:nth-child(4) { animation-delay: 0.4s; }
+    .section:nth-child(5) { animation-delay: 0.5s; }
+    .section:nth-child(6) { animation-delay: 0.6s; }
+    .section:nth-child(7) { animation-delay: 0.7s; }
+    .section:nth-child(8) { animation-delay: 0.8s; }
+    .section:nth-child(9) { animation-delay: 0.9s; }
+
+    @keyframes fadeInUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .section:hover {
+      border-color: rgba(0, 255, 255, 0.6);
+      box-shadow: 
+        0 16px 48px rgba(0, 0, 0, 0.6),
+        0 0 60px rgba(0, 255, 255, 0.25),
+        0 0 80px rgba(255, 0, 255, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      transform: translateY(-5px) scale(1.01);
+    }
+
+    .section::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      background: linear-gradient(45deg, 
+        rgba(0, 255, 255, 0.3),
+        rgba(255, 0, 255, 0.3),
+        rgba(0, 255, 157, 0.3),
+        rgba(0, 255, 255, 0.3)
+      );
+      background-size: 400% 400%;
+      border-radius: 24px;
+      z-index: -1;
+      opacity: 0;
+      transition: opacity 0.4s;
+      animation: borderRotate 4s linear infinite;
+    }
+
+    .section:hover::before {
+      opacity: 1;
+    }
+
+    @keyframes borderRotate {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .section h2 {
+      font-size: 2rem;
+      margin-bottom: 30px;
+      color: #00ffff;
+      text-shadow: 
+        0 0 15px rgba(0, 255, 255, 0.8),
+        0 0 30px rgba(0, 255, 255, 0.5),
+        0 0 45px rgba(0, 255, 255, 0.3);
+      border-bottom: 2px solid rgba(0, 255, 255, 0.4);
+      padding-bottom: 15px;
+      position: relative;
+    }
+
+    .section h2::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 100px;
+      height: 2px;
+      background: linear-gradient(90deg, 
+        rgba(0, 255, 255, 1),
+        rgba(255, 0, 255, 1),
+        rgba(0, 255, 157, 1),
+        transparent
+      );
+      animation: borderGlow 2s ease-in-out infinite, borderScan 3s linear infinite;
+    }
+
+    @keyframes borderGlow {
+      0%, 100% { opacity: 0.5; width: 100px; }
+      50% { opacity: 1; width: 250px; }
+    }
+
+    @keyframes borderScan {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(calc(100vw - 100px)); }
+    }
+
+    .section h2::before {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, 
+        transparent,
+        rgba(0, 255, 255, 0.3),
+        rgba(255, 0, 255, 0.3),
+        transparent
+      );
+      animation: borderPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes borderPulse {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.8; }
+    }
+
+    .section h3 {
+      font-size: 1.5rem;
+      margin: 30px 0 15px;
+      color: #ff00ff;
+      text-shadow: 
+        0 0 15px rgba(255, 0, 255, 0.8),
+        0 0 30px rgba(255, 0, 255, 0.5),
+        0 0 45px rgba(255, 0, 255, 0.3);
+    }
+
+    .section p {
+      color: #a0ffff;
+      line-height: 1.8;
+      margin-bottom: 15px;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-top: 30px;
+    }
+
+    .feature-card {
+      background: rgba(5, 8, 30, 0.5);
+      backdrop-filter: blur(20px) saturate(160%);
+      -webkit-backdrop-filter: blur(20px) saturate(160%);
+      border: 2px solid rgba(0, 255, 255, 0.25);
+      border-radius: 16px;
+      padding: 25px;
+      transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      position: relative;
+      overflow: hidden;
+      transform-style: preserve-3d;
+      perspective: 1000px;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, 
+        transparent,
+        rgba(0, 255, 255, 0.2),
+        rgba(255, 0, 255, 0.2),
+        transparent
+      );
+      transition: left 0.8s ease;
+    }
+
+    .feature-card:hover::before {
+      left: 100%;
+    }
+
+    .feature-card::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: radial-gradient(circle, rgba(0, 255, 255, 0.2), transparent);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+
+    .feature-card:hover::after {
+      width: 300px;
+      height: 300px;
+    }
+
+    .feature-card:hover {
+      background: rgba(5, 8, 30, 0.85);
+      border-color: rgba(0, 255, 255, 0.8);
+      box-shadow: 
+        0 12px 40px rgba(0, 0, 0, 0.5),
+        0 0 60px rgba(0, 255, 255, 0.4),
+        0 0 80px rgba(255, 0, 255, 0.3),
+        0 0 100px rgba(0, 255, 157, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      transform: translateY(-12px) scale(1.03) rotateX(2deg);
+    }
+
+    .feature-card h4 {
+      font-size: 1.3rem;
+      margin-bottom: 15px;
+      color: #00ffff;
+      text-shadow: 
+        0 0 10px rgba(0, 255, 255, 0.6),
+        0 0 20px rgba(0, 255, 255, 0.3);
+      position: relative;
+      z-index: 2;
+      transition: all 0.3s;
+    }
+
+    .feature-card:hover h4 {
+      text-shadow: 
+        0 0 15px rgba(0, 255, 255, 0.9),
+        0 0 30px rgba(0, 255, 255, 0.6),
+        0 0 45px rgba(0, 255, 255, 0.3);
+      transform: scale(1.05);
+    }
+
+    .feature-card ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .feature-card ul li {
+      color: #a0ffff;
+      padding: 8px 0;
+      padding-left: 25px;
+      position: relative;
+    }
+
+    .feature-card ul li::before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      color: #00ff9d;
+      font-weight: bold;
+      text-shadow: 0 0 8px rgba(0, 255, 157, 0.8);
+      animation: checkPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes checkPulse {
+      0%, 100% { 
+        transform: scale(1);
+        text-shadow: 0 0 8px rgba(0, 255, 157, 0.8);
+      }
+      50% { 
+        transform: scale(1.2);
+        text-shadow: 0 0 15px rgba(0, 255, 157, 1);
+      }
+    }
+
+    .feature-card ul li {
+      transition: all 0.3s;
+    }
+
+    .feature-card ul li:hover {
+      transform: translateX(5px);
+      color: #00ffff;
+    }
+
+    .cta-button {
+      display: inline-block;
+      padding: 15px 30px;
+      margin: 10px;
+      background: rgba(5, 8, 30, 0.6);
+      backdrop-filter: blur(15px) saturate(180%);
+      -webkit-backdrop-filter: blur(15px) saturate(180%);
+      border: 2px solid rgba(0, 255, 255, 0.5);
+      color: #00ffff;
+      text-decoration: none;
+      border-radius: 12px;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      font-size: 1.1rem;
+      font-weight: 600;
+      text-shadow: 
+        0 0 10px rgba(0, 255, 255, 0.8),
+        0 0 20px rgba(0, 255, 255, 0.4);
+      box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.3),
+        0 0 20px rgba(0, 255, 255, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-button::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(0, 255, 255, 0.3);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+
+    .cta-button:hover::before {
+      width: 300px;
+      height: 300px;
+    }
+
+    .cta-button:hover {
+      background: rgba(5, 8, 30, 0.8);
+      border-color: rgba(0, 255, 255, 0.9);
+      box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        0 0 40px rgba(0, 255, 255, 0.6),
+        0 0 60px rgba(0, 255, 255, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      transform: translateY(-3px) scale(1.05);
+      text-shadow: 
+        0 0 15px rgba(0, 255, 255, 1),
+        0 0 30px rgba(0, 255, 255, 0.8);
+    }
+
+    .cta-button span {
+      position: relative;
+      z-index: 1;
+    }
+
+    .highlight-box {
+      background: rgba(255, 215, 0, 0.15);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 2px solid rgba(255, 215, 0, 0.4);
+      border-left: 4px solid rgba(255, 215, 0, 0.8);
+      padding: 25px;
+      margin: 25px 0;
+      border-radius: 16px;
+      box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.3),
+        0 0 30px rgba(255, 215, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .highlight-box::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, 
+        rgba(255, 215, 0, 0.1),
+        transparent 50%,
+        rgba(255, 215, 0, 0.1)
+      );
+      animation: shimmer 3s ease-in-out infinite;
+    }
+
+    .highlight-box::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg,
+        transparent,
+        rgba(255, 215, 0, 0.2),
+        transparent
+      );
+      animation: highlightScan 4s ease-in-out infinite;
+    }
+
+    @keyframes highlightScan {
+      0% { left: -100%; }
+      50% { left: 100%; }
+      100% { left: 100%; }
+    }
+
+    @keyframes shimmer {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.6; }
+    }
+
+    .highlight-box strong {
+      color: #ffd700;
+      text-shadow: 
+        0 0 10px rgba(255, 215, 0, 0.8),
+        0 0 20px rgba(255, 215, 0, 0.4);
+      position: relative;
+      z-index: 1;
+    }
+
+    .highlight-box ul {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Table of Contents */
+    .toc {
+      background: rgba(5, 8, 30, 0.6);
+      backdrop-filter: blur(25px) saturate(180%);
+      -webkit-backdrop-filter: blur(25px) saturate(180%);
+      border: 2px solid rgba(0, 255, 255, 0.3);
+      border-radius: 16px;
+      padding: 30px;
+      margin: 40px 0;
+      box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        0 0 30px rgba(0, 255, 255, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      position: relative;
+      overflow: hidden;
+      animation: tocPulse 3s ease-in-out infinite;
+      transform: translateZ(0);
+      will-change: transform;
+    }
+
+    @keyframes tocPulse {
+      0%, 100% {
+        box-shadow: 
+          0 8px 32px rgba(0, 0, 0, 0.4),
+          0 0 30px rgba(0, 255, 255, 0.1),
+          inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      }
+      50% {
+        box-shadow: 
+          0 8px 32px rgba(0, 0, 0, 0.4),
+          0 0 50px rgba(0, 255, 255, 0.2),
+          inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      }
+    }
+
+    .toc::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: conic-gradient(
+        transparent,
+        rgba(0, 255, 255, 0.05),
+        transparent 30%,
+        transparent 70%,
+        rgba(255, 0, 255, 0.05),
+        transparent
+      );
+      animation: rotate 10s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes rotate {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .toc h3 {
+      color: #00ffff;
+      margin-bottom: 20px;
+      text-shadow: 0 0 10px rgba(0, 255, 255, 0.6);
+    }
+
+    .toc ul {
+      list-style: none;
+      padding: 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 10px;
+    }
+
+    .toc li {
+      padding: 8px 0;
+    }
+
+    .toc a {
+      color: #a0ffff;
+      text-decoration: none;
+      padding: 8px 15px;
+      display: block;
+      border-radius: 8px;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid transparent;
+      position: relative;
+      z-index: 1;
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .toc a:hover {
+      color: #00ffff;
+      background: rgba(0, 255, 255, 0.15);
+      border-color: rgba(0, 255, 255, 0.5);
+      text-shadow: 
+        0 0 10px rgba(0, 255, 255, 0.8),
+        0 0 20px rgba(0, 255, 255, 0.4);
+      transform: translateX(8px) scale(1.02);
+      box-shadow: 
+        0 4px 15px rgba(0, 255, 255, 0.3),
+        inset 0 0 20px rgba(0, 255, 255, 0.1);
+    }
+
+    /* FAQ Section */
+    .faq-item {
+      background: rgba(5, 8, 30, 0.4);
+      backdrop-filter: blur(15px) saturate(160%);
+      -webkit-backdrop-filter: blur(15px) saturate(160%);
+      border: 2px solid rgba(0, 255, 255, 0.2);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 15px 0;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .faq-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: linear-gradient(180deg, 
+        rgba(0, 255, 255, 0.6),
+        rgba(255, 0, 255, 0.6)
+      );
+      transform: scaleY(0);
+      transition: transform 0.4s;
+    }
+
+    .faq-item:hover::before {
+      transform: scaleY(1);
+    }
+
+    .faq-item:hover {
+      border-color: rgba(0, 255, 255, 0.5);
+      box-shadow: 
+        0 8px 24px rgba(0, 0, 0, 0.4),
+        0 0 30px rgba(0, 255, 255, 0.3),
+        0 0 50px rgba(255, 0, 255, 0.2);
+      transform: translateX(5px) scale(1.01);
+      background: rgba(5, 8, 30, 0.6);
+    }
+
+    .faq-question {
+      color: #00ffff;
+      font-weight: 600;
+      margin-bottom: 10px;
+      font-size: 1.1rem;
+      text-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+    }
+
+    .faq-answer {
+      color: #a0ffff;
+      line-height: 1.6;
+    }
+
+    /* Prerequisites */
+    .prerequisites-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .prerequisites-list li {
+      padding: 12px;
+      margin: 10px 0;
+      background: rgba(0, 255, 255, 0.05);
+      border-left: 4px solid rgba(0, 255, 255, 0.5);
+      border-radius: 8px;
+      color: #a0ffff;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .prerequisites-list li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: linear-gradient(180deg,
+        rgba(0, 255, 255, 0.8),
+        rgba(255, 0, 255, 0.8)
+      );
+      transform: scaleY(0);
+      transition: transform 0.3s;
+    }
+
+    .prerequisites-list li:hover::before {
+      transform: scaleY(1);
+    }
+
+    .prerequisites-list li:hover {
+      background: rgba(0, 255, 255, 0.1);
+      border-left-color: rgba(0, 255, 255, 0.8);
+      transform: translateX(5px);
+      box-shadow: 
+        0 4px 15px rgba(0, 255, 255, 0.2),
+        inset 0 0 20px rgba(0, 255, 255, 0.05);
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      .hero h1 {
+        font-size: 2rem;
+      }
+
+      .section {
+        padding: 25px;
+      }
+
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .toc ul {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    section {
+      scroll-margin-top: 120px;
+    }
+
+    /* Glitch effect for hero title */
+    .hero h1::before,
+    .hero h1::after {
+      content: attr(data-text);
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #00ffff, #ff00ff);
+      background-size: 300% 300%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      opacity: 0;
+      animation: glitch 3s infinite;
+    }
+
+    .hero h1::before {
+      clip-path: polygon(0 0, 100% 0, 100% 35%, 0 35%);
+      transform: translate(-2px, -2px);
+      animation-delay: 0.1s;
+    }
+
+    .hero h1::after {
+      clip-path: polygon(0 65%, 100% 65%, 100% 100%, 0 100%);
+      transform: translate(2px, 2px);
+      animation-delay: 0.2s;
+    }
+
+    @keyframes glitch {
+      0%, 90%, 100% { opacity: 0; }
+      92% { opacity: 0.8; }
+      94% { opacity: 0.3; }
+      96% { opacity: 0.9; }
+      98% { opacity: 0.2; }
+    }
+
+    /* Neon cursor trail effect */
+    .cursor-trail {
+      position: fixed;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(0, 255, 255, 0.6);
+      pointer-events: none;
+      z-index: 9999;
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+      animation: cursorFade 0.5s ease-out forwards;
+    }
+
+    @keyframes cursorFade {
+      to {
+        opacity: 0;
+        transform: scale(0);
+      }
+    }
+
+    /* Scroll progress indicator */
+    .scroll-progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      background: linear-gradient(90deg,
+        rgba(0, 255, 255, 0.8),
+        rgba(255, 0, 255, 0.8),
+        rgba(0, 255, 157, 0.8)
+      );
+      background-size: 200% 100%;
+      z-index: 10000;
+      transform-origin: left;
+      transform: scaleX(0);
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+      animation: progressGradient 3s linear infinite;
+    }
+
+    @keyframes progressGradient {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 200% 50%; }
+    }
+
+    /* Sparkle animation */
+    @keyframes sparkleFade {
+      0% {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+      }
+      100% {
+        opacity: 0;
+        transform: scale(0) rotate(360deg);
+      }
+    }
+
+    /* Neon Toggle Button */
+    #neonToggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 10001;
+      padding: 12px 20px;
+      background: rgba(5, 8, 30, 0.8);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 2px solid rgba(0, 255, 255, 0.5);
+      border-radius: 8px;
+      color: #00ffff;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);
+      text-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+    }
+
+    #neonToggle:hover {
+      background: rgba(0, 255, 255, 0.1);
+      border-color: #00ffff;
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+      transform: translateY(-2px);
+    }
+
+    #neonToggle:active {
+      transform: translateY(0);
+    }
+
+    /* Neon Off Styles for Guide Page */
+    body.neon-off * {
+      text-shadow: none !important;
+      box-shadow: none !important;
+      filter: none !important;
+      animation: none !important;
+    }
+
+    body.neon-off .hero::before,
+    body.neon-off .section::before,
+    body.neon-off .toc::before,
+    body.neon-off .feature-card::before {
+      display: none !important;
+    }
+
+    body.neon-off .particles {
+      display: none !important;
+    }
+
+    body.neon-off .scroll-progress {
+      display: none !important;
+    }
+
+    body.neon-off .cursor-trail {
+      display: none !important;
+    }
+
+    body.neon-off .hero {
+      border-color: rgba(0, 255, 255, 0.1) !important;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+    }
+
+    body.neon-off .section {
+      border-color: rgba(0, 255, 255, 0.1) !important;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+    }
+
+    body.neon-off .toc {
+      border-color: rgba(0, 255, 255, 0.1) !important;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+    }
+
+    body.neon-off .feature-card {
+      border-color: rgba(0, 255, 255, 0.1) !important;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    body.neon-off h1,
+    body.neon-off h2,
+    body.neon-off h3,
+    body.neon-off h4 {
+      text-shadow: none !important;
+    }
+
+    body.neon-off #modeNavigation a {
+      text-shadow: none !important;
+      box-shadow: none !important;
+    }
+
+    body.neon-off #modeNavigation a:hover {
+      text-shadow: none !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    body.neon-off #neonToggle {
+      border-color: rgba(150, 150, 150, 0.3) !important;
+      color: #999 !important;
+      text-shadow: none !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    body.neon-off #neonToggle:hover {
+      border-color: rgba(150, 150, 150, 0.5) !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+    }
+
+    /* Guide Top Section - Contract Address & Buy Links */
+    .guide-top-section {
+      max-width: 1200px;
+      margin: 40px auto 0;
+      padding: 0 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .guide-top-section .contract-section {
+      background: rgba(5, 8, 30, 0.6);
+      backdrop-filter: blur(30px) saturate(180%);
+      -webkit-backdrop-filter: blur(30px) saturate(180%);
+      border: 2px solid rgba(0, 255, 255, 0.3);
+      border-radius: 24px;
+      padding: 30px;
+      margin-bottom: 20px;
+      text-align: center;
+      box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        0 0 40px rgba(0, 255, 255, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .guide-top-section .contract-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, 
+        transparent,
+        rgba(0, 255, 255, 0.8),
+        rgba(255, 0, 255, 0.8),
+        transparent
+      );
+      animation: scanLine 3s linear infinite;
+    }
+
+    .guide-top-section .contract-label {
+      font-size: 1.1rem;
+      color: #00ffff;
+      margin-bottom: 15px;
+      font-weight: bold;
+      text-shadow: 
+        0 0 10px rgba(0, 255, 255, 0.8),
+        0 0 20px rgba(0, 255, 255, 0.5);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .guide-top-section .contract-input-group {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 15px;
+    }
+
+    .guide-top-section .contract-input {
+      background: rgba(0, 0, 0, 0.4);
+      border: 2px solid rgba(0, 255, 255, 0.3);
+      color: #00ffff;
+      padding: 14px 20px;
+      font-size: 0.95rem;
+      border-radius: 16px;
+      font-family: 'Courier New', monospace;
+      min-width: 300px;
+      max-width: 100%;
+      flex: 1;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+
+    .guide-top-section .contract-input:focus {
+      outline: none;
+      border-color: #00ffff;
+      box-shadow: 
+        0 0 20px rgba(0, 255, 255, 0.5),
+        inset 0 0 20px rgba(0, 255, 255, 0.1);
+    }
+
+    .guide-top-section .contract-btn {
+      padding: 12px 24px;
+      font-size: 0.85rem;
+      border: 2px solid rgba(0, 255, 255, 0.4);
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: 'Courier New', monospace;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      background: rgba(0, 255, 255, 0.1);
+      color: #00ffff;
+      backdrop-filter: blur(10px);
+    }
+
+    .guide-top-section .contract-btn:hover {
+      background: rgba(0, 255, 255, 0.2);
+      border-color: #00ffff;
+      box-shadow: 
+        0 0 20px rgba(0, 255, 255, 0.5),
+        inset 0 0 20px rgba(0, 255, 255, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .guide-top-section .contract-btn:active {
+      transform: translateY(0);
+    }
+
+    .guide-top-section .contract-warning {
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.6);
+      margin-top: 10px;
+      font-style: italic;
+    }
+
+    .guide-top-section .dex-links {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .guide-top-section .dex-btn {
+      padding: 16px 32px;
+      font-size: 0.95rem;
+      border: 2px solid;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: 'Courier New', monospace;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      white-space: nowrap;
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .guide-top-section .dex-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(45deg, 
+        rgba(0, 255, 255, 0.2),
+        rgba(255, 0, 255, 0.2),
+        rgba(0, 255, 157, 0.2)
+      );
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: -1;
+    }
+
+    .guide-top-section .dex-btn:hover::before {
+      opacity: 1;
+    }
+
+    .guide-top-section .dex-btn-buy {
+      background: rgba(255, 107, 53, 0.2);
+      border-color: rgba(255, 107, 53, 0.6);
+      color: #ff6b35;
+      box-shadow: 
+        0 8px 32px rgba(255, 107, 53, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    .guide-top-section .dex-btn-buy:hover {
+      background: rgba(255, 107, 53, 0.3);
+      border-color: #ff6b35;
+      box-shadow: 
+        0 0 30px rgba(255, 107, 53, 0.6),
+        0 8px 32px rgba(255, 107, 53, 0.4);
+      transform: translateY(-2px);
+      text-shadow: 0 0 10px rgba(255, 107, 53, 0.8);
+    }
+
+    .guide-top-section .dex-btn-community {
+      background: rgba(116, 39, 255, 0.2);
+      border-color: rgba(116, 39, 255, 0.6);
+      color: #7427ff;
+      box-shadow: 
+        0 8px 32px rgba(116, 39, 255, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    .guide-top-section .dex-btn-community:hover {
+      background: rgba(116, 39, 255, 0.3);
+      border-color: #7427ff;
+      box-shadow: 
+        0 0 30px rgba(116, 39, 255, 0.6),
+        0 8px 32px rgba(116, 39, 255, 0.4);
+      transform: translateY(-2px);
+      text-shadow: 0 0 10px rgba(116, 39, 255, 0.8);
+    }
+
+    .guide-top-section .dex-btn-live {
+      background: rgba(255, 77, 109, 0.2);
+      border-color: rgba(255, 77, 109, 0.6);
+      color: #ff4d6d;
+      box-shadow:
+        0 8px 32px rgba(255, 77, 109, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    .guide-top-section .dex-btn-live:hover {
+      background: rgba(255, 77, 109, 0.3);
+      border-color: #ff4d6d;
+      box-shadow:
+        0 0 30px rgba(255, 77, 109, 0.6),
+        0 8px 32px rgba(255, 77, 109, 0.4);
+      transform: translateY(-2px);
+      text-shadow: 0 0 10px rgba(255, 77, 109, 0.8);
+    }
+
+    .guide-top-section .dex-btn-github {
+      background: rgba(110, 118, 129, 0.2);
+      border-color: rgba(110, 118, 129, 0.6);
+      color: #ced3db;
+      box-shadow:
+        0 8px 32px rgba(110, 118, 129, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    .guide-top-section .dex-btn-github:hover {
+      background: rgba(110, 118, 129, 0.3);
+      border-color: #ced3db;
+      box-shadow:
+        0 0 30px rgba(110, 118, 129, 0.6),
+        0 8px 32px rgba(110, 118, 129, 0.4);
+      transform: translateY(-2px);
+      text-shadow: 0 0 10px rgba(206, 211, 219, 0.8);
+    }
+
+    .guide-top-section .dex-btn span {
+      font-size: 1.2em;
+      filter: drop-shadow(0 0 5px currentColor);
+    }
+
+    body.neon-off .guide-top-section .contract-section,
+    body.neon-off .guide-top-section .dex-btn {
+      border-color: rgba(150, 150, 150, 0.2) !important;
+      box-shadow: none !important;
+      text-shadow: none !important;
+    }
+  </style>
+</head>
+<body class="cyber-page guide-page">
+    <!-- Floating Particles -->
+  <div class="particles" id="particles"></div>
+
+  <!-- Scroll Progress Bar -->
+  <div class="scroll-progress" id="scrollProgress"></div>
+
+  <!-- Neon Toggle Button -->
+  <button id="neonToggle" title="Toggle Neon Effects">💡 Neon: ON</button>
+
+  <div id="modeNavigation">
+    <a href="/rps_vs_luna.html">🎮 VS Luna</a>
+    <a href="/rps_game.html">Play PvP! Find</a>
+    <a href="/rps_betting.html">💰 Betting Mode</a>
+    <a href="/rps_deposit.html">💾 Deposit Luna</a>
+    <a href="/group_chat.html">💬 Group Chat</a>
+    <a href="/rps_leaderboard.html">🏆 Leaderboard</a>
+    <a href="/rps_stats.html">📊 Stats</a>
+  </div>
+
+  <div class="container">
+    <div class="hero">
+      <h1 data-text="🌙 LUNA MOON">🌙 LUNA MOON</h1>
+      <p>Complete guide to LUNA MOON system and all available features</p>
+    </div>
+
+    <!-- Contract Address & Buy Links Section -->
+    <div class="guide-top-section">
+      <!-- Contract Address Section -->
+      <div class="contract-section">
+        <div class="contract-label">Contract Address:</div>
+        <div class="contract-input-group">
+          <input type="text" id="contractAddress" class="contract-input" readonly value="Loading...">
+          <button class="contract-btn contract-btn-copy" onclick="copyContractAddress()">
+            <span>📋</span> Copy
+          </button>
+          <button class="contract-btn contract-btn-view" onclick="viewContractAddress()">
+            <span>🔗</span> View
+          </button>
+        </div>
+        <div class="contract-warning">Always verify the contract address before buying.</div>
+      </div>
+
+      <!-- Buy Luna & Community Links -->
+      <div class="dex-links">
+        <a href="#" id="buyDexLink" class="dex-btn dex-btn-buy" target="_blank" onclick="openBuyDex(event)">
+          <span>⚡</span> Buy Luna
+        </a>
+        <a href="#" id="communityLink" class="dex-btn dex-btn-community" target="_blank" onclick="openCommunity(event)">
+          <span>𝕏</span> Join Community
+        </a>
+        <a href="https://www.youtube.com/@LunaMoonAI/live" id="liveStreamLink" class="dex-btn dex-btn-live" target="_blank" rel="noopener noreferrer">
+          <span>🎥</span> Watch Luna Live
+        </a>
+        <a href="https://github.com/NOI56/Luna-moon" id="githubLink" class="dex-btn dex-btn-github" target="_blank" rel="noopener noreferrer">
+          <span>🐙</span> GitHub
+        </a>
+      </div>
+    </div>
+
+    <!-- Table of Contents -->
+    <div class="toc">
+      <h3>📑 Table of Contents</h3>
+      <ul>
+        <li><a href="#about-luna">🤖 About Luna AI</a></li>
+        <li><a href="#luna-token">🌙 Luna Token</a></li>
+        <li><a href="#game-modes">🎮 Game Modes</a></li>
+        <li><a href="#deposit">💾 Deposit System</a></li>
+        <li><a href="#group-chat">💬 Group Chat</a></li>
+        <li><a href="#prerequisites">📋 Prerequisites</a></li>
+        <li><a href="#additional-features">🌟 Additional Features</a></li>
+        <li><a href="#security">🔒 Security</a></li>
+        <li><a href="#faq">❓ FAQ</a></li>
+      </ul>
+    </div>
+
+    <!-- Prerequisites -->
+    <section class="section" id="prerequisites">
+      <h2>📋 Prerequisites</h2>
+      <p>Before using Luna AI features, make sure you have:</p>
+      <ul class="prerequisites-list">
+        <li><strong>🔐 Phantom Wallet:</strong> Install and set up Phantom wallet browser extension</li>
+        <li><strong>💰 SOL Balance:</strong> Have some SOL in your wallet for transaction fees</li>
+        <li><strong>🌙 Luna Tokens:</strong> Hold the required amount of Luna tokens based on Dynamic Minimum Requirements</li>
+        <li><strong>🌐 Internet Connection:</strong> Stable connection for real-time features</li>
+      </ul>
+      <div class="highlight-box" style="margin-top: 20px;">
+        <strong>💡 Tip:</strong> Check the Dynamic Minimum Requirements on each feature page. Requirements adjust based on real-time Luna token price.
+      </div>
+    </section>
+
+    <!-- About Luna AI -->
+    <section class="section" id="about-luna">
+      <h2>🤖 About Luna AI</h2>
+      <p>Luna AI is an AI streamer that can chat with viewers, express emotions, and automatically control VTube Studio characters. Includes Rock Paper Scissors game system and Luna Token Ecosystem</p>
+      
+      <div class="features-grid">
+        <div class="feature-card">
+          <h4>🤖 AI Chat System</h4>
+          <ul>
+            <li>Auto-selects GPT-4o-mini for simple questions</li>
+            <li>Switches to GPT-4o/Claude for complex questions</li>
+            <li>OpenRouter support</li>
+            <li>Smart caching system</li>
+            <li>Rate limiting protection</li>
+          </ul>
+        </div>
+
+        <div class="feature-card">
+          <h4>🎭 Emotion System</h4>
+          <ul>
+            <li>Detects emotions from messages</li>
+            <li>Expresses emotions: angry, sad, sleepy, hype, soft</li>
+            <li>Emotion decay system</li>
+            <li>VTube Studio integration</li>
+            <li>Dynamic personality tuning</li>
+          </ul>
+        </div>
+
+        <div class="feature-card">
+          <h4>🎤 Text-to-Speech</h4>
+          <ul>
+            <li>Uses ElevenLabs for voice generation</li>
+            <li>Multiple voice modes (soft, passion, ambient)</li>
+            <li>Natural speech generation</li>
+            <li>Real-time voice synthesis</li>
+          </ul>
+        </div>
+
+        <div class="feature-card">
+          <h4>🎬 VTube Studio Integration</h4>
+          <ul>
+            <li>Talk-React (lip sync during speech)</li>
+            <li>Breathing (automatic breathing)</li>
+            <li>Idle Animations</li>
+            <li>Emotion Expressions</li>
+            <li>Real-time character control</li>
+          </ul>
+        </div>
+
+        <div class="feature-card">
+          <h4>🧠 Memory System</h4>
+          <ul>
+            <li>Stores conversation history</li>
+            <li>Remembers user preferences</li>
+            <li>Memory decay system</li>
+            <li>User preferences tracking</li>
+          </ul>
+        </div>
+
+        <div class="feature-card">
+          <h4>💤 Sleepy Mode</h4>
+          <ul>
+            <li>Sleep mode 00:00-06:00 (US time)</li>
+            <li>Realistic daily rhythm</li>
+            <li>Auto wake/sleep</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Luna Token -->
+    <section class="section" id="luna-token">
+      <h2>🌙 Luna Token</h2>
+      <p>Luna Token is a utility token for the Luna AI Ecosystem, used to access various features and reduce fees</p>
+      
+      <div class="highlight-box">
+        <strong>💎 Key Features:</strong>
+        <ul style="margin-top: 10px;">
+          <li>Utility Token for accessing various features</li>
+          <li>Token Burning: 3% from every deposit (True Burn)</li>
+          <li>Dynamic Pricing: Adjusts based on real-time price</li>
+          <li>Grandfathering: Maintains original privileges even if price changes</li>
+        </ul>
+      </div>
+
+      <h3>🔥 Token Burning System</h3>
+      <p>True Burn mechanism on Solana Blockchain:</p>
+      <ul>
+        <li>3% of deposit amount is sent to Incinerator Address</li>
+        <li>Incinerator Address has no Private Key</li>
+        <li>Tokens are permanently burned</li>
+        <li>Verifiable on Solscan</li>
+        <li>Helps reduce supply and increase token value</li>
+      </ul>
+
+      <h3>📊 Dynamic Pricing System</h3>
+      <p>Minimum Requirements adjust based on Luna's real-time price:</p>
+      <ul>
+        <li>Based on Market Cap, Volume, Liquidity</li>
+        <li>Each feature has different Base USD value</li>
+        <li>Grandfathering: Depositors maintain original privileges</li>
+        <li>Auto-updates based on DexScreener data</li>
+      </ul>
+    </section>
+
+    <!-- Game Modes -->
+    <section class="section" id="game-modes">
+      <h2>🎮 Game Modes - Rock Paper Scissors</h2>
+      
+      <div class="features-grid">
+        <div class="feature-card">
+          <h4>🤖 VS Luna</h4>
+          <p><strong>Dynamic Minimum: ~30 USD</strong></p>
+          <ul>
+            <li>Play with Luna AI instantly</li>
+            <li>No matchmaking wait time</li>
+            <li>AI-powered opponent</li>
+            <li>Real-time results</li>
+          </ul>
+          <a href="/rps_vs_luna.html" class="cta-button"><span>Play Now</span></a>
+        </div>
+
+        <div class="feature-card">
+          <h4>🎯 Play PvP! Find</h4>
+          <p><strong>Dynamic Minimum: ~10 USD</strong></p>
+          <ul>
+            <li>Find players in real-time</li>
+            <li>Auto-matchmaking system</li>
+            <li>Bot fallback (15s timeout)</li>
+            <li>WebSocket real-time updates</li>
+          </ul>
+          <a href="/rps_game.html" class="cta-button"><span>Find Match</span></a>
+        </div>
+
+        <div class="feature-card">
+          <h4>💰 Betting Mode</h4>
+          <p><strong>Create or join betting rooms</strong></p>
+          <ul>
+            <li>Create betting rooms with Luna</li>
+            <li>Join existing rooms</li>
+            <li>Win Luna tokens</li>
+            <li>Real-time room updates</li>
+          </ul>
+          <a href="/rps_betting.html" class="cta-button"><span>Enter Betting</span></a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Deposit System -->
+    <section class="section" id="deposit">
+      <h2>💾 Deposit Luna System</h2>
+      <p>Deposit Luna to reduce fees and access various features</p>
+      
+      <h3>Deposit Steps:</h3>
+      <ol style="color: #a0ffff; line-height: 2; padding-left: 30px;">
+        <li>Connect Phantom Wallet</li>
+        <li>Check Dynamic Minimum Requirement</li>
+        <li>Deposit Luna Tokens (97% to Escrow, 3% Burn)</li>
+        <li>Receive fee reduction and feature access privileges</li>
+        <li>Withdraw anytime</li>
+      </ol>
+
+      <div class="highlight-box">
+        <strong>⚠️ Important:</strong>
+        <ul style="margin-top: 10px;">
+          <li>Dynamic Minimum: ~13 USD (adjusts based on real-time price)</li>
+          <li>3% will be burned (True Burn)</li>
+          <li>Grandfathering: Stores Minimum Requirement at deposit time</li>
+          <li>Can withdraw anytime</li>
+        </ul>
+      </div>
+
+      <a href="/rps_deposit.html" class="cta-button"><span>Go to Deposit Page</span></a>
+    </section>
+
+    <!-- Group Chat -->
+    <section class="section" id="group-chat">
+      <h2>💬 Group Chat</h2>
+      <p>Chat room for Holders with real-time messaging</p>
+      
+      <ul>
+        <li><strong>Dynamic Minimum: ~10 USD</strong></li>
+        <li>Token-gated access</li>
+        <li>Real-time chat system</li>
+        <li>Community features</li>
+        <li>Multiple chat rooms</li>
+      </ul>
+
+      <a href="/group_chat.html" class="cta-button"><span>Join Group Chat</span></a>
+    </section>
+
+    <!-- Additional Features -->
+    <section class="section" id="additional-features">
+      <h2>🌟 Additional Features</h2>
+      <p style="margin-bottom: 20px;">Explore more features to enhance your Luna AI experience:</p>
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0;">
+        <a href="/rps_leaderboard.html" class="cta-button" style="text-align: center;"><span>🏆 View Leaderboard</span></a>
+        <a href="/rps_stats.html" class="cta-button" style="text-align: center;"><span>📊 View Stats</span></a>
+      </div>
+      
+      <div class="features-grid">
+        <div class="feature-card">
+          <h4>🏆 Competition System</h4>
+          <ul>
+            <li>Weekly brackets</li>
+            <li>Top 5 rewards</li>
+            <li>Leaderboard tracking</li>
+            <li>Auto distribution</li>
+          </ul>
+        </div>
+
+        <div class="feature-card">
+          <h4>👥 Referral System</h4>
+          <ul>
+            <li>Referral links</li>
+            <li>Signup Rewards (100 Luna)</li>
+            <li>First Game Rewards (200 Luna)</li>
+            <li>Top 10 Rewards (1000 Luna)</li>
+          </ul>
+        </div>
+
+        <div class="feature-card">
+          <h4>📊 Statistics & Leaderboard</h4>
+          <ul>
+            <li>Win/Loss stats</li>
+            <li>Leaderboard</li>
+            <li>Game history</li>
+            <li>Performance tracking</li>
+          </ul>
+        </div>
+
+        <div class="feature-card">
+          <h4>🔔 Notification System</h4>
+          <ul>
+            <li>Match found notifications</li>
+            <li>Room notifications</li>
+            <li>Reward alerts</li>
+            <li>Referral updates</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Security -->
+    <section class="section" id="security">
+      <h2>🔒 Security Features</h2>
+      <p>Luna AI implements multiple security measures to ensure fair play and protect users:</p>
+      <ul>
+        <li><strong>IP Self-Play Detection:</strong> Prevents users from playing against themselves</li>
+        <li><strong>Wallet Blocking:</strong> Blocks suspicious or abusive wallets</li>
+        <li><strong>Cooldown System:</strong> Rate limiting to prevent spam and abuse</li>
+        <li><strong>Suspicious Activity Log:</strong> Monitors and logs unusual patterns</li>
+        <li><strong>Anti-abuse Guardrails:</strong> Multiple layers of protection against exploitation</li>
+      </ul>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section" id="faq">
+      <h2>❓ Frequently Asked Questions</h2>
+      
+      <div class="faq-item">
+        <div class="faq-question">Q: How do I get started with Luna AI?</div>
+        <div class="faq-answer">
+          A: First, install Phantom Wallet and connect it. Then check the Dynamic Minimum Requirements for the feature you want to use. If you need to deposit, go to the Deposit Luna page to get started.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question">Q: What is Dynamic Pricing?</div>
+        <div class="faq-answer">
+          A: Dynamic Pricing adjusts minimum requirements based on real-time Luna token price, market cap, volume, and liquidity. This ensures fair access regardless of market conditions.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question">Q: What is Grandfathering?</div>
+        <div class="faq-answer">
+          A: Grandfathering means if you deposit when the minimum is 10 USD, you keep that requirement even if the price changes and the new minimum becomes 15 USD. Your privileges are locked at deposit time.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question">Q: Is token burning permanent?</div>
+        <div class="faq-answer">
+          A: Yes! Tokens are sent to the Solana Incinerator Address which has no private key. This means they are permanently removed from circulation and cannot be recovered. You can verify burns on Solscan.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question">Q: Can I withdraw my deposit anytime?</div>
+        <div class="faq-answer">
+          A: Yes, you can withdraw your deposit at any time from the Deposit Luna page. However, withdrawing will remove your fee reduction and feature access privileges until you deposit again.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question">Q: What happens if I don't meet the minimum requirement after price changes?</div>
+        <div class="faq-answer">
+          A: If you already deposited, Grandfathering protects you. If you haven't deposited yet, you'll need to meet the current Dynamic Minimum Requirement to access features.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question">Q: How does the competition system work?</div>
+        <div class="faq-answer">
+          A: Weekly competitions track your performance in Rock Paper Scissors games. Top 5 players receive rewards automatically distributed at the end of each week.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question">Q: Can I use multiple wallets?</div>
+        <div class="faq-answer">
+          A: Each wallet is tracked separately. The system includes anti-abuse measures to prevent unfair advantages from multiple wallets.
+        </div>
+      </div>
+    </section>
+
+    <!-- Quick Links -->
+    <section class="section" style="text-align: center;">
+      <h2>🚀 Get Started</h2>
+      <p style="margin-bottom: 30px;">Ready to get started? Choose your desired feature:</p>
+      <a href="/rps_vs_luna.html" class="cta-button"><span>🎮 Challenge Luna</span></a>
+      <a href="/rps_deposit.html" class="cta-button"><span>💾 Deposit Luna</span></a>
+      <a href="/rps_game.html" class="cta-button"><span>🎯 Play PvP</span></a>
+      <a href="/group_chat.html" class="cta-button"><span>💬 Group Chat</span></a>
+    </section>
+  </div>
+
+  <script src="/js/utils.js"></script>
+  <script src="/js/phantom-helper.js"></script>
+  <script src="/js/toast.js"></script>
+  <script>
+    // Sound Effects System for Navigation
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function playSound(frequency, duration, type = 'sine', volume = 0.3) {
+      try {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = frequency;
+        oscillator.type = type;
+        
+        gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + duration);
+      } catch (e) {
+        console.error('[Sound] Error playing sound:', e);
+      }
+    }
+    
+    function playNavClickSound() {
+      playSound(600, 0.1, 'sine', 0.2);
+    }
+
+    function initNavigationSounds() {
+      const navLinks = document.querySelectorAll('#modeNavigation a');
+      navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          playNavClickSound();
+          setTimeout(() => {
+            window.location.href = link.href;
+          }, 150);
+        });
+      });
+    }
+
+    initNavigationSounds();
+
+    // Create floating particles
+    function createParticles() {
+      const particlesContainer = document.getElementById('particles');
+      if (!particlesContainer) return;
+
+      const particleCount = 30;
+      for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.animationDelay = Math.random() * 20 + 's';
+        particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+        particlesContainer.appendChild(particle);
+      }
+    }
+
+    // Scroll-triggered animations
+    function initScrollAnimations() {
+      const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+          }
+        });
+      }, observerOptions);
+
+      document.querySelectorAll('.section').forEach(section => {
+        observer.observe(section);
+      });
+    }
+
+    // Magnetic hover effect for feature cards
+    function initMagneticCards() {
+      const cards = document.querySelectorAll('.feature-card');
+      cards.forEach(card => {
+        card.addEventListener('mousemove', (e) => {
+          const rect = card.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          const centerX = rect.width / 2;
+          const centerY = rect.height / 2;
+          const moveX = (x - centerX) / 10;
+          const moveY = (y - centerY) / 10;
+
+          card.style.transform = `translate(${moveX}px, ${moveY - 8}px) scale(1.03) rotateX(${moveY / 20}deg) rotateY(${moveX / 20}deg)`;
+        });
+
+        card.addEventListener('mouseleave', () => {
+          card.style.transform = '';
+        });
+      });
+    }
+
+    // Scroll progress indicator
+    function initScrollProgress() {
+      const progressBar = document.getElementById('scrollProgress');
+      if (!progressBar) return;
+
+      window.addEventListener('scroll', () => {
+        const windowHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        const scrolled = (window.scrollY / windowHeight) * 100;
+        progressBar.style.transform = `scaleX(${scrolled / 100})`;
+      });
+    }
+
+    // Cursor trail effect
+    function initCursorTrail() {
+      let trail = [];
+      const trailLength = 15;
+      
+      // Remove existing listener if any
+      if (window.cursorTrailHandler) {
+        document.removeEventListener('mousemove', window.cursorTrailHandler);
+      }
+
+      window.cursorTrailHandler = (e) => {
+        // Don't create trail if neon is off
+        if (document.body.classList.contains('neon-off')) {
+          return;
+        }
+        
+        const trailDot = document.createElement('div');
+        trailDot.className = 'cursor-trail';
+        trailDot.style.left = e.clientX + 'px';
+        trailDot.style.top = e.clientY + 'px';
+        document.body.appendChild(trailDot);
+
+        trail.push(trailDot);
+        if (trail.length > trailLength) {
+          const oldDot = trail.shift();
+          if (oldDot && oldDot.parentNode) {
+            oldDot.parentNode.removeChild(oldDot);
+          }
+        }
+
+        setTimeout(() => {
+          if (trailDot && trailDot.parentNode) {
+            trailDot.parentNode.removeChild(trailDot);
+          }
+        }, 500);
+      };
+      
+      document.addEventListener('mousemove', window.cursorTrailHandler);
+    }
+
+    // Smooth parallax effect for hero and sections
+    function initParallax() {
+      let ticking = false;
+      
+      function updateParallax() {
+        const scrolled = window.pageYOffset;
+        const hero = document.querySelector('.hero');
+        const sections = document.querySelectorAll('.section');
+        const toc = document.querySelector('.toc');
+        
+        // Hero parallax
+        if (hero) {
+          const heroSpeed = 0.5;
+          hero.style.transform = `translateY(${scrolled * heroSpeed}px)`;
+          hero.style.opacity = 1 - (scrolled / 300);
+        }
+        
+        // TOC parallax
+        if (toc && scrolled > 100) {
+          toc.style.transform = `translateY(${(scrolled - 100) * 0.3}px)`;
+        }
+        
+        // Sections parallax (subtle)
+        sections.forEach((section, index) => {
+          const rect = section.getBoundingClientRect();
+          const speed = 0.1;
+          
+          if (rect.top < window.innerHeight && rect.bottom > 0) {
+            const offset = (window.innerHeight - rect.top) * speed;
+            section.style.transform = `translateY(${offset}px)`;
+          }
+        });
+        
+        ticking = false;
+      }
+      
+      window.addEventListener('scroll', () => {
+        if (!ticking) {
+          window.requestAnimationFrame(updateParallax);
+          ticking = true;
+        }
+      });
+    }
+
+    // Smooth scroll with offset for navigation
+    function initSmoothScroll() {
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute('href'));
+          if (target) {
+            const offset = 120;
+            const targetPosition = target.getBoundingClientRect().top + window.pageYOffset - offset;
+            window.scrollTo({
+              top: targetPosition,
+              behavior: 'smooth'
+            });
+          }
+        });
+      });
+    }
+
+    // Add sparkle effect to hero
+    function initSparkles() {
+      const hero = document.querySelector('.hero');
+      if (!hero) return;
+
+      setInterval(() => {
+        const sparkle = document.createElement('div');
+        sparkle.style.position = 'absolute';
+        sparkle.style.width = '4px';
+        sparkle.style.height = '4px';
+        sparkle.style.background = '#00ffff';
+        sparkle.style.borderRadius = '50%';
+        sparkle.style.boxShadow = '0 0 10px #00ffff, 0 0 20px #00ffff';
+        sparkle.style.left = Math.random() * 100 + '%';
+        sparkle.style.top = Math.random() * 100 + '%';
+        sparkle.style.pointerEvents = 'none';
+        sparkle.style.animation = 'sparkleFade 1s ease-out forwards';
+        hero.appendChild(sparkle);
+
+        setTimeout(() => {
+          if (sparkle.parentNode) {
+            sparkle.parentNode.removeChild(sparkle);
+          }
+        }, 1000);
+      }, 300);
+    }
+
+    // Neon Toggle System
+    function initNeonToggle() {
+      const neonToggle = document.getElementById('neonToggle');
+      const body = document.body;
+      
+      if (!neonToggle) return;
+      
+      // Load saved preference
+      const neonEnabled = localStorage.getItem('neonEnabled') !== 'false';
+      
+      if (!neonEnabled) {
+        body.classList.add('neon-off');
+        neonToggle.textContent = '💡 Neon: OFF';
+      } else {
+        body.classList.remove('neon-off');
+        neonToggle.textContent = '💡 Neon: ON';
+      }
+      
+      neonToggle.addEventListener('click', () => {
+        const isOff = body.classList.contains('neon-off');
+        
+        if (isOff) {
+          body.classList.remove('neon-off');
+          neonToggle.textContent = '💡 Neon: ON';
+          localStorage.setItem('neonEnabled', 'true');
+          // Restart effects when turning neon back on
+          createParticles();
+          initCursorTrail();
+        } else {
+          body.classList.add('neon-off');
+          neonToggle.textContent = '💡 Neon: OFF';
+          localStorage.setItem('neonEnabled', 'false');
+          // Stop effects when turning neon off
+          const particles = document.getElementById('particles');
+          if (particles) {
+            particles.innerHTML = '';
+          }
+          // Remove all cursor trail elements
+          document.querySelectorAll('.cursor-trail').forEach(trail => {
+            if (trail.parentNode) {
+              trail.parentNode.removeChild(trail);
+            }
+          });
+        }
+      });
+    }
+
+    // Contract Address Functions
+    const API_BASE = window.API_BASE || '';
+    let cachedContractAddress = null;
+    let solanaCluster = 'mainnet-beta';
+
+    async function loadContractAddress() {
+      try {
+        const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/rps/contract-address`);
+        const data = await response.json();
+        
+        if (data.ok && data.contractAddress) {
+          const contractInput = document.getElementById('contractAddress');
+          if (contractInput) {
+            contractInput.value = data.contractAddress;
+          }
+          cachedContractAddress = data.contractAddress;
+          if (data.cluster || data.network) {
+            solanaCluster = data.cluster || data.network;
+          }
+          
+          // Update buy DEX link from env
+          const buyDexLink = document.getElementById('buyDexLink');
+          if (buyDexLink && data.buyLink) {
+            buyDexLink.href = data.buyLink;
+          } else if (buyDexLink) {
+            // Fallback to pump.fun if buyLink not provided
+            buyDexLink.href = `https://pump.fun/${data.contractAddress}`;
+          }
+          
+          // Update X/Twitter community link from env
+          const communityLink = document.getElementById('communityLink');
+          if (communityLink && data.xLink) {
+            communityLink.href = data.xLink;
+          }
+
+          const liveLink = document.getElementById('liveStreamLink');
+          if (liveLink && data.liveLink) {
+            liveLink.href = data.liveLink;
+          }
+
+          const githubLink = document.getElementById('githubLink');
+          if (githubLink && data.githubLink) {
+            githubLink.href = data.githubLink;
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load contract address:', error);
+        const contractInput = document.getElementById('contractAddress');
+        if (contractInput) {
+          contractInput.value = 'Error loading address';
+        }
+      }
+    }
+
+    // Copy contract address to clipboard
+    function copyContractAddress() {
+      const contractInput = document.getElementById('contractAddress');
+      if (contractInput) {
+        contractInput.select();
+        contractInput.setSelectionRange(0, 99999);
+        document.execCommand('copy');
+        
+        const btn = event.target.closest('.contract-btn-copy');
+        if (btn) {
+          const originalText = btn.innerHTML;
+          btn.innerHTML = '<span>✓</span> Copied!';
+          setTimeout(() => {
+            btn.innerHTML = originalText;
+          }, 2000);
+        }
+        
+        if (window.showToast) {
+          window.showToast('Contract address copied to clipboard!', 'success');
+        }
+      }
+    }
+
+    // View contract address on Solscan
+    function viewContractAddress() {
+      const contractInput = document.getElementById('contractAddress');
+      if (contractInput && contractInput.value && contractInput.value !== 'Loading...' && contractInput.value !== 'Error loading address') {
+        const clusterSuffix = solanaCluster && solanaCluster !== 'mainnet-beta'
+          ? `?cluster=${solanaCluster}`
+          : '';
+        window.open(`https://solscan.io/token/${contractInput.value}${clusterSuffix}`, '_blank');
+      } else {
+        if (window.showToast) {
+          window.showToast('Contract address not loaded yet. Please wait a moment and try again.', 'info');
+        } else {
+          alert('Contract address not loaded yet. Please wait a moment and try again.');
+        }
+      }
+    }
+
+    // Open buy DEX link
+    function openBuyDex(event) {
+      event.preventDefault();
+      const buyDexLink = document.getElementById('buyDexLink');
+      if (buyDexLink && buyDexLink.href && buyDexLink.href !== '#') {
+        window.open(buyDexLink.href, '_blank');
+      } else {
+        if (window.showToast) {
+          window.showToast('Contract address not loaded yet. Please wait a moment and try again.', 'info');
+        } else {
+          alert('Contract address not loaded yet. Please wait a moment and try again.');
+        }
+      }
+    }
+
+    // Open community link (X/Twitter)
+    function openCommunity(event) {
+      event.preventDefault();
+      const communityLink = document.getElementById('communityLink');
+      if (communityLink && communityLink.href && communityLink.href !== '#') {
+        window.open(communityLink.href, '_blank');
+      } else {
+        if (window.showToast) {
+          window.showToast('Community link not loaded yet. Please wait a moment and try again.', 'info');
+        } else {
+          alert('Community link not loaded yet. Please wait a moment and try again.');
+        }
+      }
+    }
+
+    function initGuideEffects() {
+      const neonEnabled = localStorage.getItem('neonEnabled') !== 'false';
+      if (neonEnabled) {
+        createParticles();
+        initCursorTrail();
+      } else {
+        const particles = document.getElementById('particles');
+        if (particles) {
+          particles.innerHTML = '';
+        }
+      }
+      initScrollAnimations();
+      initMagneticCards();
+      initScrollProgress();
+      initParallax();
+      initSmoothScroll();
+      initSparkles();
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      initNeonToggle();
+      initGuideEffects();
+      loadContractAddress();
+      initTooltips();
+    });
+
+    function initTooltips() {
+      if (!window.lunaUtils) return;
+      
+      const copyBtn = document.querySelector('.contract-btn-copy');
+      if (copyBtn) {
+        window.lunaUtils.createTooltip(copyBtn, 'Copy contract address to clipboard', 'top');
+      }
+      
+      const viewBtn = document.querySelector('.contract-btn-view');
+      if (viewBtn) {
+        window.lunaUtils.createTooltip(viewBtn, 'View contract on Solscan', 'top');
+      }
+    }
+  </script>
+</body>
+</html>
+
