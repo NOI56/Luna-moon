@@ -3297,14 +3297,33 @@
         });
 
         if (!response.ok) {
+          // Check if response is JSON or HTML
+          const contentType = response.headers.get('content-type') || '';
           const errorText = await response.text();
           let errorData;
-          try {
-            errorData = JSON.parse(errorText);
-          } catch (e) {
-            errorData = { error: `Server error: ${response.status} ${response.statusText}` };
+          
+          if (contentType.includes('application/json')) {
+            try {
+              errorData = JSON.parse(errorText);
+            } catch (e) {
+              errorData = { error: `Server error: ${response.status} ${response.statusText}` };
+            }
+          } else {
+            // Response is HTML (error page) - don't try to parse as JSON
+            if (response.status === 503 || response.status === 502) {
+              errorData = { error: 'Service temporarily unavailable. Please try again later.' };
+            } else {
+              errorData = { error: `Server error: ${response.status} ${response.statusText}` };
+            }
           }
+          
           throw new Error(errorData.error || errorData.message || `Server error: ${response.status}`);
+        }
+
+        // Check content type before parsing JSON
+        const contentType = response.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) {
+          throw new Error('Server returned non-JSON response');
         }
 
         const data = await response.json();
@@ -3660,6 +3679,22 @@
       
       try {
         const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/chat/online?roomId=${GROUP_CHAT_ROOM_ID}`);
+        
+        // Check if response is OK and is JSON
+        if (!response.ok) {
+          // Server error (503, 500, etc.) - don't try to parse as JSON
+          onlineCount.textContent = '💬 Group Chat';
+          return;
+        }
+        
+        // Check content type before parsing
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          // Response is not JSON (probably HTML error page)
+          onlineCount.textContent = '💬 Group Chat';
+          return;
+        }
+        
         const data = await response.json();
         
         if (data.ok) {
@@ -3668,7 +3703,10 @@
           onlineCount.textContent = '💬 Group Chat';
         }
       } catch (error) {
-        console.error('Failed to get online count:', error);
+        // Silently handle errors - don't spam console
+        if (error.name !== 'AbortError') {
+          console.warn('[Group Chat] Failed to get online count:', error.message);
+        }
         onlineCount.textContent = '💬 Group Chat';
       }
     }
