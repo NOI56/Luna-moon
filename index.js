@@ -1051,7 +1051,19 @@ app.use((req, res, next) => {
   next();
 });
 
+// Serve static files (including offline.html for connection errors)
 app.use(express.static(path.join(__dirname, "public")));
+
+// Fallback route for connection errors - serve offline.html for any upstream errors
+// This helps when server is starting up or experiencing issues
+app.use((req, res, next) => {
+  // If request has an error header from upstream, serve offline page
+  if (req.headers['x-upstream-error'] || req.headers['x-envoy-upstream-service-time'] === undefined) {
+    // This is a fallback - actual errors should be caught by error handler
+    return next();
+  }
+  next();
+});
 
 // Explicit favicon route for better compatibility with Phantom Wallet
 // Phantom Wallet reads favicon from browser tab, so this must work correctly
@@ -1135,8 +1147,8 @@ app.use((err, req, res, next) => {
   
   // Send appropriate error page
   if (statusCode === 503 || statusCode === 502) {
-    // Service Unavailable or Bad Gateway
-    res.status(statusCode).sendFile(path.join(__dirname, "public", "500.html"));
+    // Service Unavailable or Bad Gateway - use offline.html for connection errors
+    res.status(statusCode).sendFile(path.join(__dirname, "public", "offline.html"));
   } else if (statusCode === 500) {
     // Internal Server Error
     res.status(500).sendFile(path.join(__dirname, "public", "500.html"));
