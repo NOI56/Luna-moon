@@ -267,75 +267,106 @@ export function setupChatRoutes(app, dependencies) {
    * Send a chat message
    */
   async function sendChatMessage(roomId, wallet, message, username, balance = null, attachments = []) {
-    const room = getOrCreateChatRoom(roomId);
-    const messageId = `${roomId}_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-    
-    // Get VIP badge
-    const badge = await getVIPBadge(wallet);
-    
-    // Check for mentions
-    const mentions = [];
-    const mentionRegex = /@(\w+)/g;
-    let match;
-    while ((match = mentionRegex.exec(message)) !== null) {
-      mentions.push(match[1]);
-    }
-    
-    const chatMessage = {
-      id: messageId,
-      roomId: roomId,
-      wallet: wallet,
-      username: username || wallet.substring(0, 8) + '...',
-      message: message,
-      badge: badge,
-      mentions: mentions,
-      attachments,
-      timestamp: Date.now()
-    };
-    
-    // Add to room messages
-    room.messages.push(chatMessage);
-    
-    // Limit messages
-    if (room.messages.length > CHAT_MESSAGE_LIMIT) {
-      room.messages.shift();
-    }
-    
-    // Add participant
-    room.participants.add(wallet);
-    
-    // Update online users
-    onlineUsers.set(wallet, {
-      ws: null, // Will be set by WebSocket connection
-      lastSeen: Date.now(),
-      roomId: roomId
-    });
-    
-    // Update leaderboard
-    const currentCount = chatLeaderboard.get(wallet) || 0;
-    chatLeaderboard.set(wallet, currentCount + 1);
-    
-    // Save to database if group chat
-    if (roomId === 'group_chat') {
+    try {
+      log.info(`[chat] sendChatMessage called: roomId=${roomId}, wallet=${wallet?.substring(0, 8)}..., messageLength=${message?.length || 0}`);
+      
+      const room = getOrCreateChatRoom(roomId);
+      const messageId = `${roomId}_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      
+      // Get VIP badge
+      let badge = null;
       try {
-        await saveGroupChatMessage(chatMessage);
-      } catch (dbError) {
-        log.error('[chat] Failed to save message to database:', dbError);
+        badge = await getVIPBadge(wallet);
+      } catch (badgeError) {
+        log.warn(`[chat] Failed to get VIP badge for ${wallet.substring(0, 8)}...:`, badgeError.message);
+        // Continue without badge
       }
+      
+      // Check for mentions
+      const mentions = [];
+      const mentionRegex = /@(\w+)/g;
+      let match;
+      while ((match = mentionRegex.exec(message)) !== null) {
+        mentions.push(match[1]);
+      }
+      
+      const chatMessage = {
+        id: messageId,
+        roomId: roomId,
+        wallet: wallet,
+        username: username || wallet.substring(0, 8) + '...',
+        message: message,
+        badge: badge,
+        mentions: mentions,
+        attachments,
+        timestamp: Date.now()
+      };
+      
+      log.info(`[chat] Created message object: id=${messageId}, roomId=${roomId}`);
+      
+      // Add to room messages
+      room.messages.push(chatMessage);
+      
+      // Limit messages
+      if (room.messages.length > CHAT_MESSAGE_LIMIT) {
+        room.messages.shift();
+      }
+      
+      // Add participant
+      room.participants.add(wallet);
+      
+      // Update online users
+      onlineUsers.set(wallet, {
+        ws: null, // Will be set by WebSocket connection
+        lastSeen: Date.now(),
+        roomId: roomId
+      });
+      
+      // Update leaderboard
+      const currentCount = chatLeaderboard.get(wallet) || 0;
+      chatLeaderboard.set(wallet, currentCount + 1);
+      
+      // Save to database if group chat
+      if (roomId === 'group_chat') {
+        try {
+          await saveGroupChatMessage(chatMessage);
+          log.info(`[chat] Saved message ${messageId} to database`);
+        } catch (dbError) {
+          log.error('[chat] Failed to save message to database:', dbError);
+          log.error('[chat] Database error stack:', dbError.stack);
+          // Continue even if database save fails - message should still be broadcast
+        }
+      }
+      
+      // Broadcast message
+      log.info(`[chat] Broadcasting message from ${wallet.substring(0, 8)}... in room ${roomId}`);
+      log.info(`[chat] Message details: id=${chatMessage.id}, wallet=${wallet.substring(0, 8)}..., text=${chatMessage.message.substring(0, 50)}...`);
+      log.info(`[chat] Total WebSocket clients: ${clients.size}`);
+      
+      try {
+        broadcast({
+          type: 'chat_message',
+          roomId: roomId,
+          message: chatMessage
+        });
+        log.info(`[chat] Broadcast completed for message ${chatMessage.id}`);
+      } catch (broadcastError) {
+        log.error('[chat] Broadcast error:', broadcastError);
+        log.error('[chat] Broadcast error stack:', broadcastError.stack);
+        // Don't throw - message was created successfully
+      }
+      
+      return chatMessage;
+    } catch (error) {
+      log.error('[chat] sendChatMessage error:', error);
+      log.error('[chat] sendChatMessage error stack:', error.stack);
+      log.error('[chat] sendChatMessage error details:', {
+        roomId,
+        wallet: wallet?.substring(0, 8) + '...',
+        messageLength: message?.length || 0
+      });
+      throw error; // Re-throw to be caught by caller
     }
-    
-    // Broadcast message
-    log.info(`[chat] Broadcasting message from ${wallet.substring(0, 8)}... in room ${roomId}`);
-    log.info(`[chat] Message details: id=${chatMessage.id}, wallet=${wallet.substring(0, 8)}..., text=${chatMessage.message.substring(0, 50)}...`);
-    log.info(`[chat] Total WebSocket clients: ${clients.size}`);
-    broadcast({
-      type: 'chat_message',
-      roomId: roomId,
-      message: chatMessage
-    });
-    log.info(`[chat] Broadcast completed for message ${chatMessage.id}`);
-    
-    return chatMessage;
   }
   
   /**
@@ -389,14 +420,22 @@ export function setupChatRoutes(app, dependencies) {
         mintPublicKey = new PublicKey(mint);
         walletPubKey = new PublicKey(wallet);
       } catch (error) {
+        log.warn(`[chat] Invalid mint or wallet address for badge check: ${error.message}`);
         return null;
       }
       
-      // Get token accounts
-      const tokenAccounts = await connection.getParsedTokenAccountsByOwner(
-        walletPubKey,
-        { mint: mintPublicKey }
-      );
+      // Get token accounts with timeout and error handling
+      let tokenAccounts;
+      try {
+        tokenAccounts = await connection.getParsedTokenAccountsByOwner(
+          walletPubKey,
+          { mint: mintPublicKey }
+        );
+      } catch (rpcError) {
+        log.warn(`[chat] RPC error while getting badge for ${wallet.substring(0, 8)}...: ${rpcError.message}`);
+        // Return null instead of throwing - badge is optional
+        return null;
+      }
       
       let balance = 0;
       if (tokenAccounts.value && tokenAccounts.value.length > 0) {
@@ -836,10 +875,20 @@ export function setupChatRoutes(app, dependencies) {
       });
     } catch (e) {
       log.error("[chat] Send message error:", e);
+      log.error("[chat] Error stack:", e.stack);
+      log.error("[chat] Request body:", JSON.stringify(req.body, null, 2));
+      log.error("[chat] Error details:", {
+        message: e.message,
+        name: e.name,
+        code: e.code,
+        roomId: req.body?.roomId,
+        wallet: req.body?.wallet ? req.body.wallet.substring(0, 8) + '...' : 'missing'
+      });
       res.status(500).json({
         ok: false,
-        error: e.message,
+        error: e.message || "Internal server error",
         message: "Failed to send chat message",
+        details: process.env.NODE_ENV === 'development' ? e.stack : undefined
       });
     }
   });
