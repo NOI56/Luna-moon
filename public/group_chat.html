@@ -1981,7 +1981,17 @@
         const cached = JSON.parse(cachedRaw);
         if (Array.isArray(cached) && cached.length) {
           console.log('[Group Chat] Hydrating messages from cache:', cached.length);
-          messages = cached;
+          // Fix timestamps in cached messages
+          messages = cached.map(msg => {
+            if (!msg.timestamp || isNaN(msg.timestamp)) {
+              console.warn('[Group Chat] Fixing invalid timestamp in cached message:', msg.id);
+              msg.timestamp = Date.now(); // Use current time as fallback
+            } else {
+              // Ensure timestamp is a number
+              msg.timestamp = parseInt(msg.timestamp);
+            }
+            return msg;
+          });
           updateMessages();
         }
       } catch (error) {
@@ -3154,6 +3164,17 @@
               console.log('[Group Chat] Room ID matches! Adding message from WebSocket:', msg.message);
               console.log('[Group Chat] Message wallet:', msg.message?.wallet, 'Current wallet:', walletPublicKey);
               console.log('[Group Chat] Message ID:', msg.message?.id);
+              console.log('[Group Chat] Message timestamp:', msg.message?.timestamp);
+              
+              // Ensure message has valid timestamp
+              if (msg.message && (!msg.message.timestamp || isNaN(msg.message.timestamp))) {
+                console.warn('[Group Chat] Fixing invalid timestamp in WebSocket message:', msg.message.id);
+                msg.message.timestamp = Date.now();
+              } else if (msg.message && msg.message.timestamp) {
+                // Ensure timestamp is a number
+                msg.message.timestamp = parseInt(msg.message.timestamp);
+              }
+              
               addMessage(msg.message);
             } else {
               console.warn('[Group Chat] Room ID mismatch! Ignoring message. Received:', msg.roomId, 'Expected:', GROUP_CHAT_ROOM_ID);
@@ -3279,7 +3300,17 @@
         console.log('[Group Chat] Response:', data);
         
         if (data.ok) {
-          messages = data.messages || [];
+          messages = (data.messages || []).map(msg => {
+            // Fix timestamps in loaded messages
+            if (!msg.timestamp || isNaN(msg.timestamp)) {
+              console.warn('[Group Chat] Fixing invalid timestamp in loaded message:', msg.id);
+              msg.timestamp = Date.now(); // Use current time as fallback
+            } else {
+              // Ensure timestamp is a number
+              msg.timestamp = parseInt(msg.timestamp);
+            }
+            return msg;
+          });
           console.log('[Group Chat] Loaded', messages.length, 'messages');
           updateMessages();
           scrollToBottom();
