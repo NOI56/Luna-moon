@@ -79,25 +79,38 @@ export function setupChatRoutes(app, dependencies) {
   wss.on('connection', (ws, req) => {
     const clientIp = req.socket.remoteAddress || 'unknown';
     const clientUrl = req.url || 'unknown';
-    log.info(`[websocket] New client connecting from ${clientIp}, URL: ${clientUrl}`);
+    const clientId = `${clientIp}_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    
+    log.info(`[websocket] ========== NEW CLIENT CONNECTION ==========`);
+    log.info(`[websocket] Client ID: ${clientId}`);
+    log.info(`[websocket] Client IP: ${clientIp}`);
+    log.info(`[websocket] Client URL: ${clientUrl}`);
+    log.info(`[websocket] ReadyState: ${ws.readyState} (1=OPEN, 0=CONNECTING, 2=CLOSING, 3=CLOSED)`);
+    log.info(`[websocket] Current clients in Set BEFORE add: ${clients.size}`);
     
     // Add client to Set immediately when connection is established
+    const beforeSize = clients.size;
     clients.add(ws);
-    log.info(`[websocket] Client added to Set. Total clients: ${clients.size}, readyState: ${ws.readyState}`);
+    const afterSize = clients.size;
+    
+    log.info(`[websocket] Client added to Set. Before: ${beforeSize}, After: ${afterSize}, readyState: ${ws.readyState}`);
+    
+    // Store client ID for debugging
+    ws._clientId = clientId;
     
     // Note: Server-side WebSocket doesn't have 'open' event - connection is already open
     // Check readyState immediately
     if (ws.readyState === 1) { // WebSocket.OPEN
-      log.info(`[websocket] Client WebSocket is OPEN. Total clients: ${clients.size}`);
+      log.info(`[websocket] ✅ Client ${clientId} WebSocket is OPEN. Total clients: ${clients.size}`);
       // Send connection test message
       try {
         ws.send(JSON.stringify({ type: 'connection_test', message: 'WebSocket connected successfully' }));
-        log.debug('[websocket] Sent connection test message');
+        log.info(`[websocket] ✅ Sent connection test message to ${clientId}`);
       } catch (error) {
-        log.warn('[websocket] Failed to send connection test:', error.message);
+        log.error(`[websocket] ❌ Failed to send connection test to ${clientId}:`, error.message);
       }
     } else {
-      log.warn(`[websocket] Client WebSocket not OPEN yet. readyState: ${ws.readyState}, Total clients: ${clients.size}`);
+      log.warn(`[websocket] ⚠️ Client ${clientId} WebSocket not OPEN yet. readyState: ${ws.readyState}, Total clients: ${clients.size}`);
     }
     
     ws.on('message', (raw) => {
@@ -114,14 +127,24 @@ export function setupChatRoutes(app, dependencies) {
     });
 
     ws.on('close', (code, reason) => {
+      const beforeSize = clients.size;
       clients.delete(ws);
-      log.info(`[websocket] Client disconnected. Code: ${code}, Reason: ${reason?.toString() || 'none'}, Total clients: ${clients.size}`);
+      const afterSize = clients.size;
+      log.info(`[websocket] ========== CLIENT DISCONNECTED ==========`);
+      log.info(`[websocket] Client ID: ${ws._clientId || 'unknown'}`);
+      log.info(`[websocket] Close Code: ${code}, Reason: ${reason?.toString() || 'none'}`);
+      log.info(`[websocket] Clients BEFORE delete: ${beforeSize}, AFTER delete: ${afterSize}`);
     });
     
     ws.on('error', (error) => {
-      log.error(`[websocket] Client error: ${error.message}, Stack: ${error.stack}`);
+      log.error(`[websocket] ========== CLIENT ERROR ==========`);
+      log.error(`[websocket] Client ID: ${ws._clientId || 'unknown'}`);
+      log.error(`[websocket] Error: ${error.message}`);
+      log.error(`[websocket] Stack: ${error.stack}`);
+      const beforeSize = clients.size;
       clients.delete(ws);
-      log.info(`[websocket] Removed client due to error. Total clients: ${clients.size}`);
+      const afterSize = clients.size;
+      log.info(`[websocket] Removed client due to error. Before: ${beforeSize}, After: ${afterSize}`);
     });
   });
   
@@ -144,23 +167,30 @@ export function setupChatRoutes(app, dependencies) {
     clientsArray.forEach((client, index) => {
       try {
         const readyState = client.readyState;
-        clientStates.push({ index: index + 1, readyState });
+        const clientId = client._clientId || `client_${index + 1}`;
+        clientStates.push({ index: index + 1, readyState, clientId });
+        
+        log.info(`[websocket] Checking client ${index + 1}/${clientsArray.length}: ID=${clientId}, readyState=${readyState}`);
         
         if (readyState === 1) { // WebSocket.OPEN
           client.send(message);
           sentCount++;
-          log.info(`[websocket] ✅ Sent to client ${index + 1}/${clientsArray.length} (readyState=${readyState})`);
+          log.info(`[websocket] ✅ Sent to client ${index + 1}/${clientsArray.length} (ID=${clientId}, readyState=${readyState})`);
         } else {
           skippedCount++;
-          log.warn(`[websocket] ⚠️ Skipped client ${index + 1}/${clientsArray.length} (readyState=${readyState})`);
+          log.warn(`[websocket] ⚠️ Skipped client ${index + 1}/${clientsArray.length} (ID=${clientId}, readyState=${readyState}) - NOT OPEN`);
         }
       } catch (error) {
         errorCount++;
-        log.error(`[websocket] ❌ Broadcast error for client ${index + 1}:`, error.message);
+        const clientId = client._clientId || `client_${index + 1}`;
+        log.error(`[websocket] ❌ Broadcast error for client ${index + 1} (ID=${clientId}):`, error.message);
         log.error(`[websocket] Error stack:`, error.stack);
         // Remove failed client from Set
         try {
+          const beforeSize = clients.size;
           clients.delete(client);
+          const afterSize = clients.size;
+          log.info(`[websocket] Removed failed client. Before: ${beforeSize}, After: ${afterSize}`);
         } catch (deleteError) {
           log.warn(`[websocket] Failed to remove client from Set:`, deleteError.message);
         }
