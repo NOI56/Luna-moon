@@ -1117,7 +1117,7 @@ app.get('/test/error', (req, res, next) => {
 // Root Redirect (redirect / to /rps_stats.html)
 // ----------------------
 app.get('/', (req, res) => {
-  res.redirect('/rps_game.html');
+  res.redirect('/luna_guide.html');
 });
 
 // ----------------------
