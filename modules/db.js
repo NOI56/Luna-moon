@@ -326,7 +326,7 @@ export async function loadGroupChatMessages(roomId, limit = 1000) {
               wallet: row.wallet,
               username: row.username || row.wallet.substring(0, 8) + '...',
               message: row.message,
-              timestamp: row.timestamp,
+              timestamp: parseInt(row.timestamp) || Date.now(), // Ensure timestamp is a number
               badge: row.badge ? JSON.parse(row.badge) : null,
               mentions: row.mentions ? JSON.parse(row.mentions) : [],
               attachments: row.attachments ? JSON.parse(row.attachments) : []
