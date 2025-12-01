@@ -81,13 +81,24 @@ export function setupChatRoutes(app, dependencies) {
     const clientUrl = req.url || 'unknown';
     log.info(`[websocket] New client connecting from ${clientIp}, URL: ${clientUrl}`);
     
+    // Add client to Set immediately when connection is established
     clients.add(ws);
-    log.info(`[websocket] Client connected. Total clients: ${clients.size}, readyState: ${ws.readyState}`);
+    log.info(`[websocket] Client added to Set. Total clients: ${clients.size}, readyState: ${ws.readyState}`);
     
-    // Log when WebSocket becomes ready
-    ws.on('open', () => {
-      log.info(`[websocket] Client WebSocket opened. Total clients: ${clients.size}`);
-    });
+    // Note: Server-side WebSocket doesn't have 'open' event - connection is already open
+    // Check readyState immediately
+    if (ws.readyState === 1) { // WebSocket.OPEN
+      log.info(`[websocket] Client WebSocket is OPEN. Total clients: ${clients.size}`);
+      // Send connection test message
+      try {
+        ws.send(JSON.stringify({ type: 'connection_test', message: 'WebSocket connected successfully' }));
+        log.debug('[websocket] Sent connection test message');
+      } catch (error) {
+        log.warn('[websocket] Failed to send connection test:', error.message);
+      }
+    } else {
+      log.warn(`[websocket] Client WebSocket not OPEN yet. readyState: ${ws.readyState}, Total clients: ${clients.size}`);
+    }
     
     ws.on('message', (raw) => {
       try {
@@ -112,16 +123,6 @@ export function setupChatRoutes(app, dependencies) {
       clients.delete(ws);
       log.info(`[websocket] Removed client due to error. Total clients: ${clients.size}`);
     });
-    
-    // Send a test message to verify connection
-    try {
-      if (ws.readyState === 1) {
-        ws.send(JSON.stringify({ type: 'connection_test', message: 'WebSocket connected successfully' }));
-        log.debug('[websocket] Sent connection test message');
-      }
-    } catch (error) {
-      log.warn('[websocket] Failed to send connection test:', error.message);
-    }
   });
   
   /**
@@ -132,31 +133,49 @@ export function setupChatRoutes(app, dependencies) {
     let sentCount = 0;
     let skippedCount = 0;
     let errorCount = 0;
+    const clientStates = [];
     
-    log.debug(`[websocket] Starting broadcast: type=${data.type}, roomId=${data.roomId || 'N/A'}, clients=${clients.size}`);
+    log.info(`[websocket] Starting broadcast: type=${data.type}, roomId=${data.roomId || 'N/A'}, clients=${clients.size}`);
     
-    clients.forEach((client, index) => {
+    // Convert Set to Array for safer iteration
+    const clientsArray = Array.from(clients);
+    log.info(`[websocket] Broadcasting to ${clientsArray.length} clients`);
+    
+    clientsArray.forEach((client, index) => {
       try {
-        if (client.readyState === 1) { // WebSocket.OPEN
+        const readyState = client.readyState;
+        clientStates.push({ index: index + 1, readyState });
+        
+        if (readyState === 1) { // WebSocket.OPEN
           client.send(message);
           sentCount++;
-          log.debug(`[websocket] Sent to client ${index + 1}/${clients.size}`);
+          log.info(`[websocket] ✅ Sent to client ${index + 1}/${clientsArray.length} (readyState=${readyState})`);
         } else {
           skippedCount++;
-          log.debug(`[websocket] Skipped client ${index + 1}/${clients.size} (readyState=${client.readyState})`);
+          log.warn(`[websocket] ⚠️ Skipped client ${index + 1}/${clientsArray.length} (readyState=${readyState})`);
         }
       } catch (error) {
         errorCount++;
-        log.error(`[websocket] Broadcast error for client ${index + 1}:`, error);
-        clients.delete(client);
+        log.error(`[websocket] ❌ Broadcast error for client ${index + 1}:`, error.message);
+        log.error(`[websocket] Error stack:`, error.stack);
+        // Remove failed client from Set
+        try {
+          clients.delete(client);
+        } catch (deleteError) {
+          log.warn(`[websocket] Failed to remove client from Set:`, deleteError.message);
+        }
       }
     });
     
-    log.info(`[websocket] Broadcast ${data.type} to ${sentCount} clients (${skippedCount} skipped, ${errorCount} errors, ${clients.size} total)`);
+    log.info(`[websocket] Broadcast ${data.type} completed: ${sentCount} sent, ${skippedCount} skipped, ${errorCount} errors, ${clients.size} total clients`);
+    log.info(`[websocket] Client states: ${JSON.stringify(clientStates)}`);
     
     if (sentCount === 0 && clients.size > 0) {
-      log.warn(`[websocket] WARNING: No clients received message! All ${clients.size} clients are not in OPEN state.`);
+      log.error(`[websocket] ❌ CRITICAL: No clients received message! All ${clients.size} clients are not in OPEN state.`);
+      log.error(`[websocket] Client states: ${JSON.stringify(clientStates)}`);
     }
+    
+    return { sentCount, skippedCount, errorCount, totalClients: clients.size };
   }
 
   function broadcastTypingState(roomId) {
@@ -344,12 +363,16 @@ export function setupChatRoutes(app, dependencies) {
       log.info(`[chat] Total WebSocket clients: ${clients.size}`);
       
       try {
-        broadcast({
+        const broadcastResult = broadcast({
           type: 'chat_message',
           roomId: roomId,
           message: chatMessage
         });
-        log.info(`[chat] Broadcast completed for message ${chatMessage.id}`);
+        log.info(`[chat] Broadcast completed for message ${chatMessage.id}: ${broadcastResult.sentCount} sent, ${broadcastResult.skippedCount} skipped, ${broadcastResult.errorCount} errors`);
+        
+        if (broadcastResult.sentCount === 0) {
+          log.error(`[chat] ❌ CRITICAL: Message ${chatMessage.id} was NOT broadcast to any clients!`);
+        }
       } catch (broadcastError) {
         log.error('[chat] Broadcast error:', broadcastError);
         log.error('[chat] Broadcast error stack:', broadcastError.stack);
