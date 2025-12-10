@@ -366,6 +366,7 @@
   ]);
   const STYLE_ID = 'group-chat-widget-style';
   const SCRIPT_ID = 'group-chat-widget-script';
+  const ASSET_VERSION = '20251203b';
 
   function pathIsExcluded() {
     const pathname = (window.location.pathname || '').toLowerCase();
@@ -380,13 +381,13 @@
       const link = document.createElement('link');
       link.id = STYLE_ID;
       link.rel = 'stylesheet';
-      link.href = '/css/group-chat-widget.css';
+      link.href = `/css/group-chat-widget.css?v=${ASSET_VERSION}`;
       document.head?.appendChild(link);
     }
     if (!document.getElementById(SCRIPT_ID)) {
       const script = document.createElement('script');
       script.id = SCRIPT_ID;
-      script.src = '/js/group-chat-widget.js';
+      script.src = `/js/group-chat-widget.js?v=${ASSET_VERSION}`;
       script.defer = true;
       document.head?.appendChild(script);
     }

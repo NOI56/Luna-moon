@@ -1,0 +1,2 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title"><title>X</title><defs><radialGradient id="g" cx="30%" cy="25%" r="90%"><stop offset="0%" stop-color="#666"/><stop offset="40%" stop-color="#222"/><stop offset="100%" stop-color="#060606"/></radialGradient></defs><rect width="512" height="512" rx="96" fill="url(#g)"/><path fill="#fff" d="M128 94h96l66 92 78-92h62l-109 129 129 195h-96l-78-112-94 112h-62l125-147L128 94zm84 35 166 234h24L236 129h-24z"/></svg>
+

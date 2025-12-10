@@ -1,293 +1,362 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPEhtml>
+<htmllang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Test Notifications System</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+<metacharset="UTF-8">
+<metaname="viewport"content="width=device-width,initial-scale=1.0">
+<title>TestNotificationsSystem</title>
+<linkrel="stylesheet"href="/css/cyberpunk-neon.css">
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
 
-    body {
-      font-family: 'Courier New', 'Monaco', monospace;
-      background: #0a0a0a;
-      color: #00ffff;
-      padding: 40px;
-      min-height: 100vh;
-    }
+body{
+font-family:'SpaceGrotesk','CourierNew','Monaco',monospace;
+background:
+radial-gradient(circleat20%20%,rgba(0,255,255,0.12),transparent45%),
+radial-gradient(circleat85%5%,rgba(255,60,172,0.12),transparent55%),
+radial-gradient(circleat70%80%,rgba(116,39,255,0.15),transparent60%),
+linear-gradient(135deg,#02000d0%,#050b1f35%,#05052465%,#0b0140100%);
+background-attachment:fixed;
+color:rgba(255,255,255,0.92);
+padding:40px;
+min-height:100vh;
+}
 
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-      background: rgba(10, 10, 26, 0.8);
-      border: 2px solid #00ffff;
-      border-radius: 12px;
-      padding: 30px;
-      box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
-    }
+.container{
+max-width:800px;
+margin:0auto;
+background:rgba(5,8,30,0.75);
+border:1pxsolidrgba(0,255,255,0.25);
+border-radius:32px;
+padding:40px;
+box-shadow:
+025px65pxrgba(2,10,30,0.65),
+00120pxrgba(0,255,255,0.12),
+inset01px0rgba(255,255,255,0.1);
+backdrop-filter:blur(24px)saturate(140%);
+-webkit-backdrop-filter:blur(24px)saturate(140%);
+position:relative;
+overflow:hidden;
+isolation:isolate;
+}
 
-    h1 {
-      font-size: 2em;
-      margin-bottom: 20px;
-      text-shadow: 0 0 10px #00ffff;
-      text-align: center;
-    }
+.container::before{
+content:'';
+position:absolute;
+inset:0;
+border-radius:inherit;
+background:linear-gradient(120deg,rgba(0,255,255,0.8),rgba(116,39,255,0.65),rgba(255,60,172,0.6));
+opacity:0.35;
+filter:blur(25px);
+z-index:-2;
+}
 
-    .section {
-      margin-bottom: 30px;
-      padding: 20px;
-      background: rgba(0, 255, 255, 0.05);
-      border: 1px solid rgba(0, 255, 255, 0.3);
-      border-radius: 8px;
-    }
+.container::after{
+content:'';
+position:absolute;
+inset:1px;
+border-radius:inherit;
+background:linear-gradient(130deg,rgba(255,255,255,0.08),transparent60%);
+z-index:-1;
+opacity:0.6;
+}
 
-    .section h2 {
-      font-size: 1.3em;
-      margin-bottom: 15px;
-      color: #00ffff;
-      text-shadow: 0 0 5px #00ffff;
-    }
+h1{
+font-size:2em;
+margin-bottom:20px;
+text-shadow:
+0015pxrgba(0,255,255,0.8),
+0030pxrgba(0,255,255,0.6);
+text-align:center;
+background:linear-gradient(135deg,#00ffff,#ff3cac,#7427ff);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+background-clip:text;
+}
 
-    label {
-      display: block;
-      margin-bottom: 8px;
-      color: #00ffff;
-      font-size: 0.9em;
-    }
+.section{
+margin-bottom:30px;
+padding:24px;
+background:rgba(5,8,30,0.65);
+border:1pxsolidrgba(0,255,255,0.25);
+border-radius:20px;
+backdrop-filter:blur(20px)saturate(140%);
+-webkit-backdrop-filter:blur(20px)saturate(140%);
+box-shadow:020px40pxrgba(0,0,0,0.4),0025pxrgba(0,255,255,0.1);
+}
 
-    input, select {
-      width: 100%;
-      padding: 10px;
-      background: rgba(0, 0, 0, 0.5);
-      border: 1px solid #00ffff;
-      border-radius: 6px;
-      color: #00ffff;
-      font-family: 'Courier New', monospace;
-      font-size: 0.9em;
-      margin-bottom: 15px;
-    }
+.sectionh2{
+font-size:1.3em;
+margin-bottom:15px;
+color:#00ffff;
+text-shadow:005px#00ffff;
+}
 
-    input:focus, select:focus {
-      outline: none;
-      box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
-    }
+label{
+display:block;
+margin-bottom:8px;
+color:#00ffff;
+font-size:0.9em;
+}
 
-    button {
-      background: linear-gradient(135deg, rgba(0, 255, 255, 0.3), rgba(0, 255, 255, 0.3));
-      border: 2px solid #00ffff;
-      color: #00ffff;
-      padding: 12px 24px;
-      font-size: 1em;
-      cursor: pointer;
-      border-radius: 8px;
-      transition: all 0.3s;
-      font-family: 'Courier New', monospace;
-      margin-right: 10px;
-      margin-bottom: 10px;
-    }
+input,select{
+width:100%;
+padding:12px;
+background:rgba(0,0,0,0.4);
+border:1pxsolidrgba(0,255,255,0.3);
+border-radius:12px;
+color:#00ffff;
+font-family:'CourierNew',monospace;
+font-size:0.9em;
+margin-bottom:15px;
+backdrop-filter:blur(8px);
+-webkit-backdrop-filter:blur(8px);
+transition:all0.3sease;
+}
 
-    button:hover {
-      background: linear-gradient(135deg, rgba(0, 255, 255, 0.5), rgba(0, 255, 255, 0.5));
-      box-shadow: 0 0 15px #00ffff;
-      transform: translateY(-2px);
-    }
+input:focus,select:focus{
+outline:none;
+border-color:rgba(0,255,255,0.6);
+box-shadow:0015pxrgba(0,255,255,0.3);
+}
 
-    .result {
-      margin-top: 20px;
-      padding: 15px;
-      background: rgba(0, 0, 0, 0.5);
-      border: 1px solid rgba(0, 255, 255, 0.3);
-      border-radius: 8px;
-      font-size: 0.9em;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      max-height: 300px;
-      overflow-y: auto;
-    }
+button{
+background:linear-gradient(135deg,rgba(0,255,255,0.25),rgba(116,39,255,0.2));
+border:1pxsolidrgba(0,255,255,0.5);
+color:#00ffff;
+padding:12px24px;
+font-size:1em;
+cursor:pointer;
+border-radius:16px;
+transition:all0.3sease;
+font-family:'SpaceGrotesk','CourierNew',monospace;
+margin-right:10px;
+margin-bottom:10px;
+backdrop-filter:blur(10px)saturate(140%);
+-webkit-backdrop-filter:blur(10px)saturate(140%);
+box-shadow:08px20pxrgba(0,0,0,0.4),0015pxrgba(0,255,255,0.2);
+text-transform:uppercase;
+letter-spacing:0.1em;
+font-weight:600;
+}
 
-    .result.success {
-      border-color: #00ff00;
-      color: #00ff00;
-    }
+button:hover{
+background:linear-gradient(135deg,rgba(0,255,255,0.35),rgba(116,39,255,0.3));
+border-color:rgba(0,255,255,0.7);
+box-shadow:012px30pxrgba(0,0,0,0.5),0025pxrgba(0,255,255,0.4);
+transform:translateY(-2px);
+}
 
-    .result.error {
-      border-color: #ff0000;
-      color: #ff0000;
-    }
+.result{
+margin-top:20px;
+padding:15px;
+background:rgba(0,0,0,0.4);
+border:1pxsolidrgba(0,255,255,0.3);
+border-radius:12px;
+font-size:0.9em;
+white-space:pre-wrap;
+word-wrap:break-word;
+max-height:300px;
+overflow-y:auto;
+backdrop-filter:blur(10px);
+-webkit-backdrop-filter:blur(10px);
+}
 
-    .quick-test {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-      margin-top: 15px;
-    }
+.result.success{
+border-color:#00ff00;
+color:#00ff00;
+}
 
-    .quick-test button {
-      width: 100%;
-      margin: 0;
-    }
+.result.error{
+border-color:#ff0000;
+color:#ff0000;
+}
 
-    .info {
-      background: rgba(0, 255, 255, 0.1);
-      border-left: 4px solid #00ffff;
-      padding: 15px;
-      margin-bottom: 20px;
-      border-radius: 4px;
-    }
+.quick-test{
+display:grid;
+grid-template-columns:repeat(2,1fr);
+gap:10px;
+margin-top:15px;
+}
 
-    .info p {
-      margin-bottom: 8px;
-      font-size: 0.9em;
-    }
-  </style>
+.quick-testbutton{
+width:100%;
+margin:0;
+}
+
+.info{
+background:rgba(5,8,30,0.65);
+border:1pxsolidrgba(0,255,255,0.3);
+border-left:4pxsolidrgba(0,255,255,0.6);
+padding:20px;
+margin-bottom:20px;
+border-radius:12px;
+backdrop-filter:blur(15px)saturate(120%);
+-webkit-backdrop-filter:blur(15px)saturate(120%);
+}
+
+.infop{
+margin-bottom:8px;
+font-size:0.9em;
+}
+</style>
 </head>
-<body>
-  <div class="container">
-    <h1>🔔 Test Notifications System</h1>
+<bodyclass="cyber-page">
+<divclass="container">
+<h1>🔔TestNotificationsSystem</h1>
 
-    <div class="info">
-      <p><strong>วิธีใช้:</strong></p>
-      <p>1. ใส่ wallet address (ถ้าต้องการส่งให้คนเดียว) หรือปล่อยว่าง (จะ broadcast ไปทุกคน)</p>
-      <p>2. เลือกประเภท notification หรือใช้ปุ่ม Quick Test</p>
-      <p>3. กดปุ่ม "Send Test Notification"</p>
-      <p>4. ตรวจสอบผลลัพธ์ในหน้าเว็บที่เปิดอยู่ (ควรเห็น toast notification และ badge อัปเดต)</p>
-    </div>
+<divclass="info">
+<p><strong>วิธีใช้:</strong></p>
+<p>1.ใส่walletaddress(ถ้าต้องการส่งให้คนเดียว)หรือปล่อยว่าง(จะbroadcastไปทุกคน)</p>
+<p>2.เลือกประเภทnotificationหรือใช้ปุ่มQuickTest</p>
+<p>3.กดปุ่ม"SendTestNotification"</p>
+<p>4.ตรวจสอบผลลัพธ์ในหน้าเว็บที่เปิดอยู่(ควรเห็นtoastnotificationและbadgeอัปเดต)</p>
+</div>
 
-    <div class="section">
-      <h2>📝 Custom Test</h2>
-      <label for="wallet">Wallet Address (optional - leave empty to broadcast to all):</label>
-      <input type="text" id="wallet" placeholder="Your wallet address here...">
+<divclass="section">
+<h2>📝CustomTest</h2>
+<labelfor="wallet">WalletAddress(optional-leaveemptytobroadcasttoall):</label>
+<inputtype="text"id="wallet"placeholder="Yourwalletaddresshere...">
 
-      <label for="type">Notification Type:</label>
-      <select id="type">
-        <option value="default">Default Test Notification</option>
-        <option value="match_found">Match Found</option>
-        <option value="room_new">New Betting Room</option>
-        <option value="reward_time">Reward Distribution Soon</option>
-        <option value="reward_received">Reward Received</option>
-        <option value="referral_reward">Referral Reward</option>
-      </select>
+<labelfor="type">NotificationType:</label>
+<selectid="type">
+<optionvalue="default">DefaultTestNotification</option>
+<optionvalue="match_found">MatchFound</option>
+<optionvalue="room_new">NewBettingRoom</option>
+<optionvalue="reward_time">RewardDistributionSoon</option>
+<optionvalue="reward_received">RewardReceived</option>
+<optionvalue="referral_reward">ReferralReward</option>
+</select>
 
-      <button onclick="sendTestNotification()">🚀 Send Test Notification</button>
-    </div>
+<buttononclick="sendTestNotification()">🚀SendTestNotification</button>
+</div>
 
-    <div class="section">
-      <h2>⚡ Quick Test</h2>
-      <p style="margin-bottom: 15px; color: #00ffff; opacity: 0.8;">ทดสอบประเภท notification ต่างๆ:</p>
-      <div class="quick-test">
-        <button onclick="quickTest('match_found')">🎮 Match Found</button>
-        <button onclick="quickTest('room_new')">🏠 New Room</button>
-        <button onclick="quickTest('reward_time')">💰 Reward Time</button>
-        <button onclick="quickTest('reward_received')">🎁 Reward Received</button>
-        <button onclick="quickTest('referral_reward')">👥 Referral Reward</button>
-        <button onclick="quickTest('default')">🔔 Default Test</button>
-      </div>
-    </div>
+<divclass="section">
+<h2>⚡QuickTest</h2>
+<pstyle="margin-bottom:15px;color:#00ffff;opacity:0.8;">ทดสอบประเภทnotificationต่างๆ:</p>
+<divclass="quick-test">
+<buttononclick="quickTest('match_found')">🎮MatchFound</button>
+<buttononclick="quickTest('room_new')">🏠NewRoom</button>
+<buttononclick="quickTest('reward_time')">💰RewardTime</button>
+<buttononclick="quickTest('reward_received')">🎁RewardReceived</button>
+<buttononclick="quickTest('referral_reward')">👥ReferralReward</button>
+<buttononclick="quickTest('default')">🔔DefaultTest</button>
+</div>
+</div>
 
-    <div class="section">
-      <h2>📊 Result</h2>
-      <div id="result" class="result" style="display: none;"></div>
-    </div>
+<divclass="section">
+<h2>📊Result</h2>
+<divid="result"class="result"style="display:none;"></div>
+</div>
 
-    <div class="section">
-      <h2>📋 Get Notifications</h2>
-      <label for="getWallet">Wallet Address:</label>
-      <input type="text" id="getWallet" placeholder="Wallet address to get notifications...">
-      <button onclick="getNotifications()">📥 Get Notifications</button>
-      <button onclick="getUnreadOnly()">📬 Get Unread Only</button>
-    </div>
-  </div>
+<divclass="section">
+<h2>📋GetNotifications</h2>
+<labelfor="getWallet">WalletAddress:</label>
+<inputtype="text"id="getWallet"placeholder="Walletaddresstogetnotifications...">
+<buttononclick="getNotifications()">📥GetNotifications</button>
+<buttononclick="getUnreadOnly()">📬GetUnreadOnly</button>
+</div>
+</div>
 
-  <script>
-    const API_BASE = window.location.origin;
+<script>
+constAPI_BASE=window.location.origin;
 
-    function showResult(data, isError = false) {
-      const resultEl = document.getElementById('result');
-      resultEl.style.display = 'block';
-      resultEl.className = 'result ' + (isError ? 'error' : 'success');
-      resultEl.textContent = JSON.stringify(data, null, 2);
-    }
+functionshowResult(data,isError=false){
+constresultEl=document.getElementById('result');
+resultEl.style.display='block';
+resultEl.className='result'+(isError?'error':'success');
+resultEl.textContent=JSON.stringify(data,null,2);
+}
 
-    async function sendTestNotification() {
-      const wallet = document.getElementById('wallet').value.trim();
-      const type = document.getElementById('type').value;
+asyncfunctionsendTestNotification(){
+constwallet=document.getElementById('wallet').value.trim();
+consttype=document.getElementById('type').value;
 
-      try {
-        const response = await fetch(`${API_BASE}/luna/notifications/test`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            wallet: wallet || null,
-            type: type
-          })
-        });
+try{
+constresponse=awaitfetch(`${API_BASE}/luna/notifications/test`,{
+method:'POST',
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify({
+wallet:wallet||null,
+type:type
+})
+});
 
-        const data = await response.json();
-        showResult(data, !data.ok);
-      } catch (error) {
-        showResult({ error: error.message }, true);
-      }
-    }
+constdata=awaitresponse.json();
+showResult(data,!data.ok);
+}catch(error){
+showResult({error:error.message},true);
+}
+}
 
-    async function quickTest(type) {
-      const wallet = document.getElementById('wallet').value.trim();
-      
-      try {
-        const response = await fetch(`${API_BASE}/luna/notifications/test`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            wallet: wallet || null,
-            type: type
-          })
-        });
+asyncfunctionquickTest(type){
+constwallet=document.getElementById('wallet').value.trim();
 
-        const data = await response.json();
-        showResult(data, !data.ok);
-      } catch (error) {
-        showResult({ error: error.message }, true);
-      }
-    }
+try{
+constresponse=awaitfetch(`${API_BASE}/luna/notifications/test`,{
+method:'POST',
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify({
+wallet:wallet||null,
+type:type
+})
+});
 
-    async function getNotifications() {
-      const wallet = document.getElementById('getWallet').value.trim();
-      
-      if (!wallet) {
-        showResult({ error: 'Please enter wallet address' }, true);
-        return;
-      }
+constdata=awaitresponse.json();
+showResult(data,!data.ok);
+}catch(error){
+showResult({error:error.message},true);
+}
+}
 
-      try {
-        const response = await fetch(`${API_BASE}/luna/notifications?wallet=${wallet}`);
-        const data = await response.json();
-        showResult(data, !data.ok);
-      } catch (error) {
-        showResult({ error: error.message }, true);
-      }
-    }
+asyncfunctiongetNotifications(){
+constwallet=document.getElementById('getWallet').value.trim();
 
-    async function getUnreadOnly() {
-      const wallet = document.getElementById('getWallet').value.trim();
-      
-      if (!wallet) {
-        showResult({ error: 'Please enter wallet address' }, true);
-        return;
-      }
+if(!wallet){
+showResult({error:'Pleaseenterwalletaddress'},true);
+return;
+}
 
-      try {
-        const response = await fetch(`${API_BASE}/luna/notifications?wallet=${wallet}&unreadOnly=true`);
-        const data = await response.json();
-        showResult(data, !data.ok);
-      } catch (error) {
-        showResult({ error: error.message }, true);
-      }
-    }
-  </script>
+try{
+constresponse=awaitfetch(`${API_BASE}/luna/notifications?wallet=${wallet}`);
+constdata=awaitresponse.json();
+showResult(data,!data.ok);
+}catch(error){
+showResult({error:error.message},true);
+}
+}
+
+asyncfunctiongetUnreadOnly(){
+constwallet=document.getElementById('getWallet').value.trim();
+
+if(!wallet){
+showResult({error:'Pleaseenterwalletaddress'},true);
+return;
+}
+
+try{
+constresponse=awaitfetch(`${API_BASE}/luna/notifications?wallet=${wallet}&unreadOnly=true`);
+constdata=awaitresponse.json();
+showResult(data,!data.ok);
+}catch(error){
+showResult({error:error.message},true);
+}
+}
+</script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
 
 
 

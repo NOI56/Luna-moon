@@ -698,13 +698,13 @@
     }
   </style>
 </head>
-<body class="vs-luna-page">
+<body class="cyber-page vs-luna-page">
   <div id="modeNavigation">
     <a href="/luna_guide.html">📖 Guide</a>
     <a href="/rps_vs_luna.html" class="highlighted current">🎮 VS Luna</a>
     <a href="/rps_game.html">Play PvP! Find</a>
     <a href="/rps_betting.html">💰 Betting Mode</a>
-    <a href="/rps_deposit.html">💾 Deposit Luna</a>
+    <a href="/rps_deposit.html">🏦 Deposit Luna</a>
     <a href="/group_chat.html">💬 Group Chat</a>
     <a href="/rps_leaderboard.html">🏆 Leaderboard</a>
     <a href="/rps_stats.html">📊 Stats</a>
@@ -1994,7 +1994,10 @@
       }
 
       try {
-        const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/rps/stats?wallet=${walletPublicKey}`);
+        const statsUrl = new URL('/luna/rps/stats', API_BASE);
+        statsUrl.searchParams.set('wallet', walletPublicKey);
+        statsUrl.searchParams.set('mode', 'vs-luna');
+        const response = await (window.lunaUtils?.retryFetch || fetch)(statsUrl.toString());
         const data = await response.json();
 
         if (data.ok && data.stats) {
@@ -2545,7 +2548,7 @@
         if (isPageVisible) {
           fetchDynamicRequirement().catch((error) => console.warn('[VS Luna] Requirement refresh failed:', error));
         }
-      }, 5 * 60 * 1000);
+      }, 5 * 1000); // Check every 5 seconds
       
       hasValidSignature = false;
       walletConnected = false;

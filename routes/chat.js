@@ -7,7 +7,7 @@ import path from "path";
 import { log } from "../modules/logger.js";
 import { Connection, PublicKey } from "@solana/web3.js";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
-import { saveGroupChatMessage, loadGroupChatMessages } from "../modules/db.js";
+import { saveGroupChatMessage, loadGroupChatMessages, getActiveDeposit } from "../modules/db.js";
 import { resolveLunaMint } from "../utils/mint.js";
 
 /**
@@ -767,6 +767,41 @@ export function setupChatRoutes(app, dependencies) {
       
       // Check balance for group chat (using dynamic requirement)
       if (roomId === 'group_chat') {
+        let activeDeposit = null;
+        try {
+          activeDeposit = await getActiveDeposit(wallet);
+        } catch (depositError) {
+          log.warn(
+            "[group_chat] Failed to fetch deposit record for %s: %s",
+            wallet.substring(0, 8) + "...",
+            depositError?.message || depositError
+          );
+        }
+
+        if (activeDeposit) {
+          const depositBalance =
+            Number(activeDeposit.deposit_amount ?? activeDeposit.depositAmount ?? 0) || 0;
+          log.info(
+            "[group_chat] Wallet %s has active deposit (%s Luna). Skipping on-chain balance verification.",
+            wallet.substring(0, 8) + "...",
+            depositBalance.toLocaleString("en-US")
+          );
+          const chatMessage = await sendChatMessage(
+            roomId,
+            wallet,
+            hasText ? trimmedMessage : '',
+            username,
+            depositBalance,
+            sanitizedAttachments
+          );
+
+          return res.json({
+            ok: true,
+            message: chatMessage,
+            depositAccess: true,
+          });
+        }
+
         const GROUP_CHAT_BASE_MIN_USD = 10; // Base requirement: 10 USD
         const GROUP_CHAT_MIN_USD_FLOOR = 5; // Floor: 5 USD
         const GROUP_CHAT_MIN_USD_CAP = 20; // Cap: 20 USD

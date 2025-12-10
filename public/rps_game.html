@@ -614,6 +614,117 @@
       margin-bottom: 15px;
     }
 
+    .match-status-message {
+      font-size: 1.1em;
+      color: #ffffff;
+      margin-bottom: 10px;
+      text-shadow: 0 0 6px rgba(0, 255, 255, 0.4);
+    }
+
+    .match-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 15px;
+    }
+
+    .match-meta-item {
+      padding: 8px 14px;
+      border: 1px solid rgba(0, 255, 255, 0.3);
+      background: rgba(0, 255, 255, 0.08);
+      color: #d0f8ff;
+      font-size: 0.95em;
+      letter-spacing: 0.04em;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      max-width: min(360px, 90vw);
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      white-space: normal;
+      flex-wrap: wrap;
+    }
+
+    .match-meta-item.hidden {
+      display: none !important;
+    }
+
+    .match-meta-item .copy-btn {
+      padding: 4px 10px;
+      font-size: 0.85em;
+      background: rgba(0, 255, 255, 0.2);
+      border: 1px solid rgba(0, 255, 255, 0.5);
+      color: #00ffff;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .match-meta-item .copy-btn:hover {
+      background: rgba(0, 255, 255, 0.35);
+    }
+
+    .match-meta-item .value-emphasis {
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .match-meta-item.countdown-warning {
+      border-color: rgba(255, 196, 0, 0.7);
+      color: #ffe18a;
+    }
+
+    .match-meta-item.countdown-critical {
+      border-color: rgba(255, 77, 77, 0.8);
+      color: #ff9f9f;
+      animation: pulseCritical 1s ease-in-out infinite;
+    }
+
+    @keyframes pulseCritical {
+      0% {
+        box-shadow: 0 0 10px rgba(255, 77, 77, 0.4);
+      }
+      50% {
+        box-shadow: 0 0 20px rgba(255, 77, 77, 0.8);
+      }
+      100% {
+        box-shadow: 0 0 10px rgba(255, 77, 77, 0.4);
+      }
+    }
+
+    .session-stats {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 15px;
+    }
+
+    .session-stat {
+      min-width: 120px;
+      padding: 10px 14px;
+      border: 1px solid rgba(0, 255, 255, 0.25);
+      background: rgba(0, 255, 255, 0.05);
+      border-radius: 6px;
+      text-align: center;
+    }
+
+    .session-stat .label {
+      display: block;
+      font-size: 0.85em;
+      color: rgba(255, 255, 255, 0.75);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 4px;
+    }
+
+    .session-stat .value {
+      font-size: 1.4em;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
     .match-timer {
       font-size: 1.5em;
       color: #00ffff;
@@ -629,6 +740,12 @@
       border: 1px solid #00ffff;
       border-radius: 0;
       word-break: break-all;
+    }
+
+    .choice-btn.choice-locked {
+      pointer-events: none;
+      cursor: not-allowed;
+      opacity: 0.75;
     }
 
     .find-match-btn, .cancel-match-btn {
@@ -1017,7 +1134,7 @@
     }
   </style>
   </head>
-  <body class="pvp-page">
+  <body class="cyber-page pvp-page">
   <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
   <script src="/js/utils.js"></script>
   <script src="/js/phantom-helper.js"></script>
@@ -1033,7 +1150,7 @@
       <a href="/rps_vs_luna.html">🎮 VS Luna</a>
       <a href="/rps_game.html" class="highlighted current">Play PvP! Find</a>
       <a href="/rps_betting.html">💰 Betting Mode</a>
-      <a href="/rps_deposit.html">💾 Deposit Luna</a>
+      <a href="/rps_deposit.html">🏦 Deposit Luna</a>
       <a href="/group_chat.html">💬 Group Chat</a>
       <a href="/rps_leaderboard.html">🏆 Leaderboard</a>
       <a href="/rps_stats.html">📊 Stats</a>
@@ -1076,8 +1193,39 @@
     <!-- PvP Matching Section -->
     <div id="matchSection" class="match-section">
       <div id="matchStatus" class="match-status">
+        <div id="matchStatusMessage" class="match-status-message">Connect wallet and press "Find Match" to start!</div>
         <div id="matchTimer" class="match-timer">⏱️ Ready to find match!</div>
         <div id="opponentInfo" class="opponent-info">Connect wallet and check balance to start</div>
+      </div>
+      <div class="match-meta">
+        <div id="queueInfo" class="match-meta-item">Players waiting: 0</div>
+        <div id="matchIdDisplay" class="match-meta-item hidden">
+          Match ID:
+          <span id="matchIdValue" class="value-emphasis">--</span>
+          <button id="copyMatchIdBtn" type="button" class="copy-btn">Copy</button>
+        </div>
+        <div id="matchCountdown" class="match-meta-item hidden">
+          ⏳ Time left:
+          <span id="matchCountdownValue" class="value-emphasis">--</span>
+        </div>
+      </div>
+      <div id="sessionStats" class="session-stats">
+        <div class="session-stat">
+          <span class="label">Wins</span>
+          <span id="sessionWins" class="value">0</span>
+        </div>
+        <div class="session-stat">
+          <span class="label">Losses</span>
+          <span id="sessionLosses" class="value">0</span>
+        </div>
+        <div class="session-stat">
+          <span class="label">Ties</span>
+          <span id="sessionTies" class="value">0</span>
+        </div>
+        <div class="session-stat">
+          <span class="label">Win Rate</span>
+          <span id="sessionWinRate" class="value">0%</span>
+        </div>
       </div>
       <div class="match-actions">
       <button id="findMatchBtn" class="find-match-btn">🎮 Find Match</button>
@@ -1117,6 +1265,11 @@
     const API_BASE = window.location.origin;
     const DEFAULT_PVP_MIN_BALANCE = 100000;
     const DYNAMIC_REQUIREMENT_CONTEXT = 'play-pvp';
+    const DEFAULT_MATCH_STATUS_MESSAGE = 'Connect wallet and press "Find Match" to start!';
+    const MATCH_DECISION_TIME_LIMIT = 13; // seconds to lock in choices after match found
+    const MATCH_COUNTDOWN_WARNING_THRESHOLD = 10;
+    const MATCH_COUNTDOWN_CRITICAL_THRESHOLD = 5;
+    const SESSION_STATS_STORAGE_KEY = 'pvpSessionStats';
     const dynamicRequirementState = {
       amount: DEFAULT_PVP_MIN_BALANCE,
       usd: null,
@@ -1143,7 +1296,13 @@
     let balanceUpdateInterval = null; // For real-time balance updates
     let handCycleInterval = null;
     let activeTimeouts = new Set();
+    let activeShuffleIntervals = new Set();
     let isPageVisible = !document.hidden;
+    let queuePlayerCount = 0;
+    const sessionStats = loadSessionStats();
+    let matchCountdownInterval = null;
+    let matchCountdownRemaining = 0;
+    let hasSubmittedChoice = false;
     
     // Cleanup all intervals and timeouts
     function cleanupAll() {
@@ -1161,6 +1320,8 @@
       }
       activeTimeouts.forEach(timeout => clearTimeout(timeout));
       activeTimeouts.clear();
+      activeShuffleIntervals.forEach(intervalId => clearInterval(intervalId));
+      activeShuffleIntervals.clear();
     }
     
     // Safe setTimeout wrapper
@@ -1171,6 +1332,276 @@
       }, delay);
       activeTimeouts.add(timeoutId);
       return timeoutId;
+    }
+
+    function setMatchStatusMessage(message) {
+      const matchStatus = document.getElementById('matchStatus');
+      if (!matchStatus) return;
+      let messageEl = document.getElementById('matchStatusMessage');
+      if (!messageEl) {
+        messageEl = document.createElement('div');
+        messageEl.id = 'matchStatusMessage';
+        messageEl.className = 'match-status-message';
+        matchStatus.insertBefore(messageEl, matchStatus.firstChild || null);
+      }
+      const text = typeof message === 'string' && message.trim().length > 0
+        ? message
+        : DEFAULT_MATCH_STATUS_MESSAGE;
+      messageEl.textContent = text;
+      messageEl.style.display = 'block';
+    }
+
+    function updateQueueInfoDisplay(count = 0, { note = '' } = {}) {
+      const queueInfoEl = document.getElementById('queueInfo');
+      if (!queueInfoEl) return;
+      const safeCount = Number.isFinite(count) && count >= 0 ? Math.floor(count) : 0;
+      queuePlayerCount = safeCount;
+      const suffix = note ? ` ${note}` : '';
+      let displayValue = safeCount;
+      if (safeCount <= 0 && (isWaitingForOpponent || currentMatchId)) {
+        displayValue = 'searching…';
+      }
+      queueInfoEl.textContent = `Players waiting: ${displayValue}${suffix}`;
+      queueInfoEl.title = `Active in queue: ${displayValue}${suffix}`;
+      queueInfoEl.classList.remove('hidden');
+      queueInfoEl.style.display = 'inline-flex';
+    }
+
+    function updateMatchIdDisplay(matchId) {
+      const wrapper = document.getElementById('matchIdDisplay');
+      const valueEl = document.getElementById('matchIdValue');
+      if (!wrapper || !valueEl) return;
+      if (matchId && wrapper.dataset.activeMatchId !== matchId) {
+        valueEl.textContent = matchId;
+        wrapper.classList.remove('hidden');
+        wrapper.style.display = 'inline-flex';
+        wrapper.dataset.activeMatchId = matchId;
+      } else if (!matchId) {
+        valueEl.textContent = '--';
+        wrapper.classList.add('hidden');
+        wrapper.style.display = 'none';
+        wrapper.dataset.activeMatchId = '';
+      }
+    }
+
+    function loadSessionStats() {
+      try {
+        const stored = localStorage.getItem(SESSION_STATS_STORAGE_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (
+            typeof parsed === 'object' &&
+            Number.isFinite(parsed.wins) &&
+            Number.isFinite(parsed.losses) &&
+            Number.isFinite(parsed.ties)
+          ) {
+            return {
+              wins: parsed.wins,
+              losses: parsed.losses,
+              ties: parsed.ties
+            };
+          }
+        }
+      } catch (err) {
+        console.warn('[RPS] Failed to load session stats:', err);
+      }
+      return { wins: 0, losses: 0, ties: 0 };
+    }
+
+    function persistSessionStats() {
+      try {
+        localStorage.setItem(SESSION_STATS_STORAGE_KEY, JSON.stringify(sessionStats));
+      } catch (err) {
+        console.warn('[RPS] Failed to persist session stats:', err);
+      }
+    }
+
+    function updateSessionStatsDisplay() {
+      const totalGames = sessionStats.wins + sessionStats.losses + sessionStats.ties;
+      const winRate = totalGames > 0
+        ? `${Math.round((sessionStats.wins / totalGames) * 100)}%`
+        : '0%';
+      const winsEl = document.getElementById('sessionWins');
+      const lossesEl = document.getElementById('sessionLosses');
+      const tiesEl = document.getElementById('sessionTies');
+      const rateEl = document.getElementById('sessionWinRate');
+      if (winsEl) winsEl.textContent = sessionStats.wins;
+      if (lossesEl) lossesEl.textContent = sessionStats.losses;
+      if (tiesEl) tiesEl.textContent = sessionStats.ties;
+      if (rateEl) rateEl.textContent = winRate;
+    }
+
+    function recordSessionResult(resultType) {
+      if (resultType === 'win') {
+        sessionStats.wins += 1;
+      } else if (resultType === 'lose') {
+        sessionStats.losses += 1;
+      } else if (resultType === 'tie') {
+        sessionStats.ties += 1;
+      }
+      updateSessionStatsDisplay();
+      persistSessionStats();
+    }
+
+    function applyCountdownVisualState(countdownEl) {
+      if (!countdownEl) return;
+      countdownEl.classList.remove('countdown-warning', 'countdown-critical');
+      if (matchCountdownRemaining <= MATCH_COUNTDOWN_CRITICAL_THRESHOLD) {
+        countdownEl.classList.add('countdown-critical');
+      } else if (matchCountdownRemaining <= MATCH_COUNTDOWN_WARNING_THRESHOLD) {
+        countdownEl.classList.add('countdown-warning');
+      }
+    }
+
+    function startMatchCountdown(seconds = MATCH_DECISION_TIME_LIMIT) {
+      const countdownEl = document.getElementById('matchCountdown');
+      const valueEl = document.getElementById('matchCountdownValue');
+      if (!countdownEl || !valueEl) return;
+      stopMatchCountdown(false);
+      matchCountdownRemaining = Number.isFinite(seconds) && seconds > 0
+        ? Math.floor(seconds)
+        : MATCH_DECISION_TIME_LIMIT;
+      const updateDisplay = () => {
+        valueEl.textContent = `${Math.max(matchCountdownRemaining, 0)}s`;
+        countdownEl.classList.remove('hidden');
+        countdownEl.style.display = 'inline-flex';
+        applyCountdownVisualState(countdownEl);
+      };
+      updateDisplay();
+      matchCountdownInterval = setInterval(() => {
+        matchCountdownRemaining -= 1;
+        if (matchCountdownRemaining <= 0) {
+          valueEl.textContent = '0s';
+          applyCountdownVisualState(countdownEl);
+          stopMatchCountdown(false);
+          if (window.showToast) {
+            window.showToast('Match timer expired! Actions may auto-complete soon.', 'warning');
+          } else {
+            alert('Match timer expired! Actions may auto-complete soon.');
+          }
+          autoSubmitRandomChoice();
+          return;
+        }
+        updateDisplay();
+      }, 1000);
+    }
+
+    function stopMatchCountdown(resetDisplay = true) {
+      if (matchCountdownInterval) {
+        clearInterval(matchCountdownInterval);
+        matchCountdownInterval = null;
+      }
+      if (resetDisplay) {
+        const countdownEl = document.getElementById('matchCountdown');
+        if (countdownEl) {
+          countdownEl.classList.add('hidden');
+          countdownEl.style.display = 'none';
+          countdownEl.classList.remove('countdown-warning', 'countdown-critical');
+        }
+      }
+      matchCountdownRemaining = 0;
+    }
+
+    function resetMatchStatusUI() {
+      setMatchStatusMessage(DEFAULT_MATCH_STATUS_MESSAGE);
+      updateQueueInfoDisplay(0);
+      updateMatchIdDisplay(null);
+      stopMatchCountdown();
+      unlockChoiceButtons();
+      const matchTimerEl = document.getElementById('matchTimer');
+      if (matchTimerEl) {
+        matchTimerEl.textContent = '⏱️ Ready to find match!';
+        matchTimerEl.style.display = 'block';
+      }
+      const opponentInfo = document.getElementById('opponentInfo');
+      if (opponentInfo) {
+        opponentInfo.textContent = 'Connect wallet and check balance to start';
+        opponentInfo.dataset.wallet = '';
+        opponentInfo.style.display = 'block';
+      }
+    }
+
+    function escapeHtml(text) {
+      if (text === null || text === undefined) return '';
+      return text.toString().replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+      }[char] || char));
+    }
+
+    function getOpponentInfoMarkup(opponentWallet, isBot = false) {
+      const botLabel = isBot ? ' (Bot)' : '';
+      if (!opponentWallet || typeof opponentWallet !== 'string') {
+        return `Opponent: <span class="opponent-wallet-placeholder">Waiting for opponent wallet...</span>${botLabel}`;
+      }
+      const trimmed = opponentWallet.trim();
+      const shortWallet = trimmed.length > 16
+        ? `${trimmed.substring(0, 8)}...${trimmed.substring(trimmed.length - 8)}`
+        : trimmed;
+      const safeShort = escapeHtml(shortWallet);
+      const safeFull = escapeHtml(trimmed);
+      const tooltipAttr = trimmed.length > 16 ? ` title="${safeFull}"` : '';
+      return `Opponent: <span class="opponent-wallet-short"${tooltipAttr}>${safeShort}</span>${botLabel}`;
+    }
+
+    function lockChoiceButtons() {
+      hasSubmittedChoice = true;
+      document.querySelectorAll('.choice-btn').forEach(btn => {
+        btn.classList.add('choice-locked');
+        btn.dataset.choiceLocked = 'true';
+      });
+    }
+
+    function unlockChoiceButtons() {
+      hasSubmittedChoice = false;
+      document.querySelectorAll('.choice-btn').forEach(btn => {
+        if (btn.dataset.choiceLocked === 'true') {
+          btn.dataset.choiceLocked = 'false';
+        }
+        btn.classList.remove('choice-locked');
+      });
+    }
+
+    function autoSubmitRandomChoice() {
+      if (hasSubmittedChoice || !currentMatchId) {
+        return;
+      }
+      const status = document.getElementById('status');
+      const autoChoice = handChoices[Math.floor(Math.random() * handChoices.length)];
+      if (status) {
+        status.textContent = `Time is up! Auto-selecting ${autoChoice.toUpperCase()}.`;
+        status.className = 'status warning';
+      }
+      playPvPMatch(autoChoice);
+    }
+
+    // Initialize meta displays once DOM is available
+    resetMatchStatusUI();
+    updateSessionStatsDisplay();
+
+    const copyMatchIdBtn = document.getElementById('copyMatchIdBtn');
+    if (copyMatchIdBtn) {
+      copyMatchIdBtn.addEventListener('click', async () => {
+        const matchId = currentMatchId || document.getElementById('matchIdValue')?.textContent || '';
+        if (!matchId || matchId === '--') {
+          if (window.showToast) {
+            window.showToast('No active match to copy.', 'warning');
+          }
+          return;
+        }
+        try {
+          await navigator.clipboard.writeText(matchId);
+          if (window.showToast) {
+            window.showToast('Match ID copied to clipboard!', 'success');
+          }
+        } catch (err) {
+          console.warn('[RPS] Failed to copy match ID:', err);
+          alert(`Match ID: ${matchId}`);
+        }
+      });
     }
     
     // Page visibility API
@@ -1316,7 +1747,6 @@
       const disconnectBtnFixed = document.getElementById('disconnectWalletBtnFixed');
       const walletInfoFixed = document.getElementById('walletInfoFixed');
       const balanceCheck = document.getElementById('balanceCheck');
-      const matchStatus = document.getElementById('matchStatus');
       const matchSection = document.getElementById('matchSection');
 
       if (connectBtn) {
@@ -1351,9 +1781,7 @@
 
       cancelMatch();
 
-      if (matchStatus) {
-        matchStatus.innerHTML = '<div id="matchTimer" class="match-timer">⏱️ Ready to find match!</div><div id="opponentInfo" class="opponent-info">Connect wallet and check balance to start</div>';
-      }
+      resetMatchStatusUI();
       if (matchSection) {
         matchSection.classList.remove('hidden');
       }
@@ -1764,7 +2192,7 @@
       fetchDynamicRequirement().catch((error) => console.warn('[Game] Initial requirement fetch failed:', error));
       setInterval(() => {
         fetchDynamicRequirement().catch((error) => console.warn('[Game] Requirement refresh failed:', error));
-      }, 5 * 60 * 1000);
+      }, 5 * 1000); // Check every 5 seconds
       connectWebSocket();
       setupMatchSystem();
       
@@ -1859,7 +2287,7 @@
         console.log('[WebSocket] WebSocket state:', ws.readyState, '(OPEN =', WebSocket.OPEN, ')');
       };
       
-      ws.onmessage = (event) => {
+      ws.onmessage = async (event) => {
         try {
           const msg = JSON.parse(event.data);
           console.log('[WebSocket] Received message:', msg.type, msg);
@@ -1868,7 +2296,7 @@
             handleMatchFound(msg);
           } else if (msg.type === 'rps_match_result') {
             console.log('[WebSocket] Match result:', msg);
-            handleMatchResult(msg);
+            await handleMatchResult(msg);
           }
         } catch (e) {
           console.error('WebSocket message error:', e);
@@ -1950,9 +2378,11 @@
       cancelMatchBtn.classList.remove('hidden');
       isWaitingForOpponent = true;
       matchStartTime = Date.now();
-
-      matchStatus.textContent = 'Searching for opponent...';
+      setMatchStatusMessage('Searching for opponent...');
       opponentInfo.textContent = '';
+      updateQueueInfoDisplay(1, { note: ' (including you)' });
+      stopMatchCountdown();
+      updateMatchIdDisplay(null);
 
       // Start timer
       matchTimer = setInterval(() => {
@@ -1987,7 +2417,8 @@
           handleMatchFound(data);
         } else if (data.ok && data.inQueue) {
           // Already in queue, waiting for opponent
-          matchStatus.textContent = 'Waiting for opponent...';
+          setMatchStatusMessage('Waiting for opponent...');
+          updateQueueInfoDisplay(Math.max(queuePlayerCount, 1), { note: ' (including you)' });
           
           // Fallback: Poll for match after 15 seconds (in case WebSocket doesn't work)
           setTimeout(async () => {
@@ -2019,7 +2450,7 @@
                     isBot: checkData.isBot,
                   });
                 } else if (checkData.ok && !checkData.inQueue) {
-                  console.log('[RPS] ⚠️ Not in queue anymore, stopping poll');
+                console.log('[RPS] ⚠️ Not in queue anymore, stopping poll');
                   clearInterval(pollInterval);
                 }
               } catch (e) {
@@ -2032,7 +2463,7 @@
               clearInterval(pollInterval);
               if (isWaitingForOpponent && !currentMatchId) {
                 console.log('[RPS] ⚠️ Poll timeout after 25 seconds total');
-                matchStatus.textContent = 'Bot match should be ready. Please refresh and try again.';
+                setMatchStatusMessage('Bot match should be ready. Please refresh and try again.');
               }
             }, 10000);
           }, 15000); // Start polling after 15 seconds
@@ -2163,8 +2594,26 @@
         matchTimer = null;
       }
 
+      if (!data || !data.matchId) {
+        console.error('[RPS] ❌ Invalid match data received:', data);
+        const invalidMatchMsg = 'Match data is incomplete. Please try finding a match again.';
+        if (window.showToast) {
+          window.showToast(invalidMatchMsg, 'error');
+        } else {
+          alert(invalidMatchMsg);
+        }
+        cancelMatch();
+        return;
+      }
+
       currentMatchId = data.matchId;
-      opponentWallet = data.player1 === walletPublicKey ? data.player2 : data.player1;
+      const opponentCandidates = [];
+      const derivedOpponent = data.player1 === walletPublicKey ? data.player2 : data.player1;
+      if (derivedOpponent) opponentCandidates.push(derivedOpponent);
+      if (data.opponentWallet) opponentCandidates.push(data.opponentWallet);
+      if (data.opponentPublicKey) opponentCandidates.push(data.opponentPublicKey);
+      if (data.opponent) opponentCandidates.push(data.opponent);
+      opponentWallet = opponentCandidates.find((value) => typeof value === 'string' && value.trim().length > 0) || null;
 
       console.log('[RPS] Setting match data:', {
         currentMatchId,
@@ -2183,20 +2632,23 @@
         matchTimerEl.textContent = '✅ Match Found!';
         matchTimerEl.style.display = 'block';
       }
-      
+      setMatchStatusMessage('Match found! Choose your hand!');
       if (matchStatus) {
-        matchStatus.textContent = 'Match found! Choose your hand!';
         matchStatus.style.display = 'block';
       }
+      updateMatchIdDisplay(currentMatchId);
+      updateQueueInfoDisplay(0);
+      startMatchCountdown(MATCH_DECISION_TIME_LIMIT);
       
       if (opponentInfo) {
-        opponentInfo.textContent = `Opponent: ${opponentWallet.substring(0, 8)}...${opponentWallet.substring(opponentWallet.length - 8)}${data.isBot ? ' (Bot)' : ''}`;
+        opponentInfo.innerHTML = getOpponentInfoMarkup(opponentWallet, data.isBot);
+        opponentInfo.dataset.wallet = opponentWallet || '';
         opponentInfo.style.display = 'block';
       }
       
       if (findMatchBtn) {
-        findMatchBtn.classList.remove('hidden');
-        findMatchBtn.style.display = 'inline-block';
+        findMatchBtn.classList.add('hidden');
+        findMatchBtn.style.display = 'none';
       }
       
       if (cancelMatchBtn) {
@@ -2236,11 +2688,86 @@
       isWaitingForOpponent = false;
       currentMatchId = null;
       opponentWallet = null;
+      updateQueueInfoDisplay(0);
+      updateMatchIdDisplay(null);
+      stopMatchCountdown();
+      setMatchStatusMessage(DEFAULT_MATCH_STATUS_MESSAGE);
+      unlockChoiceButtons();
+    }
+
+    // Countdown overlay helper to sync reveals
+    function runMatchRevealCountdown(shuffleTargets = null) {
+      return new Promise((resolve) => {
+        const countdownNumbers = [3, 2, 1];
+        
+        // Remove any existing countdown overlays to avoid stacking
+        document.querySelectorAll('.countdown-overlay').forEach((overlay) => {
+          if (overlay && overlay.parentNode) {
+            overlay.parentNode.removeChild(overlay);
+          }
+        });
+        
+        const countdownOverlay = document.createElement('div');
+        countdownOverlay.className = 'countdown-overlay';
+        document.body.appendChild(countdownOverlay);
+
+        const targets = (Array.isArray(shuffleTargets) && shuffleTargets.length
+          ? shuffleTargets
+          : [
+              document.getElementById('playerHand'),
+              document.getElementById('lunaHand'),
+            ]
+        ).filter(Boolean);
+
+        const shuffleIntervalIds = [];
+        const startShuffle = (handElement) => {
+          const intervalId = setInterval(() => {
+            const randomChoice = handChoices[Math.floor(Math.random() * handChoices.length)];
+            handElement.innerHTML = '';
+            handElement.appendChild(getHandDisplay(randomChoice));
+          }, 120);
+          shuffleIntervalIds.push(intervalId);
+          activeShuffleIntervals.add(intervalId);
+        };
+
+        const stopShuffle = () => {
+          shuffleIntervalIds.forEach((intervalId) => {
+            clearInterval(intervalId);
+            activeShuffleIntervals.delete(intervalId);
+          });
+          shuffleIntervalIds.length = 0;
+        };
+        
+        targets.forEach(startShuffle);
+        
+        let countdownIndex = 0;
+        const showCountdown = () => {
+          if (countdownIndex < countdownNumbers.length) {
+            const countdownText = document.createElement('div');
+            countdownText.className = 'countdown';
+            countdownText.textContent = countdownNumbers[countdownIndex];
+            countdownOverlay.innerHTML = '';
+            countdownOverlay.appendChild(countdownText);
+            playCountdownSound();
+            countdownIndex++;
+            safeSetTimeout(showCountdown, 1000);
+          } else {
+            stopShuffle();
+            if (countdownOverlay.parentNode) {
+              countdownOverlay.parentNode.removeChild(countdownOverlay);
+            }
+            resolve();
+          }
+        };
+        
+        showCountdown();
+      });
     }
 
     // Handle Match Result
-    function handleMatchResult(data) {
+    async function handleMatchResult(data) {
       console.log('[RPS] handleMatchResult called with:', data);
+      stopMatchCountdown();
       const result = document.getElementById('result');
       const status = document.getElementById('status');
       const playerHand = document.getElementById('playerHand');
@@ -2250,6 +2777,18 @@
         console.error('[RPS] Missing elements in handleMatchResult');
         return;
       }
+
+      const involvesMyWallet = (data.player1 && data.player1 === walletPublicKey) || (data.player2 && data.player2 === walletPublicKey);
+      const isCurrentMatch = currentMatchId && data.matchId === currentMatchId;
+      if (!involvesMyWallet && !isCurrentMatch) {
+        console.log('[RPS] Ignoring match result not related to current player');
+        return;
+      }
+
+      stopHandCycle();
+      status.textContent = 'Revealing choices...';
+      status.className = 'status';
+      await runMatchRevealCountdown([playerHand, lunaHand]);
 
       const isPlayer1 = data.player1 === walletPublicKey;
       // Support both choice1/choice2 and player1Choice/player2Choice
@@ -2275,6 +2814,7 @@
         result.className = 'result tie';
         status.textContent = `Both chose ${myChoice}. It's a tie!`;
         playTieSound();
+        recordSessionResult('tie');
       } else {
         const isWinner = (isPlayer1 && data.result === 'player1') || (!isPlayer1 && data.result === 'player2');
         if (isWinner) {
@@ -2282,11 +2822,13 @@
           result.className = 'result win';
           status.textContent = `Opponent chose ${opponentChoice}. You win!`;
           playWinSound();
+          recordSessionResult('win');
         } else {
           result.textContent = '😢 You Lose!';
           result.className = 'result lose';
           status.textContent = `Opponent chose ${opponentChoice}. You lose!`;
           playLoseSound();
+          recordSessionResult('lose');
         }
       }
 
@@ -2315,21 +2857,8 @@
         if (matchSection) {
           matchSection.classList.remove('hidden');
         }
-        // Reset match status - use innerHTML if textContent doesn't work
-        if (matchStatus) {
-          matchStatus.innerHTML = '<div id="matchTimer" class="match-timer">⏱️ Ready to find match!</div><div id="opponentInfo" class="opponent-info">Connect wallet and check balance to start</div>';
-        }
-        
-        // Re-get elements after reset
-        const newMatchTimerEl = document.getElementById('matchTimer');
-        const newOpponentInfo = document.getElementById('opponentInfo');
-        
-        if (newMatchTimerEl) {
-          newMatchTimerEl.textContent = '⏱️ Ready to find match!';
-        }
-        if (newOpponentInfo) {
-          newOpponentInfo.textContent = 'Connect wallet and check balance to start';
-        }
+        resetMatchStatusUI();
+        unlockChoiceButtons();
         if (findMatchBtn) {
           findMatchBtn.classList.remove('hidden');
           findMatchBtn.style.display = 'inline-block';
@@ -2368,7 +2897,6 @@
 
       if (!status || !result || !playerHand || !lunaHand) return;
 
-      disableGame();
       status.textContent = '';
       result.textContent = '';
 
@@ -2381,31 +2909,11 @@
       lunaHand.classList.add('cycling');
       startHandCycle(lunaHand);
 
-      // Countdown 3-2-1
-      const countdownOverlay = document.createElement('div');
-      countdownOverlay.className = 'countdown-overlay';
-      document.body.appendChild(countdownOverlay);
-
-      const countdownNumbers = [3, 2, 1];
-      let countdownIndex = 0;
-
-      const showCountdown = () => {
-        if (countdownIndex < countdownNumbers.length) {
-          const countdownText = document.createElement('div');
-          countdownText.className = 'countdown';
-          countdownText.textContent = countdownNumbers[countdownIndex];
-          countdownOverlay.innerHTML = '';
-          countdownOverlay.appendChild(countdownText);
-          playCountdownSound();
-          countdownIndex++;
-          setTimeout(showCountdown, 1000);
-        } else {
-          countdownOverlay.remove();
-          submitPvPChoice(playerChoice);
-        }
-      };
-
-      showCountdown();
+      lockChoiceButtons();
+      gameActive = false;
+      status.textContent = 'Choice locked! Waiting for opponent...';
+      status.className = 'status';
+      submitPvPChoice(playerChoice);
     }
 
     // Submit PvP Choice
@@ -2886,25 +3394,26 @@
       document.querySelectorAll('.choice-btn').forEach(btn => {
         btn.classList.remove('disabled');
         btn.disabled = false;
-        // Remove inline styles when enabling
+        // Always allow selection until user chooses or timer auto picks
         btn.style.pointerEvents = '';
         btn.style.cursor = '';
         btn.style.opacity = '';
       });
+      unlockChoiceButtons();
       console.log('[Game] Game enabled - wallet verified connected');
     }
 
     function disableGame() {
       gameActive = false;
       document.querySelectorAll('.choice-btn').forEach(btn => {
-        btn.classList.add('disabled');
-        btn.disabled = true;
-        // Force pointer-events to none via inline style as backup
-        btn.style.pointerEvents = 'none';
-        btn.style.cursor = 'not-allowed';
-        btn.style.opacity = '0.5';
+        btn.classList.remove('disabled');
+        btn.disabled = false;
+        // Keep pointer events to allow manual selection until player chooses or auto submit triggers
+        btn.style.pointerEvents = '';
+        btn.style.cursor = '';
+        btn.style.opacity = '';
       });
-      console.log('[Game] Game disabled - buttons should not be clickable');
+      console.log('[Game] Game disabled - logical flag set (buttons remain usable until choice submitted)');
     }
 
     // Setup event listeners
@@ -2918,7 +3427,12 @@
       document.querySelectorAll('.choice-btn').forEach(btn => {
         btn.addEventListener('click', async (e) => {
           // ALWAYS check disabled state first (before any other checks)
-          if (btn.classList.contains('disabled') || btn.disabled) {
+        if (hasSubmittedChoice) {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
+        if (btn.classList.contains('disabled') || btn.disabled) {
             e.preventDefault();
             e.stopPropagation();
             return;
@@ -2998,34 +3512,10 @@
       lunaHand.classList.add('cycling');
       startHandCycle(lunaHand);
 
-      // Countdown 3-2-1
-      const countdownOverlay = document.createElement('div');
-      countdownOverlay.className = 'countdown-overlay';
-      document.body.appendChild(countdownOverlay);
+      status.textContent = 'Choice locked! Luna is thinking...';
+      status.className = 'status';
 
-      const countdownNumbers = [3, 2, 1];
-      let countdownIndex = 0;
-
-      const showCountdown = () => {
-        if (countdownIndex < countdownNumbers.length) {
-          const countdownText = document.createElement('div');
-          countdownText.className = 'countdown';
-          countdownText.textContent = countdownNumbers[countdownIndex];
-          countdownOverlay.innerHTML = '';
-          countdownOverlay.appendChild(countdownText);
-          playCountdownSound();
-          countdownIndex++;
-          setTimeout(showCountdown, 1000);
-        } else {
-          // Remove countdown overlay
-          countdownOverlay.remove();
-          
-          // Continue with game
-          continueGame(playerChoice, username, playerHand, lunaHand, status, result);
-        }
-      };
-
-      showCountdown();
+      continueGame(playerChoice, username, playerHand, lunaHand, status, result);
     }
 
     // Hand cycling animation
@@ -3089,51 +3579,55 @@
           throw new Error(data.message || 'Game failed');
         }
 
-        // Show Luna's choice (stop cycling)
+        stopHandCycle();
+        status.textContent = 'Revealing choices...';
+        status.className = 'status';
+        await runMatchRevealCountdown([playerHand, lunaHand]);
+
+        playerHand.innerHTML = '';
+        playerHand.appendChild(getHandDisplay(playerChoice));
+        playerHand.classList.remove('animate', 'cycling');
+
+        lunaHand.innerHTML = '';
+        lunaHand.appendChild(getHandDisplay(data.lunaChoice));
+        lunaHand.classList.remove('cycling', 'animate');
+        
+        // Show result
+        if (data.result === 'win') {
+          result.textContent = '🎉 You Win!';
+          result.className = 'result win';
+          status.textContent = `Luna chose ${data.lunaChoice}. You win!`;
+          status.className = 'status success';
+          playWinSound();
+        } else if (data.result === 'lose') {
+          result.textContent = '😢 You Lose!';
+          result.className = 'result lose';
+          status.textContent = `Luna chose ${data.lunaChoice}. You lose!`;
+          status.className = 'status error';
+          playLoseSound();
+        } else {
+          result.textContent = '🤝 Tie!';
+          result.className = 'result tie';
+          status.textContent = `Luna chose ${data.lunaChoice}. It's a tie!`;
+          status.className = 'status';
+          playTieSound();
+        }
+
+        // Re-enable game after 2 seconds (only if wallet is still connected)
         setTimeout(() => {
-          stopHandCycle();
-          lunaHand.innerHTML = '';
-          lunaHand.appendChild(getHandDisplay(data.lunaChoice));
-          lunaHand.classList.remove('cycling', 'animate');
-          playerHand.classList.remove('animate', 'cycling');
-
-          // Show result
-          if (data.result === 'win') {
-            result.textContent = '🎉 You Win!';
-            result.className = 'result win';
-            status.textContent = `Luna chose ${data.lunaChoice}. You win!`;
-            status.className = 'status success';
-            playWinSound();
-          } else if (data.result === 'lose') {
-            result.textContent = '😢 You Lose!';
-            result.className = 'result lose';
-            status.textContent = `Luna chose ${data.lunaChoice}. You lose!`;
-            status.className = 'status error';
-            playLoseSound();
+          // Only enable if wallet is still connected (enableGame() will check)
+          if (walletConnected && walletPublicKey) {
+            enableGame(); // enableGame() will verify wallet connection internally
           } else {
-            result.textContent = '🤝 Tie!';
-            result.className = 'result tie';
-            status.textContent = `Luna chose ${data.lunaChoice}. It's a tie!`;
-            status.className = 'status';
-            playTieSound();
+            disableGame(); // Ensure game stays disabled if wallet disconnected
           }
-
-          // Re-enable game after 2 seconds (only if wallet is still connected)
-          setTimeout(() => {
-            // Only enable if wallet is still connected (enableGame() will check)
-            if (walletConnected && walletPublicKey) {
-              enableGame(); // enableGame() will verify wallet connection internally
-            } else {
-              disableGame(); // Ensure game stays disabled if wallet disconnected
-            }
-            status.textContent = '';
-            result.textContent = '';
-            playerHand.innerHTML = '';
-            playerHand.appendChild(getHandDisplay('rock'));
-            lunaHand.innerHTML = '';
-            lunaHand.appendChild(getHandDisplay('rock'));
-          }, 2000);
-        }, 500);
+          status.textContent = '';
+          result.textContent = '';
+          playerHand.innerHTML = '';
+          playerHand.appendChild(getHandDisplay('rock'));
+          lunaHand.innerHTML = '';
+          lunaHand.appendChild(getHandDisplay('rock'));
+        }, 2000);
 
       } catch (error) {
         stopHandCycle();

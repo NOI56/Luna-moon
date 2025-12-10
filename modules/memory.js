@@ -162,6 +162,8 @@ export function updateUserMemory(username, patch = {}) {
     }
   }
   
+  let preferences = base.preferences || [];
+  
   // Memory decay: Forget old preferences and old conversation history entries
   // Preferences older than 30 days get removed (simulate forgetting)
   const now = Date.now();
@@ -186,7 +188,6 @@ export function updateUserMemory(username, patch = {}) {
   }
   
   // Update personal preferences (extract from messages)
-  let preferences = base.preferences || [];
   if (patch.lastMessage) {
     const msg = patch.lastMessage.toLowerCase();
     // Extract preferences (simple keyword matching)

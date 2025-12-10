@@ -3,6 +3,7 @@
 
 import { log } from "../modules/logger.js";
 import { Connection, PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { getRpsStatsFromHistory } from "../modules/db.js";
 
 /**
  * Setup RPS Stats routes
@@ -16,6 +17,7 @@ export function setupRpsStatsRoutes(app, dependencies) {
     RPS_MIN_BALANCE,
     LUNA_TOKEN_MINT,
     getWalletBalance,
+    getLeaderboardEntry,
   } = dependencies;
 
   /**
@@ -340,6 +342,8 @@ export function setupRpsStatsRoutes(app, dependencies) {
   app.get("/luna/rps/stats", async (req, res) => {
     try {
       const wallet = req.query.wallet;
+      const rawMode = typeof req.query.mode === "string" ? req.query.mode.trim() : "";
+      const hasModeFilter = rawMode.length > 0;
       
       if (!wallet) {
         return res.status(400).json({
@@ -348,9 +352,57 @@ export function setupRpsStatsRoutes(app, dependencies) {
           message: "Wallet address is required",
         });
       }
+
+      if (hasModeFilter) {
+        try {
+          const historyStats = await getRpsStatsFromHistory({ wallet, mode: rawMode });
+          const totalGames = historyStats.totalGames || 0;
+          return res.json({
+            ok: true,
+            wallet: wallet,
+            mode: historyStats.mode || null,
+            stats: {
+              totalGames: totalGames,
+              wins: historyStats.wins || 0,
+              losses: historyStats.losses || 0,
+              draws: historyStats.draws || 0,
+              ties: historyStats.draws || 0,
+              totalWon: historyStats.totalWon || 0,
+              totalBet: historyStats.totalBet || 0,
+            },
+            message: totalGames > 0
+              ? `Statistics loaded successfully${historyStats.mode ? ` (${historyStats.mode})` : ""}`
+              : "No statistics found for this wallet",
+          });
+        } catch (historyError) {
+          log.error("[rps] Stats history aggregation error:", historyError);
+          return res.status(500).json({
+            ok: false,
+            error: "HistoryAggregationFailed",
+            message: "Failed to load statistics from history",
+          });
+        }
+      }
       
       // Get stats from rpsLeaderboard
-      const playerStats = rpsLeaderboard.get(wallet);
+      let playerStats = rpsLeaderboard.get(wallet);
+      
+      if (!playerStats && typeof getLeaderboardEntry === "function") {
+        try {
+          const persistedEntry = await getLeaderboardEntry(wallet);
+          if (persistedEntry) {
+            playerStats = {
+              wins: persistedEntry.wins || 0,
+              losses: persistedEntry.losses || 0,
+              totalWon: persistedEntry.totalWon || 0,
+              totalSolWon: persistedEntry.totalSolWon || 0,
+            };
+            rpsLeaderboard.set(wallet, playerStats);
+          }
+        } catch (persistErr) {
+          log.error("[rps] Failed to load persistent stats for wallet:", persistErr);
+        }
+      }
       
       if (!playerStats) {
         // Player not found in leaderboard - return zero stats
@@ -382,6 +434,7 @@ export function setupRpsStatsRoutes(app, dependencies) {
           wins: wins,
           losses: losses,
           draws: draws,
+          ties: draws,
           totalWon: totalWon,
         },
         wallet: wallet,

@@ -1,89 +1,170 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPEhtml>
+<htmllang="en">
 <head>
-<meta charset="UTF-8" />
-<title>Luna Chat Tester</title>
+<metacharset="UTF-8"/>
+<title>LunaChatTester</title>
+<linkrel="stylesheet"href="/css/cyberpunk-neon.css">
 <style>
-  body {
-    background: #0d0f14;
-    color: white;
-    font-family: "Segoe UI", sans-serif;
-    margin: 0;
-    padding: 30px;
-  }
-  .box {
-    width: 420px;
-    margin: auto;
-    padding: 25px;
-    border-radius: 14px;
-    background: #101420;
-    box-shadow: 0 0 20px rgba(0,255,255,0.1);
-  }
-  input, textarea {
-    width: 100%;
-    padding: 10px;
-    border-radius: 10px;
-    border: none;
-    margin-top: 10px;
-    background: #1a1f2d;
-    color: white;
-  }
-  button {
-    width: 100%;
-    margin-top: 15px;
-    padding: 12px;
-    border-radius: 10px;
-    border: none;
-    font-size: 16px;
-    cursor: pointer;
-    background: linear-gradient(to right, #00d9ff, #d000ff);
-    color: white;
-  }
-  .log {
-    margin-top: 20px;
-    padding: 15px;
-    background: rgba(255,255,255,0.05);
-    border-radius: 10px;
-    white-space: pre-wrap;
-    font-size: 13px;
-  }
+body{
+background:
+radial-gradient(circleat20%20%,rgba(0,255,255,0.12),transparent45%),
+radial-gradient(circleat85%5%,rgba(255,60,172,0.12),transparent55%),
+radial-gradient(circleat70%80%,rgba(116,39,255,0.15),transparent60%),
+linear-gradient(135deg,#02000d0%,#050b1f35%,#05052465%,#0b0140100%);
+background-attachment:fixed;
+color:rgba(255,255,255,0.92);
+font-family:'SpaceGrotesk',"SegoeUI",sans-serif;
+margin:0;
+padding:30px;
+min-height:100vh;
+display:flex;
+align-items:center;
+justify-content:center;
+}
+.box{
+width:420px;
+margin:auto;
+padding:30px;
+border-radius:24px;
+background:rgba(5,8,30,0.75);
+border:1pxsolidrgba(0,255,255,0.25);
+box-shadow:
+025px65pxrgba(2,10,30,0.65),
+00120pxrgba(0,255,255,0.12),
+inset01px0rgba(255,255,255,0.1);
+backdrop-filter:blur(24px)saturate(140%);
+-webkit-backdrop-filter:blur(24px)saturate(140%);
+position:relative;
+overflow:hidden;
+isolation:isolate;
+}
+.box::before{
+content:'';
+position:absolute;
+inset:0;
+border-radius:inherit;
+background:linear-gradient(120deg,rgba(0,255,255,0.8),rgba(116,39,255,0.65),rgba(255,60,172,0.6));
+opacity:0.35;
+filter:blur(25px);
+z-index:-2;
+}
+.box::after{
+content:'';
+position:absolute;
+inset:1px;
+border-radius:inherit;
+background:linear-gradient(130deg,rgba(255,255,255,0.08),transparent60%);
+z-index:-1;
+opacity:0.6;
+}
+.boxh2{
+color:#00ffff;
+text-shadow:
+0010pxrgba(0,255,255,0.8),
+0020pxrgba(0,255,255,0.6);
+margin-bottom:20px;
+}
+.boxlabel{
+color:rgba(255,255,255,0.9);
+display:block;
+margin-top:15px;
+margin-bottom:8px;
+font-size:0.9em;
+text-transform:uppercase;
+letter-spacing:0.1em;
+}
+input,textarea{
+width:100%;
+padding:12px;
+border-radius:12px;
+border:1pxsolidrgba(0,255,255,0.3);
+margin-top:10px;
+background:rgba(0,0,0,0.4);
+color:#00ffff;
+font-family:'CourierNew',monospace;
+backdrop-filter:blur(8px);
+-webkit-backdrop-filter:blur(8px);
+transition:all0.3sease;
+}
+input:focus,textarea:focus{
+outline:none;
+border-color:rgba(0,255,255,0.6);
+box-shadow:0015pxrgba(0,255,255,0.3);
+}
+button{
+width:100%;
+margin-top:15px;
+padding:12px;
+border-radius:12px;
+border:1pxsolidrgba(0,255,255,0.5);
+font-size:16px;
+cursor:pointer;
+background:linear-gradient(135deg,rgba(0,255,255,0.25),rgba(116,39,255,0.2));
+color:#00ffff;
+font-weight:600;
+text-transform:uppercase;
+letter-spacing:0.1em;
+backdrop-filter:blur(10px)saturate(140%);
+-webkit-backdrop-filter:blur(10px)saturate(140%);
+box-shadow:08px20pxrgba(0,0,0,0.4),0015pxrgba(0,255,255,0.2);
+transition:all0.3sease;
+}
+button:hover{
+background:linear-gradient(135deg,rgba(0,255,255,0.35),rgba(116,39,255,0.3));
+border-color:rgba(0,255,255,0.7);
+box-shadow:012px30pxrgba(0,0,0,0.5),0025pxrgba(0,255,255,0.4);
+transform:translateY(-2px);
+}
+.log{
+margin-top:20px;
+padding:15px;
+background:rgba(0,0,0,0.4);
+border:1pxsolidrgba(0,255,255,0.2);
+border-radius:12px;
+white-space:pre-wrap;
+font-size:13px;
+color:rgba(255,255,255,0.8);
+backdrop-filter:blur(10px);
+-webkit-backdrop-filter:blur(10px);
+font-family:'CourierNew',monospace;
+}
 </style>
 </head>
 
-<body>
-<div class="box">
-  <h2>Luna Chat Tester</h2>
-  <label>Username</label>
-  <input id="user" value="test-user">
+<bodyclass="cyber-page">
+<divclass="box">
+<h2>LunaChatTester</h2>
+<label>Username</label>
+<inputid="user"value="test-user">
 
-  <label>Message (English only for Luna)</label>
-  <textarea id="text" rows="3">Luna I love you</textarea>
+<label>Message(EnglishonlyforLuna)</label>
+<textareaid="text"rows="3">LunaIloveyou</textarea>
 
-  <button onclick="sendMsg()">Send to /luna/message</button>
+<buttononclick="sendMsg()">Sendto/luna/message</button>
 
-  <div class="log" id="log">Waiting...</div>
+<divclass="log"id="log">Waiting...</div>
 </div>
 
 <script>
-async function sendMsg() {
-  const user = document.getElementById('user').value;
-  const text = document.getElementById('text').value;
+asyncfunctionsendMsg(){
+constuser=document.getElementById('user').value;
+consttext=document.getElementById('text').value;
 
-  const logBox = document.getElementById("log");
-  logBox.textContent = "Sending...";
+constlogBox=document.getElementById("log");
+logBox.textContent="Sending...";
 
-  try {
-    const res = await fetch('http://localhost:8787/luna/message', {
-      method: "POST",
-      headers: { "Content-Type": "application/json"},
-      body: JSON.stringify({ user, text })
-    });
+try{
+constres=awaitfetch('http://localhost:8787/luna/message',{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({user,text})
+});
 
-    const data = await res.json();
-    logBox.textContent = JSON.stringify(data, null, 2);
-  } catch (e) {
-    logBox.textContent = "Error: " + e.message;
-  }
+constdata=awaitres.json();
+logBox.textContent=JSON.stringify(data,null,2);
+}catch(e){
+logBox.textContent="Error:"+e.message;
+}
 }
 </script>
 

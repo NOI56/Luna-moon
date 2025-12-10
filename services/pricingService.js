@@ -251,17 +251,29 @@ export async function getBettingFeePercentage(wallet, BETTING_FEE_DEFAULT, BETTI
       return BETTING_FEE_DEFAULT; // 3% default
     }
     
-    const depositAge = Date.now() - deposit.createdAt;
+    // Use deposit_date instead of createdAt for accurate age calculation
+    const depositDate = typeof deposit.deposit_date === 'number' 
+      ? deposit.deposit_date 
+      : Number(deposit.deposit_date) || deposit.created_at || Date.now();
+    const depositAge = Date.now() - depositDate;
     const threeDays = 3 * 24 * 60 * 60 * 1000;
     const sixDays = 6 * 24 * 60 * 60 * 1000;
     
-    if (depositAge >= sixDays) {
-      return BETTING_FEE_6_DAYS; // 1% after 6 days
-    } else if (depositAge >= threeDays) {
-      return BETTING_FEE_3_DAYS; // 2% after 3 days
-    } else {
-      return BETTING_FEE_DEFAULT; // 3% default
+    // Special privilege: If user has deposit (even if withdrawn), they get reduced fee
+    // Only check if deposit is active (not withdrawn) for maximum discount
+    if (deposit.status === 'active') {
+      if (depositAge >= sixDays) {
+        return BETTING_FEE_6_DAYS; // 1% after 6 days
+      } else if (depositAge >= threeDays) {
+        return BETTING_FEE_3_DAYS; // 2% after 3 days
+      }
     }
+    // If withdrawn, still give some discount (2% instead of 3%)
+    if (deposit.status === 'withdrawn') {
+      return BETTING_FEE_3_DAYS; // 2% for users who have deposited before
+    }
+    
+    return BETTING_FEE_DEFAULT; // 3% default
   } catch (error) {
     log.error("[rps] Error getting betting fee percentage:", error);
     return BETTING_FEE_DEFAULT; // Fallback to default
@@ -315,7 +327,17 @@ export async function calculateFee(
  * @param {number} betAmount - Original bet amount in Luna
  * @param {Object} rewardPool - Reward pool state object with getter/setter (optional)
  */
-export async function collectFee(collectedFees, sendSol, wallet, feeInSol, roomId, betAmount, rewardPool = null) {
+export async function collectFee(
+  collectedFees,
+  sendSol,
+  wallet,
+  feeInSol,
+  roomId,
+  betAmount,
+  rewardPool = null,
+  options = {}
+) {
+  const { skipTransfer = false } = options;
   if (!collectedFees.has(wallet)) {
     collectedFees.set(wallet, {
       totalFees: 0,
@@ -342,7 +364,7 @@ export async function collectFee(collectedFees, sendSol, wallet, feeInSol, roomI
   
   // Send fee to BETTING_FEE_WALLET automatically
   const feeWallet = process.env.BETTING_FEE_WALLET;
-  if (feeWallet && feeWallet !== "your_fee_wallet_address_here") {
+  if (!skipTransfer && feeWallet && feeWallet !== "your_fee_wallet_address_here") {
     try {
       const signature = await sendSol(feeWallet, feeInSol);
       if (signature) {
@@ -353,7 +375,7 @@ export async function collectFee(collectedFees, sendSol, wallet, feeInSol, roomI
     } catch (error) {
       console.error(`[rps-betting-fee] Error sending fee to ${feeWallet.substring(0, 8)}...:`, error.message);
     }
-  } else {
+  } else if (!skipTransfer) {
     console.warn(`[rps-betting-fee] BETTING_FEE_WALLET not configured, fee recorded in memory only`);
   }
 }

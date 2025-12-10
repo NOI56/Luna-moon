@@ -777,11 +777,11 @@
 </head>
 <body class="cyber-page deposit-page">
   <div id="modeNavigation">
-    <a href="/luna_guide.html">📖 Guide</a>
+    <a href="/luna_guide.html">📘 Guide</a>
     <a href="/rps_vs_luna.html">🎮 VS Luna</a>
-    <a href="/rps_game.html">Play PvP! Find</a>
+    <a href="/rps_game.html">🧭 Play PvP! Find</a>
     <a href="/rps_betting.html">💰 Betting Mode</a>
-    <a href="/rps_deposit.html" class="highlighted current">💾 Deposit Luna</a>
+    <a href="/rps_deposit.html" class="highlighted current">🏦 Deposit Luna</a>
     <a href="/group_chat.html">💬 Group Chat</a>
     <a href="/rps_leaderboard.html">🏆 Leaderboard</a>
     <a href="/rps_stats.html">📊 Stats</a>
@@ -804,12 +804,12 @@
   <div class="scroll-progress" id="scrollProgress"></div>
 
   <div class="game-container">
-    <h1>💰 Deposit Luna</h1>
+    <h1>Deposit Luna</h1>
     <div class="subtitle">Reduce Betting Mode Fee by Holding Luna</div>
     
     <div id="walletConnect" class="wallet-connect hidden">
-      <button id="connectWalletBtn" class="wallet-btn">🔗 Connect Phantom Wallet</button>
-      <button id="disconnectWalletBtn" class="wallet-btn disconnect-btn hidden">🔌 Disconnect / Change Wallet</button>
+      <button id="connectWalletBtn" class="wallet-btn" style="display: none;">🔗 Connect Phantom Wallet</button>
+      <button id="disconnectWalletBtn" class="wallet-btn disconnect-btn hidden" style="display: none;">🔌 Disconnect / Change Wallet</button>
       <div id="walletInfo" class="wallet-info hidden"></div>
     </div>
     
@@ -830,13 +830,13 @@
 
     <!-- Info Box -->
     <div id="infoBox" class="info-box hidden">
-      <h4>📋 How It Works</h4>
+      <h4>ℹ️ How It Works</h4>
       <ul>
         <li>
           Hold at least
-          <span class="requirement-highlight" id="requirementListValue">150,000</span>
+          <span class="requirement-highlight" id="requirementListValue">225,000</span>
           Luna
-          <span class="requirement-note" id="requirementListUsd">≈ $10.00</span>
+          <span class="requirement-note" id="requirementListUsd">≈ $15.00</span>
           (auto-adjusted by dynamic pricing)
         </li>
         <li>Deposit Luna for 5 days → Betting Mode fee reduces to 2% (from 3%)</li>
@@ -844,9 +844,10 @@
         <li>Deposit Luna for 15 days → Betting Mode fee reduces to 0.5% (from 3%)</li>
         <li>You can withdraw your Luna anytime</li>
         <li>Deposit fee: 3% (deducted from deposit amount and burned)</li>
+        <li>Active deposit = unlocks Group Chat access even if your wallet balance is below the chat minimum. Access is removed when you withdraw.</li>
       </ul>
       <div style="margin-top: 18px; padding: 15px; border: 1px solid rgba(0, 255, 255, 0.4); border-radius: 10px; background: rgba(0, 0, 0, 0.35); font-size: 0.95em;">
-        <div style="color: #00ffff; margin-bottom: 10px; font-weight: bold;">💡 Why deposit?</div>
+        <div style="color: #00ffff; margin-bottom: 10px; font-weight: bold;">❓ Why deposit?</div>
         <div style="color: #d2fdfd; margin-bottom: 10px;">Lower fees mean more Luna kept from every bet. Example per 1,000 Luna wager:</div>
         <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; text-align: center; font-family: 'Courier New', monospace;">
           <div style="padding: 8px; background: rgba(255, 255, 255, 0.05); border-radius: 6px;">
@@ -885,18 +886,18 @@
     <div id="dynamicRequirementCard" class="dynamic-requirement-card">
       <div class="dynamic-requirement-card__title">Dynamic Minimum Requirement</div>
       <div class="dynamic-requirement-card__value">
-        <span id="dynamicMinAmountDisplay">150,000</span>
+        <span id="dynamicMinAmountDisplay">225,000</span>
         <span class="unit">Luna</span>
       </div>
-      <div class="dynamic-requirement-card__usd" id="dynamicMinUsdDisplay">≈ $10.00 USD • Price $0.00010</div>
+      <div class="dynamic-requirement-card__usd" id="dynamicMinUsdDisplay">≈ $15.00 USD • Price $0.00007</div>
       <div class="dynamic-requirement-card__meta" id="dynamicMinMetaDisplay">Updated just now • Source: Fallback</div>
     </div>
 
     <!-- Deposit/Withdraw Section -->
     <div id="depositSection" class="deposit-section hidden">
-      <h3>💰 Deposit Luna (Reduce Betting Fee)</h3>
+      <h3>Deposit Luna (Reduce Betting Fee)</h3>
       <div style="font-size: 0.95em; color: #00ffff; margin-bottom: 15px;">
-        Current minimum: <span class="requirement-highlight" id="depositRequirementSummary">150,000 Luna (~$10.00)</span>.
+        Current minimum: <span class="requirement-highlight" id="depositRequirementSummary">225,000 Luna (~$15.00)</span>.
         Once you deposit, this threshold is locked (grandfathered) for your wallet until you withdraw.
       </div>
       
@@ -911,11 +912,11 @@
           <label style="color: #00ffff; display: block; margin-bottom: 5px;">Deposit Amount (Luna):</label>
           <input type="number" id="depositAmount" min="1" placeholder="Locked at minimum" style="width: 100%; padding: 10px; background: rgba(0, 0, 0, 0.5); border: 1px solid #00ffff; border-radius: 8px; color: #00ffff; font-family: 'Courier New', monospace; font-size: 1em;" readonly>
           <div style="font-size: 0.85em; color: #00ffff; opacity: 0.7; margin-top: 5px;">
-            Amount is locked at the current minimum (<span id="depositLockedAmount">150,000</span> Luna <span id="depositLockedUsd">(~$10.00)</span>). Fee: <span id="depositFeeRate">3%</span> (burned immediately)
+            Amount is locked at the current minimum (<span id="depositLockedAmount">225,000</span> Luna <span id="depositLockedUsd">(~$15.00)</span>). Fee: <span id="depositFeeRate">3%</span> (burned immediately)
           </div>
         </div>
         <button id="depositBtn" class="wallet-btn" style="width: 100%;" aria-label="Deposit Luna tokens">
-          <span class="btn-text">💾 Deposit Luna</span>
+          <span class="btn-text">🏦 Deposit Luna</span>
           <span class="btn-loading hidden" aria-hidden="true">
             <span class="loading-spinner"></span> Processing...
           </span>
@@ -1033,16 +1034,17 @@
       escrowWallet: null,
       mint: null,
       mintDecimals: 9,
-      minDeposit: 150000,
-      minDepositUsd: null,
+      minDeposit: 225000,
+      minDepositUsd: 15,
       minDepositSource: 'fallback',
       minDepositUpdatedAt: null,
       priceUsd: null,
       burnWallet: null,
+      tokenProgramId: null,
     };
     const dynamicRequirementState = {
       amount: depositConfig.minDeposit,
-      usd: null,
+      usd: depositConfig.minDepositUsd,
       source: 'fallback',
       updatedAt: null,
       priceUsd: null,
@@ -1096,7 +1098,7 @@
     function enforceLockedDepositAmount() {
       const depositInput = document.getElementById('depositAmount');
       if (!depositInput) return;
-      const min = depositConfig.minDeposit || 150000;
+      const min = depositConfig.minDeposit || 225000;
       depositInput.value = min;
       depositInput.min = min;
       depositInput.readOnly = true;
@@ -1140,7 +1142,7 @@
       return value.toLocaleString('en-US');
     }
 
-    function formatUsdValue(value, { fallback = '—', compact = false } = {}) {
+    function formatUsdValue(value, { fallback = '--', compact = false } = {}) {
       const amount = Number(value);
       if (!Number.isFinite(amount)) return fallback;
       if (compact) {
@@ -1163,7 +1165,7 @@
     function applyDynamicRequirement(info = {}) {
       const payload = info.dynamicMin ? info.dynamicMin : info;
       const amountCandidate = Number(
-        payload.amount ?? payload.minDeposit ?? depositConfig.minDeposit ?? 150000
+        payload.amount ?? payload.minDeposit ?? depositConfig.minDeposit ?? 225000
       );
       const normalizedAmount = Number.isFinite(amountCandidate) ? Math.max(Math.round(amountCandidate), 1) : depositConfig.minDeposit;
       depositConfig.minDeposit = normalizedAmount;
@@ -1202,7 +1204,7 @@
     }
 
     function updateDynamicRequirementCard() {
-      const amount = dynamicRequirementState.amount || depositConfig.minDeposit || 150000;
+      const amount = dynamicRequirementState.amount || depositConfig.minDeposit || 225000;
       const amountDisplay = document.getElementById('dynamicMinAmountDisplay');
       if (amountDisplay) {
         amountDisplay.textContent = formatNumberDetailed(amount);
@@ -1219,17 +1221,17 @@
       }
       const metaDisplay = document.getElementById('dynamicMinMetaDisplay');
       if (metaDisplay) {
-        const updatedAtText = dynamicRequirementState.updatedAt
-          ? new Date(dynamicRequirementState.updatedAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })
-          : '--';
-        const sourceLabel = dynamicRequirementState.source === 'dexscreener' ? 'DexScreener' : 'Fallback';
-        const marketCapPart = dynamicRequirementState.marketCap
-          ? ` • MCap ${formatUsdValue(dynamicRequirementState.marketCap, { compact: true })}`
-          : '';
-        const volumePart = dynamicRequirementState.volume24h
-          ? ` • 24h Vol ${formatUsdValue(dynamicRequirementState.volume24h, { compact: true })}`
-          : '';
-        metaDisplay.textContent = `Updated ${updatedAtText} • Source: ${sourceLabel}${marketCapPart}${volumePart}`;
+      const updatedAtText = dynamicRequirementState.updatedAt
+        ? new Date(dynamicRequirementState.updatedAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })
+        : '--';
+      const sourceLabel = dynamicRequirementState.source === 'dexscreener' ? 'DexScreener' : 'Fallback';
+      const marketCapPart = dynamicRequirementState.marketCap
+        ? ` • MCap ${formatUsdValue(dynamicRequirementState.marketCap, { compact: true })}`
+        : '';
+      const volumePart = dynamicRequirementState.volume24h
+        ? ` • 24h Vol ${formatUsdValue(dynamicRequirementState.volume24h, { compact: true })}`
+        : '';
+      metaDisplay.textContent = `Updated ${updatedAtText} • Source: ${sourceLabel}${marketCapPart}${volumePart}`;
       }
 
       const requirementSummary = document.getElementById('depositRequirementSummary');
@@ -1411,7 +1413,7 @@
     function renderTierCountdown(daysElapsed) {
       const info = getNextTierCountdownInfo(daysElapsed);
       if (!info) {
-        return '<div style="margin-top: 8px; color: #00ff00;">🎉 Lowest fee unlocked. Enjoy 0.5% fee!</div>';
+        return '<div style="margin-top: 8px; color: #00ff00;">✅ Lowest fee unlocked. Enjoy 0.5% fee!</div>';
       }
       const etaDisplay = competitionEndTime
         ? new Date(competitionEndTime).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })
@@ -1420,7 +1422,7 @@
           : info.etaText;
       return `
         <div style="margin-top: 8px; color: #00ffff;">
-          ⏱ Next discount (<strong>${escapeHtml(info.nextTier.feeLabel)}</strong>) in <strong>${escapeHtml(info.countdownText)}</strong><br>
+          ⏳ Next discount (<strong>${escapeHtml(info.nextTier.feeLabel)}</strong>) in <strong>${escapeHtml(info.countdownText)}</strong><br>
           <span style="font-size: 0.8em; opacity: 0.8;">Est. ${escapeHtml(etaDisplay)}</span>
         </div>
       `;
@@ -1736,8 +1738,18 @@
 
     // Send Luna via Phantom wallet - creates transaction and asks user to sign
     // Make it a global function so it can be called from onclick
-    window.sendViaPhantom = async function(mintAddress, escrowWallet, amount, decimalsOverride, burnWalletAddress, burnRateOverride) {
-      console.log('[Deposit] sendViaPhantom', { mintAddress, escrowWallet, amount, decimalsOverride, burnWalletAddress, burnRateOverride });
+    window.sendViaPhantom = async function(
+      mintAddress,
+      escrowWallet,
+      amount,
+      decimalsOverride,
+      burnWalletAddress,
+      burnRateOverride,
+      needsEscrowAta = false,
+      needsBurnAta = false,
+      tokenProgramIdParam = null
+    ) {
+      console.log('[Deposit] sendViaPhantom', { mintAddress, escrowWallet, amount, decimalsOverride, burnWalletAddress, burnRateOverride, needsEscrowAta, needsBurnAta, tokenProgramIdParam });
         if (!window.solana || !window.solana.isPhantom) {
         throw new Error('Phantom wallet not found. Please install Phantom wallet extension.');
         }
@@ -1768,8 +1780,9 @@
       const escrowPublicKey = new PublicKey(escrowWallet);
       const burnWallet = burnWalletAddress || depositConfig.burnWallet || null;
       const burnWalletPublicKey = burnWallet ? new PublicKey(burnWallet) : null;
+      const tokenProgramIdPub = new PublicKey(tokenProgramIdParam || depositConfig.tokenProgramId || 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
 
-      const TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
+      const TOKEN_PROGRAM_ID = tokenProgramIdPub;
       const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
       const SYS_PROGRAM_ID = SystemProgram.programId;
       const RENT_SYSVAR_ID = new PublicKey('SysvarRent111111111111111111111111111111111');
@@ -1810,6 +1823,23 @@
       const burnTokenAccount = burnWalletPublicKey ? findAta(burnWalletPublicKey) : null;
 
       const instructions = [];
+
+      // Minimal createAssociatedTokenAccountInstruction (Token-2022 safe)
+      function createAtaIx(payer, ata, owner, mint, tokenProgramId, associatedProgramId) {
+        return new TransactionInstruction({
+          programId: associatedProgramId,
+          keys: [
+            { pubkey: payer, isSigner: true, isWritable: true },          // payer
+            { pubkey: ata, isSigner: false, isWritable: true },           // associated token account
+            { pubkey: owner, isSigner: false, isWritable: false },        // owner
+            { pubkey: mint, isSigner: false, isWritable: false },         // mint
+            { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+            { pubkey: tokenProgramId, isSigner: false, isWritable: false },
+            { pubkey: RENT_SYSVAR_ID, isSigner: false, isWritable: false },
+          ],
+          data: new Uint8Array(), // no data
+        });
+      }
       function writeBigUInt64LE(value) {
         const buffer = new Uint8Array(8);
         let temp = BigInt(value);
@@ -1824,6 +1854,20 @@
       transferNet[0] = 3;
       transferNet.set(writeBigUInt64LE(netRawAmount), 1);
 
+      // Create escrow ATA on the fly if backend couldn't (payer = user)
+      if (needsEscrowAta) {
+        instructions.push(
+          createAtaIx(
+            payerPublicKey,
+            escrowTokenAccount,
+            escrowPublicKey,
+            mintPublicKey,
+            TOKEN_PROGRAM_ID,
+            ASSOCIATED_TOKEN_PROGRAM_ID
+          )
+        );
+      }
+
       instructions.push(
         new TransactionInstruction({
           programId: TOKEN_PROGRAM_ID,
@@ -1837,6 +1881,19 @@
       );
 
       if (burnWalletPublicKey && burnRawAmount > 0n) {
+        if (needsBurnAta) {
+          instructions.push(
+            createAtaIx(
+              payerPublicKey,
+              burnTokenAccount,
+              burnWalletPublicKey,
+              mintPublicKey,
+              TOKEN_PROGRAM_ID,
+              ASSOCIATED_TOKEN_PROGRAM_ID
+            )
+          );
+        }
+
         const transferBurn = new Uint8Array(9);
         transferBurn[0] = 3;
         transferBurn.set(writeBigUInt64LE(burnRawAmount), 1);
@@ -2765,7 +2822,8 @@
       }
 
       try {
-        const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/rps/balance?wallet=${walletPublicKey}`);
+        const mintParam = depositConfig.mint ? `&mint=${encodeURIComponent(depositConfig.mint)}` : '';
+        const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/rps/balance?wallet=${walletPublicKey}${mintParam}`);
         const data = await response.json();
         
         if (!data.ok) {
@@ -2813,6 +2871,7 @@
     }
 
     // Deposit/Withdraw System
+    let hasActiveDeposit = false;
     async function checkDepositStatus() {
       const depositSection = document.getElementById('depositSection');
       const manualWithdrawSection = document.getElementById('manualWithdrawSection');
@@ -2859,11 +2918,13 @@
         if (typeof data.minDeposit === 'number') depositConfig.minDeposit = data.minDeposit;
         if (typeof data.mintDecimals === 'number') depositConfig.mintDecimals = data.mintDecimals;
         if (data.burnWallet) depositConfig.burnWallet = data.burnWallet;
+        if (data.tokenProgramId) depositConfig.tokenProgramId = data.tokenProgramId;
 
         const localPending = getPendingWithdrawal();
         const hasLocalPending = Boolean(localPending && localPending.wallet === walletPublicKey);
 
         if (data.ok && data.hasDeposit && data.deposit) {
+          hasActiveDeposit = true;
           if (depositForm) depositForm.style.display = 'none';
           if (withdrawBtn) withdrawBtn.style.display = 'block';
           const hasServerPending = Boolean(data.deposit.pendingWithdrawIntent);
@@ -2918,7 +2979,7 @@
                 ${tierCountdownHtml}
               </div>
               <div style="margin-top: 15px; padding: 15px; background: rgba(0, 0, 0, 0.5); border: 2px solid #00ffff; border-radius: 8px;">
-                <div style="margin-bottom: 10px; font-weight: bold; color: #00ffff;">📜 Transaction Signature:</div>
+                <div style="margin-bottom: 10px; font-weight: bold; color: #00ffff;">🔗 Transaction Signature:</div>
                 <div style="font-family: monospace; font-size: 0.85em; word-break: break-all; margin-bottom: 15px; padding: 10px; background: rgba(0,0,0,0.7); border: 1px solid #00ffff; border-radius: 6px; color: #00ffff;">
                   ${signature}
                 </div>
@@ -2931,6 +2992,7 @@
             </div>
           `;
         } else {
+          hasActiveDeposit = false;
           if (withdrawBtn) withdrawBtn.style.display = 'none';
           if (manualWithdrawSection) manualWithdrawSection.classList.add('hidden');
           if (manualWithdrawInput) manualWithdrawInput.value = '';
@@ -2943,7 +3005,7 @@
           if (playerBalance < depositConfig.minDeposit) {
             depositStatus.innerHTML = `
               <div style="color: #ff0000; font-size: 0.9em;">
-                ❌ You need at least ${minDepositDisplay} to deposit.<br>
+                ⚠️ You need at least ${minDepositDisplay} to deposit.<br>
                 Current: ${currentBalanceDisplay}
               </div>
             `;
@@ -2953,13 +3015,14 @@
             depositStatus.innerHTML = `
               <div style="color: #00ffff; font-size: 0.9em;">
                 ✅ Ready to deposit. Minimum: ${minDepositDisplay}<br>
-                Depositing for 5 days → 2% fee, 10 days → 1% fee, 15 days → 0.5% fee (default: ${formatBurnRate()})
+                Deposit for 5 days → 2% fee, 10 days → 1% fee, 15 days → 0.5% fee (default: ${formatBurnRate()})
               </div>
             `;
           }
         }
       } catch (error) {
         console.error('[Deposit] Error checking deposit status:', error);
+        hasActiveDeposit = false;
         if (depositStatus) {
           depositStatus.innerHTML = `
             <div style="color: #ff0000; font-size: 0.9em;">
@@ -3046,6 +3109,9 @@
             if (initData.burnWallet) {
               depositConfig.burnWallet = initData.burnWallet;
             }
+            if (initData.tokenProgramId) {
+              depositConfig.tokenProgramId = initData.tokenProgramId;
+            }
             if (typeof initData.burnRate === 'number') {
               currentBurnRate = initData.burnRate;
               updateDepositFeeRateDisplay();
@@ -3078,7 +3144,10 @@
               amountValue,
               depositConfig.mintDecimals,
               depositConfig.burnWallet,
-              currentBurnRate
+              currentBurnRate,
+              Boolean(initData.needsEscrowAta),
+              Boolean(initData.needsBurnAta),
+              initData.tokenProgramId || depositConfig.tokenProgramId
             );
 
             if (!signature) {
@@ -3129,6 +3198,17 @@
         withdrawBtn.addEventListener('click', async () => {
           if (!walletConnected || !walletPublicKey) {
             alert('Please connect your wallet first!');
+            return;
+          }
+
+          if (!hasActiveDeposit) {
+            const msg = 'No active deposit found for this wallet.';
+            if (window.showToast) {
+              window.showToast(msg, 'error');
+            } else {
+              alert(msg);
+            }
+            await checkDepositStatus();
             return;
           }
 

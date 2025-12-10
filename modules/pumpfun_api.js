@@ -111,7 +111,16 @@ export async function getTokenInfoFromDexScreener(tokenMintAddress) {
     const url = `https://api.dexscreener.com/latest/dex/tokens/${tokenMintAddress}`;
     const resp = await fetch(url);
     
-    if (!resp.ok) return null;
+    // Handle rate limiting (429 Too Many Requests)
+    if (resp.status === 429) {
+      console.warn("[pumpfun_api] DexScreener rate limit exceeded. Using cached/fallback data.");
+      return null;
+    }
+    
+    if (!resp.ok) {
+      console.warn(`[pumpfun_api] DexScreener API error: ${resp.status} ${resp.statusText}`);
+      return null;
+    }
     
     const data = await resp.json();
     

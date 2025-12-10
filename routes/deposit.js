@@ -3,11 +3,12 @@
 
 import { log } from "../modules/logger.js";
 import { Connection, PublicKey, Keypair, Transaction, sendAndConfirmTransaction, SystemProgram } from "@solana/web3.js";
-import { getAssociatedTokenAddressSync, createTransferInstruction, createAssociatedTokenAccountInstruction, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { getAssociatedTokenAddressSync, createTransferInstruction, createAssociatedTokenAccountInstruction, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import bs58 from "bs58";
 import {
   saveLunaDeposit,
   getActiveDeposit,
+  getDepositForStatus,
   withdrawDeposit,
   getDepositBySignature,
   clearAllDeposits,
@@ -15,6 +16,7 @@ import {
   clearWithdrawIntent,
   getPendingWithdrawals,
   getTotalBurnedLuna,
+  getQueueMetrics,
 } from "../modules/db.js";
 import { getTokenInfoFromDexScreener } from "../modules/pumpfun_api.js";
 
@@ -45,10 +47,15 @@ export function setupDepositRoutes(app, dependencies) {
   const MIN_DEPOSIT = typeof DEPOSIT_MIN_BALANCE === "number" ? DEPOSIT_MIN_BALANCE : 150000;
   const MS_PER_DAY = 24 * 60 * 60 * 1000;
   const RPC_URL = SOLANA_RPC_URL || process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com";
-  const BASE_MIN_USD = toNumberOrFallback(process.env.DEPOSIT_BASE_MIN_USD, 10);
-  const MIN_USD_FLOOR = toNumberOrFallback(process.env.DEPOSIT_MIN_USD_FLOOR, 5);
+  const BASE_MIN_USD = toNumberOrFallback(process.env.DEPOSIT_BASE_MIN_USD, 15);
+  const MIN_USD_FLOOR = toNumberOrFallback(process.env.DEPOSIT_MIN_USD_FLOOR, 15);
   const MAX_USD_CAP = toNumberOrFallback(process.env.DEPOSIT_MIN_USD_CAP, 30);
   const DYNAMIC_MIN_CACHE_MS = toNumberOrFallback(process.env.DEPOSIT_DYNAMIC_CACHE_MS, 5 * 60 * 1000);
+  const MINT_PROGRAM_CACHE_MS = toNumberOrFallback(process.env.MINT_PROGRAM_CACHE_MS, 5 * 60 * 1000);
+  const RATE_LIMIT_MAX = toNumberOrFallback(process.env.DEPOSIT_RATE_LIMIT_MAX, 5);
+  const RATE_LIMIT_WINDOW_MS = toNumberOrFallback(process.env.DEPOSIT_RATE_LIMIT_WINDOW_MS, 60 * 1000);
+  const HEALTH_RPC_TIMEOUT_MS = toNumberOrFallback(process.env.HEALTH_RPC_TIMEOUT_MS, 5000);
+  const walletLocks = new Map();
   const connection = new Connection(RPC_URL, "confirmed");
   let cachedMintDecimals = null;
 
@@ -88,19 +95,184 @@ export function setupDepositRoutes(app, dependencies) {
   }
 
   const TOKEN_PROGRAM_ID_STR = TOKEN_PROGRAM_ID.toBase58();
+  const TOKEN_2022_PROGRAM_ID_STR = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
+  
+  // Helper to check if program ID is a token program (Token or Token-2022)
+  const isTokenProgram = (programId) => {
+    const programIdStr = toProgramIdString(programId);
+    return programIdStr === TOKEN_PROGRAM_ID_STR || programIdStr === TOKEN_2022_PROGRAM_ID_STR;
+  };
   const burnRateRaw = Number(process.env.DEPOSIT_BURN_RATE ?? 0.03);
   const DEPOSIT_BURN_RATE = Number.isFinite(burnRateRaw)
     ? Math.min(Math.max(burnRateRaw, 0), 1)
     : 0.03;
 
-  const escrowTokenAccount =
+  let tokenProgramId = TOKEN_PROGRAM_ID;
+  let escrowTokenAccount = null;
+  let burnTokenAccount = null;
+  let tokenProgramCache = {
+    tokenProgramId,
+    expiresAt: 0,
+  };
+  const rateLimiter = new Map(); // key -> array of timestamps
+  let lastHealthStatus = { ok: true, db: true, rpc: true, ts: Date.now() };
+
+  async function withWalletLock(wallet, task) {
+    const prev = walletLocks.get(wallet) || Promise.resolve();
+    let result;
+    const next = prev.then(async () => {
+      result = await task();
+      return result;
+    });
+    walletLocks.set(wallet, next.catch(() => {}));
+    try {
+      await next;
+      return result;
+    } finally {
+      const current = walletLocks.get(wallet);
+      if (current === next) {
+        walletLocks.delete(wallet);
+      }
+    }
+  }
+
+  function checkRateLimit(key) {
+    if (!key) return { ok: true };
+    const now = Date.now();
+    const windowStart = now - RATE_LIMIT_WINDOW_MS;
+    const arr = rateLimiter.get(key) || [];
+    const filtered = arr.filter((ts) => ts >= windowStart);
+    if (filtered.length >= RATE_LIMIT_MAX) {
+      const retryAfterMs = RATE_LIMIT_WINDOW_MS - (now - filtered[0]);
+      rateLimiter.set(key, filtered);
+      return { ok: false, retryAfterMs };
+    }
+    filtered.push(now);
+    rateLimiter.set(key, filtered);
+    return { ok: true };
+  }
+
+  async function healthCheck() {
+    const start = Date.now();
+    let dbOk = false;
+    let rpcOk = false;
+
+    // DB check: simple query depending on driver
+    try {
+      if (pg) {
+        await pg.query("SELECT 1");
+      } else if (db) {
+        await new Promise((resolve, reject) => {
+          db.get("SELECT 1", [], (err) => (err ? reject(err) : resolve()));
+        });
+      }
+      dbOk = true;
+    } catch (err) {
+      dbOk = false;
+      log.debug("[health] db check failed:", err?.message || err);
+    }
+
+    // RPC check: getLatestBlockhash with timeout
+    try {
+      const rpcPromise = connection.getLatestBlockhash("finalized");
+      const timed = Promise.race([
+        rpcPromise,
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("RPC timeout")), HEALTH_RPC_TIMEOUT_MS)
+        ),
+      ]);
+      await timed;
+      rpcOk = true;
+    } catch (err) {
+      rpcOk = false;
+      log.debug("[health] rpc check failed:", err?.message || err);
+    }
+
+    const ok = dbOk && rpcOk;
+    lastHealthStatus = { ok, db: dbOk, rpc: rpcOk, ts: Date.now(), durationMs: Date.now() - start };
+    return lastHealthStatus;
+  }
+
+  async function resolveTokenProgramAndAtas() {
+    if (!mintPublicKey) {
+      return;
+    }
+
+    const now = Date.now();
+    const cacheValid = tokenProgramCache.expiresAt && tokenProgramCache.expiresAt > now && tokenProgramCache.tokenProgramId;
+
+    if (!cacheValid) {
+      try {
+        const mintInfo = await connection.getAccountInfo(mintPublicKey);
+        if (mintInfo?.owner) {
+          const ownerStr = mintInfo.owner.toBase58();
+          tokenProgramId =
+            ownerStr === TOKEN_2022_PROGRAM_ID_STR ? new PublicKey(TOKEN_2022_PROGRAM_ID_STR) : TOKEN_PROGRAM_ID;
+        } else {
+          tokenProgramId = TOKEN_PROGRAM_ID;
+        }
+      } catch (error) {
+        log.error("[deposit] Failed to fetch mint info for token program detection:", error?.message || error);
+        tokenProgramId = TOKEN_PROGRAM_ID;
+      }
+
+      tokenProgramCache = {
+        tokenProgramId,
+        expiresAt: now + MINT_PROGRAM_CACHE_MS,
+      };
+    } else {
+      tokenProgramId = tokenProgramCache.tokenProgramId;
+    }
+
+    try {
+      escrowTokenAccount =
     mintPublicKey && escrowPublicKey
-      ? getAssociatedTokenAddressSync(mintPublicKey, escrowPublicKey, false)
+          ? getAssociatedTokenAddressSync(mintPublicKey, escrowPublicKey, false, tokenProgramId)
       : null;
-  const burnTokenAccount =
+    } catch (error) {
+      log.error("[deposit] Failed to derive escrow ATA:", error?.message || error);
+      escrowTokenAccount = null;
+    }
+
+    try {
+      burnTokenAccount =
     mintPublicKey && burnWalletPublicKey
-      ? getAssociatedTokenAddressSync(mintPublicKey, burnWalletPublicKey, true)
+          ? getAssociatedTokenAddressSync(mintPublicKey, burnWalletPublicKey, true, tokenProgramId)
       : null;
+    } catch (error) {
+      log.error("[deposit] Failed to derive burn ATA:", error?.message || error);
+      burnTokenAccount = null;
+    }
+  }
+
+  async function ensureEscrowAtaExists() {
+    if (!escrowKeypair || !escrowTokenAccount || !mintPublicKey || !escrowPublicKey) {
+      return;
+    }
+    try {
+      const info = await connection.getAccountInfo(escrowTokenAccount);
+      if (info) {
+        return;
+      }
+      log.info("[deposit] Creating escrow ATA for", escrowPublicKey.toBase58());
+      const tx = new Transaction().add(
+        createAssociatedTokenAccountInstruction(
+          escrowKeypair.publicKey,
+          escrowTokenAccount,
+          escrowPublicKey,
+          mintPublicKey,
+          tokenProgramId,
+          ASSOCIATED_TOKEN_PROGRAM_ID
+        )
+      );
+      await sendAndConfirmTransaction(connection, tx, [escrowKeypair], {
+        commitment: "confirmed",
+      });
+      log.info("[deposit] Escrow ATA created successfully:", escrowTokenAccount.toBase58());
+    } catch (error) {
+      log.error("[deposit] Failed to ensure escrow ATA exists:", error?.message || error);
+    }
+  }
 
   async function ensureBurnAtaExists() {
     if (!escrowKeypair || !burnTokenAccount || !mintPublicKey || !burnWalletPublicKey) {
@@ -118,8 +290,8 @@ export function setupDepositRoutes(app, dependencies) {
           burnTokenAccount,
           burnWalletPublicKey,
           mintPublicKey,
-          SystemProgram.programId,
-          TOKEN_PROGRAM_ID
+          tokenProgramId,
+          ASSOCIATED_TOKEN_PROGRAM_ID
         )
       );
       await sendAndConfirmTransaction(connection, tx, [escrowKeypair], {
@@ -131,8 +303,19 @@ export function setupDepositRoutes(app, dependencies) {
     }
   }
 
+  resolveTokenProgramAndAtas()
+    .then(() =>
+      ensureEscrowAtaExists().catch((err) => {
+        log.error("[deposit] ensureEscrowAtaExists error:", err?.message || err);
+      })
+    )
+    .then(() =>
   ensureBurnAtaExists().catch((err) => {
     log.error("[deposit] ensureBurnAtaExists error:", err?.message || err);
+      })
+    )
+    .catch((err) => {
+      log.error("[deposit] init ATA setup error:", err?.message || err);
   });
 
   const getCurrentMintDecimals = () => (cachedMintDecimals ?? 9);
@@ -162,10 +345,10 @@ export function setupDepositRoutes(app, dependencies) {
       context: "deposit",
       baseUsd: BASE_MIN_USD > 0 ? BASE_MIN_USD : 10,
       floorUsd: MIN_USD_FLOOR,
-      capUsd: MAX_USD_CAP,
+      capUsd: MIN_USD_FLOOR, // lock to the floor (no upsizing)
       fallbackAmount: MIN_DEPOSIT,
       cacheMs: DYNAMIC_MIN_CACHE_MS,
-      allowMarketAdjustments: true,
+      allowMarketAdjustments: false,
     },
     "vs-luna": {
       context: "vs-luna",
@@ -445,12 +628,15 @@ export function setupDepositRoutes(app, dependencies) {
     };
   };
 
-  const sendDepositStatusResponse = async (res, deposit, extra = {}) => {
-    const dynamicMin = await getDynamicRequirement({ context: "deposit" });
+  const sendDepositStatusResponse = async (res, deposit, extra = {}, context = "deposit") => {
+    const dynamicMin = await getDynamicRequirement({ context });
+    const isActiveDeposit = deposit && deposit.status !== "withdrawn";
+    const payloadDeposit = isActiveDeposit ? buildDepositPayload(deposit) : null;
+
     return res.json({
       ok: true,
-      hasDeposit: Boolean(deposit),
-      deposit: deposit ? buildDepositPayload(deposit) : null,
+      hasDeposit: Boolean(isActiveDeposit),
+      deposit: payloadDeposit,
       escrowWallet: escrowPublicKey ? escrowPublicKey.toBase58() : FALLBACK_ESCROW_WALLET,
       mint: mintPublicKey ? mintPublicKey.toBase58() : LUNA_TOKEN_MINT || null,
       minDeposit: dynamicMin.amount,
@@ -573,6 +759,7 @@ export function setupDepositRoutes(app, dependencies) {
   }
 
   async function verifyOnchainDeposit(signature, wallet, requiredMinAmount = null) {
+    await resolveTokenProgramAndAtas();
     if (!isDepositSystemReady()) {
       throw new Error("Deposit system is not fully configured. Please contact an administrator.");
     }
@@ -593,11 +780,12 @@ export function setupDepositRoutes(app, dependencies) {
     const instructions = parsedTx.transaction?.message?.instructions || [];
     const escrowAtaBase58 = escrowTokenAccount.toBase58();
     const mintBase58 = mintPublicKey.toBase58();
+    const userAtaBase58 = getAssociatedTokenAddressSync(mintPublicKey, new PublicKey(wallet), false, tokenProgramId).toBase58();
 
-    const transferInstruction = instructions.find((ix) => {
+    // Try to find transfer instruction in parsed format first
+    let transferInstruction = instructions.find((ix) => {
       if (!ix.parsed) return false;
-      const programId = toProgramIdString(ix.programId);
-      if (programId !== TOKEN_PROGRAM_ID_STR) return false;
+      if (!isTokenProgram(ix.programId)) return false;
       const type = ix.parsed?.type;
       if (type !== "transfer" && type !== "transferChecked") return false;
       const info = ix.parsed?.info || {};
@@ -610,6 +798,66 @@ export function setupDepositRoutes(app, dependencies) {
         (!mint || mint === mintBase58)
       );
     });
+
+    // If not found in parsed format, try to find in raw format
+    if (!transferInstruction) {
+      const rawTx = await connection.getTransaction(signature, {
+        maxSupportedTransactionVersion: 0,
+        commitment: "confirmed",
+      });
+      
+      if (rawTx && rawTx.transaction && rawTx.transaction.message) {
+        const rawInstructions = rawTx.transaction.message.instructions || [];
+        const escrowAtaPubkey = escrowTokenAccount;
+        const userAtaPubkey = new PublicKey(userAtaBase58);
+        const walletPubkey = new PublicKey(wallet);
+        
+        for (const ix of rawInstructions) {
+          if (!isTokenProgram(ix.programId)) continue;
+          
+          // Check if this is a transfer instruction (instruction discriminator = 3)
+          if (ix.data && ix.data.length >= 9 && ix.data[0] === 3) {
+            // Check account keys match
+            const accounts = ix.accountKeys || rawTx.transaction.message.accountKeys || [];
+            const accountIndices = ix.accounts || [];
+            
+            // Find source and destination accounts
+            let sourceIdx = -1;
+            let destIdx = -1;
+            let authorityIdx = -1;
+            
+            for (let i = 0; i < accountIndices.length; i++) {
+              const accountKey = accounts[accountIndices[i]];
+              if (accountKey && accountKey.equals(userAtaPubkey)) {
+                sourceIdx = i;
+              }
+              if (accountKey && accountKey.equals(escrowAtaPubkey)) {
+                destIdx = i;
+              }
+              if (accountKey && accountKey.equals(walletPubkey)) {
+                authorityIdx = i;
+              }
+            }
+            
+            // Transfer instruction should have: source (writable), dest (writable), authority (signer)
+            if (sourceIdx >= 0 && destIdx >= 0 && authorityIdx >= 0) {
+              transferInstruction = {
+                parsed: {
+                  type: "transfer",
+                  info: {
+                    source: userAtaBase58,
+                    destination: escrowAtaBase58,
+                    authority: wallet,
+                    amount: ix.data.slice(1, 9).toString(),
+                  },
+                },
+              };
+              break;
+            }
+          }
+        }
+      }
+    }
 
     if (!transferInstruction) {
       throw new Error("No Luna transfer to the escrow wallet was found in this transaction.");
@@ -642,14 +890,48 @@ export function setupDepositRoutes(app, dependencies) {
     if (burnTokenAccount) {
       const burnIx = instructions.find((ix) => {
         if (!ix.parsed) return false;
-        const programId = toProgramIdString(ix.programId);
-        if (programId !== TOKEN_PROGRAM_ID_STR) return false;
+        if (!isTokenProgram(ix.programId)) return false;
         const type = ix.parsed?.type;
         if (type !== "transfer" && type !== "transferChecked") return false;
         const info = ix.parsed?.info || {};
         const destination = info.destination || info.dest;
         const authority = info.authority || info.owner || info.sourceOwner;
         return destination === burnTokenAccount.toBase58() && authority === wallet;
+      });
+
+      if (burnIx && burnIx.parsed) {
+        const info = burnIx.parsed.info || {};
+        const tokenAmountInfo = info.tokenAmount || {};
+        const burnDecimals = tokenAmountInfo.decimals ?? info.decimals ?? (await getMintDecimals());
+        const burnRawStr = tokenAmountInfo.amount || info.amount;
+        if (burnRawStr) {
+          burnRawAmount = BigInt(burnRawStr);
+          const uiAmountValue =
+            tokenAmountInfo.uiAmount !== undefined
+              ? Number(tokenAmountInfo.uiAmount)
+              : info.uiAmount !== undefined
+                ? Number(info.uiAmount)
+                : Number(burnRawAmount) / Math.pow(10, burnDecimals);
+          burnAmountUi = uiAmountValue;
+        }
+      }
+    }
+
+    if (burnAmountUi <= 0) {
+      const burnIx = instructions.find((ix) => {
+        if (!ix.parsed) return false;
+        if (!isTokenProgram(ix.programId)) return false;
+        const type = ix.parsed?.type;
+        if (type !== "burn" && type !== "burnChecked") return false;
+        const info = ix.parsed?.info || {};
+        const account = info.account || info.source || info.tokenAccount;
+        const authority = info.authority || info.owner;
+        const mint = info.mint || info.tokenMint;
+        return (
+          account === userAtaBase58 &&
+          authority === wallet &&
+          (!mint || mint === mintBase58)
+        );
       });
 
       if (burnIx && burnIx.parsed) {
@@ -734,17 +1016,23 @@ export function setupDepositRoutes(app, dependencies) {
       throw new Error("Deposit system is not configured. Please contact administrator.");
     }
 
+    await resolveTokenProgramAndAtas();
+
     if (!escrowKeypair) {
       throw new Error("Escrow private key is not configured. Withdrawal is unavailable.");
     }
 
-    const deposit = await getActiveDeposit(wallet);
+    let deposit = await getActiveDeposit(wallet);
     if (!deposit) {
-      throw new Error("No active deposit found for this wallet");
+      // Fallback: include withdrawn/pending records for recovery
+      deposit = await getDepositForStatus(wallet);
+      if (!deposit) {
+        throw new Error("No active deposit found for this wallet");
+      }
     }
 
     const userPubkey = new PublicKey(wallet);
-    const userTokenAccount = getAssociatedTokenAddressSync(mintPublicKey, userPubkey, false);
+    const userTokenAccount = getAssociatedTokenAddressSync(mintPublicKey, userPubkey, false, tokenProgramId);
     const userAtaInfo = await connection.getAccountInfo(userTokenAccount);
 
     const rawAmount = await getDepositRawAmount(deposit);
@@ -777,7 +1065,9 @@ export function setupDepositRoutes(app, dependencies) {
           userPubkey,
           userTokenAccount,
           userPubkey,
-          mintPublicKey
+          mintPublicKey,
+          tokenProgramId,
+          ASSOCIATED_TOKEN_PROGRAM_ID
         )
       );
     }
@@ -787,7 +1077,9 @@ export function setupDepositRoutes(app, dependencies) {
         escrowTokenAccount,
         userTokenAccount,
         escrowPublicKey,
-        Number(rawAmount)
+        Number(rawAmount),
+        [],
+        tokenProgramId
       )
     );
 
@@ -810,6 +1102,8 @@ export function setupDepositRoutes(app, dependencies) {
       throw new Error("Deposit system is not configured. Please contact administrator.");
     }
 
+    await resolveTokenProgramAndAtas();
+
     const parsedTx = await connection.getParsedTransaction(signature, {
       maxSupportedTransactionVersion: 0,
       commitment: "confirmed",
@@ -825,12 +1119,16 @@ export function setupDepositRoutes(app, dependencies) {
 
     const instructions = parsedTx.transaction?.message?.instructions || [];
     const escrowAtaBase58 = escrowTokenAccount.toBase58();
-    const userTokenAccount = getAssociatedTokenAddressSync(mintPublicKey, new PublicKey(wallet), false).toBase58();
+    const userTokenAccount = getAssociatedTokenAddressSync(
+      mintPublicKey,
+      new PublicKey(wallet),
+      false,
+      tokenProgramId
+    ).toBase58();
 
     const transferInstruction = instructions.find((ix) => {
       if (!ix.parsed) return false;
-      const programId = toProgramIdString(ix.programId);
-      if (programId !== TOKEN_PROGRAM_ID_STR) return false;
+      if (!isTokenProgram(ix.programId)) return false;
       const type = ix.parsed?.type;
       if (type !== "transfer" && type !== "transferChecked") return false;
       const info = ix.parsed?.info || {};
@@ -869,6 +1167,58 @@ export function setupDepositRoutes(app, dependencies) {
   }
 
   /**
+   * GET /luna/deposit/token-program
+   * Returns the token program ID for the configured mint (Token or Token-2022)
+   */
+  app.get("/luna/deposit/token-program", async (req, res) => {
+    try {
+      if (!mintPublicKey) {
+        return res.status(503).json({
+          ok: false,
+          error: "Mint not configured",
+        });
+      }
+
+      try {
+        const mintInfo = await connection.getAccountInfo(mintPublicKey);
+        if (!mintInfo) {
+          return res.status(404).json({
+            ok: false,
+            error: "Mint account not found",
+          });
+        }
+
+        const mintOwner = toProgramIdString(mintInfo.owner);
+        const TOKEN_2022_PROGRAM_ID_STR = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
+        const isToken2022 = mintOwner === TOKEN_2022_PROGRAM_ID_STR;
+
+        return res.json({
+          ok: true,
+          tokenProgramId: isToken2022 ? TOKEN_2022_PROGRAM_ID_STR : TOKEN_PROGRAM_ID_STR,
+          programName: isToken2022 ? "Token-2022" : "Token",
+          mint: mintPublicKey.toBase58(),
+        });
+      } catch (error) {
+        log.error("[deposit] Error detecting token program:", error);
+        // Fallback to Token Program
+        return res.json({
+          ok: true,
+          tokenProgramId: TOKEN_PROGRAM_ID_STR,
+          programName: "Token",
+          mint: mintPublicKey.toBase58(),
+        });
+      }
+    } catch (error) {
+      log.error("[deposit] Error in /luna/deposit/token-program:", error);
+      return res.status(500).json({
+        ok: false,
+        error: "Failed to get token program",
+        message: error.message,
+      });
+    }
+  });
+
+  /**
    * GET /luna/deposit/status
    */
   app.get("/luna/deposit/status", async (req, res) => {
@@ -886,8 +1236,10 @@ export function setupDepositRoutes(app, dependencies) {
         });
       }
 
-      const deposit = await getActiveDeposit(wallet);
-      return sendDepositStatusResponse(res, deposit);
+      const rawContext = (req.query.context || "deposit").toString().toLowerCase();
+      const contextKey = rawContext || "deposit";
+      const deposit = await getDepositForStatus(wallet);
+      return sendDepositStatusResponse(res, deposit, {}, contextKey);
     } catch (error) {
       log.error("[deposit] Error getting deposit status:", error);
       return res.status(500).json({
@@ -1013,6 +1365,7 @@ export function setupDepositRoutes(app, dependencies) {
         });
       }
 
+      return await withWalletLock(wallet, async () => {
       const payload = await buildClientWithdrawTransaction(wallet);
       await setWithdrawIntent(wallet, Date.now());
       return res.json({
@@ -1026,6 +1379,7 @@ export function setupDepositRoutes(app, dependencies) {
         message: payload.needsAtaCreation
           ? "Phantom may ask to create a token account before completing the withdrawal."
           : "Sign the transaction in Phantom to complete withdrawal.",
+        });
       });
     } catch (error) {
       log.error("[deposit] Failed to prepare withdrawal transaction:", error);
@@ -1043,6 +1397,16 @@ export function setupDepositRoutes(app, dependencies) {
   app.post("/luna/deposit/init", async (req, res) => {
     try {
       const { wallet, amount } = req.body || {};
+      const ipKey = req.ip || req.connection?.remoteAddress || "unknown";
+      const rateKey = `${wallet || "unknown"}|${ipKey}`;
+      const rl = checkRateLimit(rateKey);
+      if (!rl.ok) {
+        return res.status(429).json({
+          ok: false,
+          error: "Too many requests. Please wait a moment before trying again.",
+          retryAfterMs: rl.retryAfterMs,
+        });
+      }
 
       if (!wallet || !amount) {
         return res.status(400).json({
@@ -1065,6 +1429,9 @@ export function setupDepositRoutes(app, dependencies) {
         });
       }
 
+      await resolveTokenProgramAndAtas();
+
+      return await withWalletLock(wallet, async () => {
       const dynamicMin = await getDynamicRequirement({ context: "deposit" });
       const minDepositAmount = Number(dynamicMin.amount) || MIN_DEPOSIT;
       const requestedAmount = Number(amount);
@@ -1085,6 +1452,9 @@ export function setupDepositRoutes(app, dependencies) {
 
       const decimals = await getMintDecimals();
 
+        const escrowAtaInfo = escrowTokenAccount ? await connection.getAccountInfo(escrowTokenAccount) : null;
+        const burnAtaInfo = burnTokenAccount ? await connection.getAccountInfo(burnTokenAccount) : null;
+
       return res.json({
         ok: true,
         escrowWallet: escrowPublicKey.toBase58(),
@@ -1100,6 +1470,10 @@ export function setupDepositRoutes(app, dependencies) {
         note: DEFAULT_DEPOSIT_NOTE,
         burnRate: DEPOSIT_BURN_RATE,
         burnWallet: burnWalletPublicKey ? burnWalletPublicKey.toBase58() : null,
+          needsEscrowAta: !escrowAtaInfo,
+          needsBurnAta: burnTokenAccount ? !burnAtaInfo : false,
+          tokenProgramId: tokenProgramId?.toBase58?.() || TOKEN_PROGRAM_ID_STR,
+        });
       });
     } catch (error) {
       log.error("[deposit] Error initializing deposit:", error);
@@ -1118,6 +1492,16 @@ export function setupDepositRoutes(app, dependencies) {
   app.post("/luna/deposit/verify", async (req, res) => {
     try {
       const { wallet, signature } = req.body || {};
+      const ipKey = req.ip || req.connection?.remoteAddress || "unknown";
+      const rateKey = `${wallet || "unknown"}|${ipKey}`;
+      const rl = checkRateLimit(rateKey);
+      if (!rl.ok) {
+        return res.status(429).json({
+          ok: false,
+          error: "Too many requests. Please wait a moment before trying again.",
+          retryAfterMs: rl.retryAfterMs,
+        });
+      }
 
       if (!wallet || !signature) {
         return res.status(400).json({
@@ -1163,6 +1547,7 @@ export function setupDepositRoutes(app, dependencies) {
         });
       }
 
+      return await withWalletLock(wallet, async () => {
       const dynamicMin = await getDynamicRequirement({ context: "deposit" });
       const minRequirementAmount = Number(dynamicMin.amount) || MIN_DEPOSIT;
       const verification = await verifyOnchainDeposit(signature, wallet, minRequirementAmount);
@@ -1205,6 +1590,7 @@ export function setupDepositRoutes(app, dependencies) {
       return res.json({
         ok: true,
         deposit: buildDepositPayload(depositRecord),
+        });
       });
     } catch (error) {
       log.error("[deposit] Error verifying deposit:", error);
@@ -1286,6 +1672,7 @@ export function setupDepositRoutes(app, dependencies) {
         });
       }
 
+      return await withWalletLock(wallet, async () => {
       const deposit = await getActiveDeposit(wallet);
       if (!deposit) {
         return res.status(404).json({
@@ -1325,6 +1712,7 @@ export function setupDepositRoutes(app, dependencies) {
           amount: deposit.deposit_amount,
           signature,
         },
+        });
       });
     } catch (error) {
       log.error("[deposit] Error processing withdrawal:", error);
@@ -1357,9 +1745,62 @@ export function setupDepositRoutes(app, dependencies) {
     }
   });
 
+  app.get("/healthz", async (_req, res) => {
+    try {
+      const status = await healthCheck();
+      const httpCode = status.ok ? 200 : 503;
+      return res.status(httpCode).json({
+        ok: status.ok,
+        db: status.db,
+        rpc: status.rpc,
+        ts: status.ts,
+        durationMs: status.durationMs,
+      });
+    } catch (error) {
+      log.error("[health] Failed to run health check:", error);
+      return res.status(503).json({ ok: false, error: "Health check failed" });
+    }
+  });
+
+  app.get("/luna/deposit/queue-metrics", async (_req, res) => {
+    try {
+      const metrics = await getQueueMetrics();
+      return res.json({ ok: true, metrics });
+    } catch (error) {
+      log.error("[deposit] Failed to fetch queue metrics:", error);
+      return res.status(500).json({ ok: false, error: "Failed to fetch queue metrics" });
+    }
+  });
+
   const WITHDRAW_MONITOR_INTERVAL_MS = Number(process.env.WITHDRAW_MONITOR_INTERVAL_MS || 20000);
+  const QUEUE_MONITOR_INTERVAL_MS = Number(process.env.QUEUE_MONITOR_INTERVAL_MS || 60000);
   let withdrawMonitorHandle = null;
   let withdrawMonitorRunning = false;
+  let queueMonitorHandle = null;
+  let queueMonitorRunning = false;
+
+  async function emitQueueMetrics(trigger = "timer") {
+    if (queueMonitorRunning) return;
+    queueMonitorRunning = true;
+    try {
+      const metrics = await getQueueMetrics();
+      log.info(
+        `[queue] ${trigger} total=${metrics.totalDeposits} active=${metrics.activeDeposits} pendingWithdraw=${metrics.pendingWithdrawals} withdrawn=${metrics.withdrawnDeposits}`
+      );
+    } catch (error) {
+      log.debug("[deposit] Queue monitor check failed:", error.message || error);
+    } finally {
+      queueMonitorRunning = false;
+    }
+  }
+
+  function startQueueMonitor() {
+    if (queueMonitorHandle) return;
+    queueMonitorHandle = setInterval(() => emitQueueMetrics("timer"), QUEUE_MONITOR_INTERVAL_MS);
+    emitQueueMetrics("startup").catch((error) => {
+      log.debug("[deposit] Queue monitor initial run failed:", error.message || error);
+    });
+  }
 
   async function processPendingWithdrawals() {
     if (withdrawMonitorRunning) return;
@@ -1448,5 +1889,6 @@ export function setupDepositRoutes(app, dependencies) {
   }
 
   startWithdrawMonitor();
+  startQueueMonitor();
 }
 

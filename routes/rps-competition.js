@@ -64,3 +64,14 @@ export function setupRpsCompetitionRoutes(app, dependencies) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+

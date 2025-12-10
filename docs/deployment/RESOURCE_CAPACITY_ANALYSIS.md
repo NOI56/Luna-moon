@@ -193,3 +193,14 @@
 - [Resource Configuration Guide](./NORTHFLANK_DEPLOYMENT.md#ขั้นตอนที่-4-ตั้งค่า-resources)
 - [Troubleshooting Guide](./TROUBLESHOOTING_DEPLOYMENT.md)
 
+
+
+
+
+
+
+
+
+
+
+

@@ -13,7 +13,15 @@ import { getNextMonday } from "../utils/helpers.js";
  * @param {Function} distributeRewards - Function to distribute rewards (optional)
  * @returns {Object} - { competitionStartTime, competitionEndTime, rewardsDistributed }
  */
-export async function initializeCompetition(rpsLeaderboard, rewardPool, competitionStartTime, competitionEndTime, distributeRewards = null) {
+export async function initializeCompetition(
+  rpsLeaderboard,
+  rewardPool,
+  competitionStartTime,
+  competitionEndTime,
+  distributeRewards = null,
+  options = {}
+) {
+  const { clearPersistentLeaderboard } = options || {};
   let rewardsDistributed = false;
   
   // Check if we need to start a new competition
@@ -51,6 +59,13 @@ export async function initializeCompetition(rpsLeaderboard, rewardPool, competit
     competitionEndTime = getNextMonday(); // Set to next Monday 00:00:00 UTC
     // Reset leaderboard for new competition
     rpsLeaderboard.clear();
+    if (typeof clearPersistentLeaderboard === "function") {
+      try {
+        await clearPersistentLeaderboard();
+      } catch (persistErr) {
+        log.error("[rps-competition] Failed to clear persistent leaderboard storage:", persistErr);
+      }
+    }
     rewardPool.value = 0;
     log.info(`[rps-competition] New weekly competition started. Ends at: ${new Date(competitionEndTime).toISOString()} (Next Monday 00:00:00 UTC)`);
   } else {

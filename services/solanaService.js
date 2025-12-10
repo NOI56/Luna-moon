@@ -12,16 +12,16 @@ import { log } from "../modules/logger.js";
  * @param {number} amountInSol - Amount in SOL
  * @returns {Promise<string|null>} - Transaction signature or null if failed
  */
-export async function sendSol(toWallet, amountInSol) {
+export async function sendSol(toWallet, amountInSol, options = {}) {
   try {
-    const privateKey = process.env.REWARD_SENDER_PRIVATE_KEY;
+    const privateKey = options.privateKey || process.env.REWARD_SENDER_PRIVATE_KEY;
     if (!privateKey || privateKey === "your_private_key_here") {
       log.warn("[rps] REWARD_SENDER_PRIVATE_KEY not configured, cannot send SOL");
       return null;
     }
     
     const connection = new Connection(
-      process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com",
+      options.rpcUrl || process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com",
       "confirmed"
     );
     
@@ -61,27 +61,28 @@ export async function sendSol(toWallet, amountInSol) {
  * @param {string} LUNA_TOKEN_MINT - Luna token mint address
  * @returns {Promise<string|null>} - Transaction signature or null if failed
  */
-export async function sendLunaToken(toWallet, amountInLuna, LUNA_TOKEN_MINT) {
+export async function sendLunaToken(toWallet, amountInLuna, LUNA_TOKEN_MINT, options = {}) {
   try {
-    const privateKey = process.env.REWARD_SENDER_PRIVATE_KEY;
+    const privateKey = options.privateKey || process.env.REWARD_SENDER_PRIVATE_KEY;
     if (!privateKey || privateKey === "your_private_key_here") {
       log.warn("[rps] REWARD_SENDER_PRIVATE_KEY not configured, cannot send Luna tokens");
       return null;
     }
     
-    if (!LUNA_TOKEN_MINT || LUNA_TOKEN_MINT === "your_token_mint_address_from_pumpfun_here") {
+    const resolvedMint = options.mint || LUNA_TOKEN_MINT;
+    if (!resolvedMint || resolvedMint === "your_token_mint_address_from_pumpfun_here") {
       log.warn("[rps] LUNA_TOKEN_MINT not configured, cannot send Luna tokens");
       return null;
     }
     
     const connection = new Connection(
-      process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com",
+      options.rpcUrl || process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com",
       "confirmed"
     );
     
     // Decode private key
     const keypair = Keypair.fromSecretKey(bs58.decode(privateKey));
-    const mintPublicKey = new PublicKey(LUNA_TOKEN_MINT);
+    const mintPublicKey = new PublicKey(resolvedMint);
     const toPublicKey = new PublicKey(toWallet);
     
     // Get or create associated token accounts

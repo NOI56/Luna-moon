@@ -978,6 +978,87 @@
     color: rgba(255, 255, 255, 0.65);
     }
 
+  .deposit-access-card {
+    margin: 20px auto 0;
+    padding: 18px 24px;
+    border-radius: 20px;
+    background: rgba(6, 12, 32, 0.85);
+    border: 1px solid rgba(0, 255, 255, 0.2);
+    box-shadow: 0 25px 40px rgba(0, 0, 0, 0.35);
+    max-width: 960px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    position: relative;
+    z-index: 5;
+    pointer-events: auto;
+  }
+
+  .deposit-access-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .deposit-access-card__badge {
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: rgba(0, 255, 255, 0.15);
+    border: 1px solid rgba(0, 255, 255, 0.35);
+    color: #00ffff;
+    white-space: nowrap;
+  }
+
+  .deposit-access-card__details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+  }
+
+  .deposit-access-card__label {
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 6px;
+  }
+
+  .deposit-access-card__value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #ffffff;
+    word-break: break-word;
+  }
+
+  .deposit-access-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .deposit-access-card__actions .ghost-btn {
+    border-radius: 999px;
+    padding: 10px 18px;
+    pointer-events: auto;
+  }
+
+  .deposit-access-card__actions .primary {
+    background: linear-gradient(135deg, rgba(0, 255, 255, 0.15), rgba(255, 60, 172, 0.2));
+    border-color: rgba(0, 255, 255, 0.45);
+    color: #ffffff;
+  }
+
+  .deposit-access-card__notice {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.85);
+    line-height: 1.5;
+  }
+
+  /* Inline Deposit Form Styles */
+
   .messenger-shell {
     margin-top: 40px;
     display: flex;
@@ -1052,6 +1133,7 @@
   .messenger-body {
     flex: 1;
     overflow: hidden;
+    position: relative;
   }
 
   .message-thread {
@@ -1062,6 +1144,55 @@
     flex-direction: column;
     gap: 14px;
     scroll-behavior: smooth;
+  }
+
+  .message-thread.blurred {
+    filter: blur(9px);
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .chat-blur-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(3, 8, 28, 0.7);
+    border-radius: 24px;
+    border: 1px solid rgba(0, 255, 255, 0.15);
+    backdrop-filter: blur(6px);
+    transition: opacity 0.3s ease;
+    z-index: 5;
+    text-align: center;
+    padding: 24px;
+  }
+
+  .chat-blur-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .chat-blur-overlay__content {
+    max-width: 360px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    color: #d2f7ff;
+  }
+
+  .chat-blur-overlay__title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: #00ffbf;
+    text-transform: uppercase;
+  }
+
+  .chat-blur-overlay__message {
+    font-size: 1rem;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.85);
   }
 
   .message-row {
@@ -1335,7 +1466,7 @@
     <a href="/rps_vs_luna.html">🎮 VS Luna</a>
     <a href="/rps_game.html">Play PvP! Find</a>
     <a href="/rps_betting.html">💰 Betting Mode</a>
-    <a href="/rps_deposit.html">💾 Deposit Luna</a>
+    <a href="/rps_deposit.html">🏦 Deposit Luna</a>
     <a href="/group_chat.html" class="highlighted current">💬 Group Chat</a>
     <a href="/rps_leaderboard.html">🏆 Leaderboard</a>
     <a href="/rps_stats.html">📊 Stats</a>
@@ -1364,6 +1495,9 @@
     <div class="header">
       <h1>💬 Luna Group Chat</h1>
       <p>Chat with Luna Community members</p>
+      <p style="margin-top: 8px; color: #7bffcb; font-size: 0.95rem;">
+        🏦 Active deposit = lifetime Group Chat access (kept until you withdraw), even if your wallet balance is below the chat minimum.
+      </p>
     </div>
 
     <div id="chatDynamicRequirementCard" class="dynamic-requirement-card">
@@ -1406,6 +1540,14 @@
           <div class="message-thread" id="groupChatMessages">
             <div class="group-chat-empty">Loading messages...</div>
           </div>
+          <div class="chat-blur-overlay hidden" id="chatBlurOverlay" aria-live="polite">
+            <div class="chat-blur-overlay__content">
+              <div class="chat-blur-overlay__title">Hold Luna to unlock chat</div>
+              <div class="chat-blur-overlay__message" id="chatBlurMessage">
+                Connect your Phantom wallet and hold Luna tokens to view the conversation.
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="typing-indicator hidden" id="typingIndicator"></div>
@@ -1444,6 +1586,7 @@
     </div>
   </div>
 
+  <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
   <script src="/js/utils.js"></script>
   <script src="/js/phantom-helper.js"></script>
   <script src="/js/toast.js"></script>
@@ -1476,8 +1619,13 @@
     const GROUP_CHAT_ROOM_ID = 'group_chat';
     const DEFAULT_CHAT_MIN_BALANCE = 100000;
     const DYNAMIC_REQUIREMENT_CONTEXT = 'group-chat';
+    const CHAT_DEPOSIT_CONTEXT = 'group-chat';
     const MESSAGE_CACHE_KEY = 'groupChatMessageCache:v1';
     const MESSAGE_CACHE_LIMIT = 150;
+    const CHAT_ACCESS_STORAGE_KEY = 'groupChatUnlocked';
+    const CHAT_ACCESS_UNLOCK_TTL_MS = 5 * 1000;
+    const CHAT_ACCESS_LOCK_TTL_MS = 5 * 1000;
+    const DEFAULT_WIDGET_BLUR_MESSAGE = 'Connect your wallet and hold Luna tokens to view the conversation.';
     let activeTimeouts = new Set();
     let onlineCountInterval = null;
     let isPageVisible = !document.hidden;
@@ -1940,6 +2088,7 @@
       dynamicRequirementState.source = payload.source || dynamicRequirementState.source || 'fallback';
       dynamicRequirementState.updatedAt = payload.updatedAt || Date.now();
       updateRequirementDisplay();
+      updateDepositAccessCard();
     }
 
     async function fetchDynamicRequirement(force = false) {
@@ -1962,12 +2111,209 @@
       }
     }
 
+    function hasChatAccess() {
+      if (!walletConnected || !walletPublicKey) {
+        return false;
+      }
+      if (hasDepositAccess) {
+        return true;
+      }
+      return currentBalance >= getCurrentMinRequirement();
+    }
+
+    function shortenAddress(address, leading = 6, trailing = 6) {
+      if (!address || typeof address !== 'string') return '--';
+      if (address.length <= leading + trailing) {
+        return address;
+      }
+      return `${address.slice(0, leading)}...${address.slice(-trailing)}`;
+    }
+
+    function formatBurnRateDisplay(rate) {
+      const percentage = Number(rate || 0) * 100;
+      if (!Number.isFinite(percentage)) {
+        return '—';
+      }
+      return percentage % 1 === 0 ? `${percentage.toFixed(0)}% burn` : `${percentage.toFixed(2)}% burn`;
+    }
+
+    function updateDepositAccessCard(message) {
+      const badge = document.getElementById('depositAccessStatusBadge');
+      const escrowEl = document.getElementById('depositEscrowWallet');
+      const minEl = document.getElementById('depositMinRequirement');
+      const burnEl = document.getElementById('depositBurnRateDisplay');
+      const notice = document.getElementById('depositAccessNotice');
+      const card = document.getElementById('depositAccessCard');
+      const inlineToggleBtn = document.getElementById('inlineDepositToggleBtn');
+      const inlineForm = document.getElementById('inlineDepositForm');
+      if (!card) return;
+
+      const escrowWallet = depositStatusCache?.escrowWallet || null;
+      // Group chat always uses 1% burn rate regardless of server default
+      const burnRate = 0.01; // 1% burn (for display only)
+      if (escrowEl) {
+        escrowEl.textContent = escrowWallet ? shortenAddress(escrowWallet, 8, 8) : '--';
+      }
+      if (minEl) {
+        minEl.textContent = `${formatNumberDetailed(getCurrentMinRequirement())} Luna`;
+      }
+      if (burnEl) {
+        burnEl.textContent = formatBurnRateDisplay(burnRate);
+      }
+
+      let badgeText = 'Wallet not connected';
+      let badgeStyle = 'warning';
+      let noticeText = message || 'Connect your wallet to view deposit status.';
+      let showDepositBtn = false;
+
+      if (!walletConnected || !walletPublicKey) {
+        hasDepositAccess = false;
+        depositStatusCache = null;
+        showDepositBtn = false;
+      } else if (hasDepositAccess && depositStatusCache?.deposit) {
+        const deposit = depositStatusCache.deposit;
+        const depositedAmount = formatNumberDetailed(deposit.depositAmount || deposit.amount || 0);
+        const depositDate = deposit.depositDate
+          ? new Date(deposit.depositDate).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })
+          : null;
+        badgeText = 'Deposit active';
+        badgeStyle = 'success';
+        noticeText = `✅ Deposit active (${depositedAmount} Luna). ${depositDate ? `Deposited on ${depositDate}. ` : ''}You can withdraw anytime from the deposit panel.`;
+        showDepositBtn = false;
+      } else if (walletConnected) {
+        badgeText = 'Deposit not found';
+        badgeStyle = 'default';
+        const requirementText = `${formatNumberDetailed(getCurrentMinRequirement())} Luna`;
+        noticeText = message
+          ? message
+          : `Hold at least ${requirementText} or make a 1% burn deposit to keep chatting even if the dynamic minimum increases.`;
+        showDepositBtn = true;
+      }
+
+      // Update deposit button visibility
+      if (inlineToggleBtn) {
+        inlineToggleBtn.style.display = showDepositBtn ? '' : 'none';
+        if (hasDepositAccess) {
+          inlineToggleBtn.textContent = '✅ Deposit Active';
+        } else {
+          inlineToggleBtn.textContent = '💰 Deposit Now';
+        }
+      }
+
+      if (badge) {
+        badge.textContent = badgeText;
+        badge.style.background =
+          badgeStyle === 'success'
+            ? 'rgba(0, 255, 0, 0.15)'
+            : badgeStyle === 'warning'
+              ? 'rgba(255, 174, 0, 0.15)'
+              : 'rgba(0, 255, 255, 0.15)';
+        badge.style.borderColor =
+          badgeStyle === 'success'
+            ? 'rgba(0, 255, 0, 0.6)'
+            : badgeStyle === 'warning'
+              ? 'rgba(255, 174, 0, 0.5)'
+              : 'rgba(0, 255, 255, 0.35)';
+        badge.style.color =
+          badgeStyle === 'success'
+            ? '#00ff99'
+            : badgeStyle === 'warning'
+              ? '#ffae00'
+              : '#00ffff';
+      }
+
+      if (notice) {
+        notice.textContent = noticeText;
+      }
+
+    }
+
+    async function refreshDepositStatus(showErrorToast = false) {
+      if (!walletConnected || !walletPublicKey) {
+        hasDepositAccess = false;
+        depositStatusCache = null;
+        updateDepositAccessCard();
+        return false;
+      }
+      try {
+        const url = new URL(`${API_BASE}/luna/deposit/status`);
+        url.searchParams.set('wallet', walletPublicKey);
+        url.searchParams.set('context', CHAT_DEPOSIT_CONTEXT);
+        const response = await (window.lunaUtils?.retryFetch || fetch)(url.toString());
+        const data = await response.json();
+        if (!response.ok || !data.ok) {
+          throw new Error(data.error || data.message || 'Failed to load deposit status');
+        }
+        depositStatusCache = data;
+        hasDepositAccess = Boolean(data.hasDeposit && data.deposit);
+        if (data.dynamicMin || typeof data.minDeposit === 'number') {
+          const dynamicPayload = data.dynamicMin || {
+            amount: data.minDeposit,
+            usd: data.minDepositUsd,
+            source: data.minDepositSource,
+            updatedAt: data.minDepositUpdatedAt,
+            priceUsd: data.priceUsd,
+            marketCap: data.marketCap,
+            volume24h: data.volume24h,
+            liquidity: data.liquidityUsd,
+          };
+          applyDynamicRequirementData(dynamicPayload);
+        } else {
+          updateRequirementDisplay();
+        }
+        updateDepositAccessCard();
+        if (hasDepositAccess) {
+          setWidgetAccessUnlocked(true, 'Deposit active');
+          setChatBlurState(false);
+          setChatInputState(true, 'Deposit active — type a message');
+          return true;
+        }
+        return false;
+      } catch (error) {
+        console.warn('[Group Chat] Deposit status error:', error);
+        hasDepositAccess = false;
+        depositStatusCache = null;
+        updateDepositAccessCard(error.message || 'Failed to load deposit status.');
+        if (showErrorToast) {
+          notifyUser(error.message || 'Failed to load deposit status', 'warning');
+        }
+        return false;
+      }
+    }
+
+    function initDepositAccessControls() {
+      const refreshBtn = document.getElementById('depositStatusRefreshBtn');
+
+      if (refreshBtn && refreshBtn.dataset.listenerAttached !== 'true') {
+        refreshBtn.dataset.listenerAttached = 'true';
+        refreshBtn.addEventListener('click', async () => {
+          if (!walletConnected || !walletPublicKey) {
+            notifyUser('Connect your wallet to refresh deposit status.', 'warning');
+            return;
+          }
+          const originalText = refreshBtn.textContent;
+          refreshBtn.disabled = true;
+          refreshBtn.textContent = 'Refreshing...';
+          try {
+            const unlocked = await refreshDepositStatus(true);
+            if (!unlocked) {
+              await checkBalance();
+            }
+          } finally {
+            refreshBtn.disabled = false;
+            refreshBtn.textContent = originalText;
+          }
+        });
+      }
+    }
     let walletConnected = false;
     let walletPublicKey = null;
     let username = null;
     let currentBalance = 0;
     let ws = null;
     let messages = [];
+    let hasDepositAccess = false;
+    let depositStatusCache = null;
 
     function hydrateMessagesFromCache() {
       if (messages.length) {
@@ -2005,6 +2351,33 @@
         localStorage.setItem(MESSAGE_CACHE_KEY, JSON.stringify(snapshot));
       } catch (error) {
         console.warn('[Group Chat] Failed to persist cache:', error);
+      }
+    }
+
+    function setChatBlurState(shouldBlur, message) {
+      const thread = document.getElementById('groupChatMessages');
+      const overlay = document.getElementById('chatBlurOverlay');
+      const overlayMessage = document.getElementById('chatBlurMessage');
+      if (!thread || !overlay) {
+        return;
+      }
+      thread.classList.toggle('blurred', !!shouldBlur);
+      overlay.classList.toggle('hidden', !shouldBlur);
+      if (overlayMessage && shouldBlur && typeof message === 'string' && message.trim().length > 0) {
+        overlayMessage.textContent = message.trim();
+      }
+    }
+
+    function setWidgetAccessUnlocked(unlocked, message) {
+      try {
+        const payload = {
+          unlocked: !!unlocked,
+          message: message || DEFAULT_WIDGET_BLUR_MESSAGE,
+          expires: Date.now() + (unlocked ? CHAT_ACCESS_UNLOCK_TTL_MS : CHAT_ACCESS_LOCK_TTL_MS)
+        };
+        localStorage.setItem(CHAT_ACCESS_STORAGE_KEY, JSON.stringify(payload));
+      } catch (error) {
+        console.warn('[Group Chat] Failed to update widget access flag:', error);
       }
     }
 
@@ -2250,11 +2623,14 @@
       }
       
       setChatInputState(false, 'Please connect Wallet');
+      const initMessage = 'Connect your wallet and hold Luna tokens to view the conversation.';
+      setWidgetAccessUnlocked(false, initMessage);
+      setChatBlurState(true, initMessage);
       updateRequirementDisplay();
       fetchDynamicRequirement().catch((error) => console.warn('[Group Chat] Initial requirement fetch failed:', error));
       setInterval(() => {
         fetchDynamicRequirement().catch((error) => console.warn('[Group Chat] Requirement refresh failed:', error));
-      }, 5 * 60 * 1000);
+      }, 5 * 1000); // Check every 5 seconds
       initWalletButtons();
       initNeonToggle();
       initNavigationSounds();
@@ -2322,11 +2698,13 @@
       const helperAutoConnected = forceDisconnected
         ? false
         : await attemptPhantomHelperAutoConnect();
+      const shouldRunNativeAutoConnect = !helperAutoConnected && !forceDisconnected;
+      
       if (helperAutoConnected) {
-        return;
+        console.log('[Group Chat] Phantom helper already handled wallet connection, continuing realtime init...');
       }
       
-      if (!forceDisconnected && window.solana && window.solana.isPhantom) {
+      if (shouldRunNativeAutoConnect && window.solana && window.solana.isPhantom) {
         // Case 1: Wallet is already connected
         if (window.solana.isConnected && window.solana.publicKey) {
           const currentWallet = window.solana.publicKey.toString();
@@ -2339,24 +2717,20 @@
               if (sigData.publicKey === currentWallet) {
                 console.log('[Group Chat] ✅ Persistent connection found - using existing authenticated connection');
                 handleWalletConnected(currentWallet);
-                return; // Exit early
               } else {
                 console.log('[Group Chat] Signature wallet mismatch - clearing signature');
                 localStorage.removeItem('walletSignature');
                 handleWalletConnected(currentWallet);
-                return; // Exit early
               }
             } catch (err) {
               console.error('[Group Chat] Error checking signature:', err);
               localStorage.removeItem('walletSignature');
               handleWalletConnected(currentWallet);
-              return; // Exit early
             }
           } else {
             // Connected but no signature - use existing connection silently
             console.log('[Group Chat] ✅ Wallet already connected (no signature) - using existing connection');
             handleWalletConnected(currentWallet);
-            return; // Exit early
           }
         }
         
@@ -2383,13 +2757,11 @@
               if (sigData.publicKey === currentWallet) {
                 console.log('[Group Chat] ✅ Auto-reconnected with valid signature');
                 handleWalletConnected(currentWallet);
-                return; // Exit early
               } else {
                 console.log('[Group Chat] Signature wallet mismatch after reconnect - clearing signature');
                 localStorage.removeItem('walletSignature');
                 // Still connect but without signature
                 handleWalletConnected(currentWallet);
-                return; // Exit early
               }
             }
           } catch (err) {
@@ -2401,7 +2773,13 @@
         console.log('[Group Chat] Force disconnect flag active. Skipping auto-reconnect.');
       }
       
+      if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
       connectWebSocket();
+      } else if (ws.readyState !== WebSocket.OPEN) {
+        // Ready state 0 (CONNECTING) - let existing connection finish
+        console.log('[Group Chat] WebSocket already initializing, skipping duplicate connect');
+      }
+      
       loadMessages();
       
       // Initialize enhanced effects (respect neon toggle)
@@ -2971,9 +3349,21 @@
         walletInfoFixed.style.opacity = '';
       }
       
-      // Check balance (this will update the wallet balance display)
-      console.log('[Group Chat] Calling checkBalance()...');
+      // Check deposit status first, then fallback to balance requirement
+      console.log('[Group Chat] Checking deposit status before verifying balance...');
+      const verifyingMsg = 'Verifying Luna holdings...';
+      setChatBlurState(true, verifyingMsg);
+      setWidgetAccessUnlocked(false, verifyingMsg);
+      refreshDepositStatus()
+        .then((hasDeposit) => {
+          if (!hasDeposit) {
       checkBalance();
+          }
+        })
+        .catch((error) => {
+          console.warn('[Group Chat] Deposit status check failed:', error);
+          checkBalance();
+        });
 
       // Re-render messages so existing bubbles align with ownership
       updateMessages();
@@ -2985,6 +3375,9 @@
       walletConnected = false;
       username = null;
       currentBalance = 0;
+      hasDepositAccess = false;
+      depositStatusCache = null;
+      updateDepositAccessCard();
       
       // Update both fixed and container buttons
       const connectBtn = document.getElementById('connectWalletBtn');
@@ -3010,6 +3403,9 @@
       }
       
       showWalletRequired();
+      const needsWalletMsg = 'Connect your wallet to view chat history.';
+      setChatBlurState(true, needsWalletMsg);
+      setWidgetAccessUnlocked(false, needsWalletMsg);
       updateMessages();
     }
 
@@ -3060,6 +3456,19 @@
         return;
       }
 
+      if (hasDepositAccess) {
+        const depositAmount = formatNumberDetailed(
+          depositStatusCache?.deposit?.depositAmount ||
+          depositStatusCache?.deposit?.amount ||
+          0
+        );
+        const unlockedMsg = `Deposit active (${depositAmount} Luna locked).`;
+        setChatBlurState(false, unlockedMsg);
+        setWidgetAccessUnlocked(true, unlockedMsg);
+        setChatInputState(true, 'Deposit active — type a message');
+        return;
+      }
+
       console.log('[Group Chat] Checking balance for wallet:', walletPublicKey);
       
       // Hide balance requirement box (we show wallet info instead)
@@ -3092,12 +3501,23 @@
           balanceRequirement.style.display = 'none';
         }
         
-        if (currentBalance >= getCurrentMinRequirement()) {
+        const minRequirement = getCurrentMinRequirement();
+        const meetsRequirement = currentBalance >= minRequirement;
+        if (!meetsRequirement) {
+          const needHoldMsg = `Hold at least ${formatNumber(minRequirement)} Luna or make a 1% burn deposit to unlock chat permanently.`;
+          setChatBlurState(true, needHoldMsg);
+          setWidgetAccessUnlocked(false, needHoldMsg);
+        } else {
+          setChatBlurState(false);
+          setWidgetAccessUnlocked(true);
+        }
+
+        if (meetsRequirement) {
           console.log('[Group Chat] Balance sufficient, enabling chat');
           setChatInputState(true, 'Type a message... (or use /help for commands)');
         } else {
           console.log('[Group Chat] Balance insufficient');
-          setChatInputState(false, `Need at least ${formatNumber(getCurrentMinRequirement())} Luna to chat`);
+          setChatInputState(false, `Hold ${formatNumber(minRequirement)} Luna or deposit to chat`);
         }
       } catch (error) {
         console.error('[Group Chat] Balance check error:', error);
@@ -3110,7 +3530,10 @@
         if (walletBalanceFixed) {
           walletBalanceFixed.textContent = 'Error';
         }
+        const balanceErrorMsg = 'Unable to verify Luna balance. Please try again.';
         setChatInputState(false, 'Balance check failed. Please try again');
+        setChatBlurState(true, balanceErrorMsg);
+        setWidgetAccessUnlocked(false, balanceErrorMsg);
       }
     }
 
@@ -3122,7 +3545,10 @@
         balanceRequirement.style.display = 'none';
       }
       
+      const message = 'Connect your wallet to view chat history.';
       setChatInputState(false, 'Please connect Wallet');
+      setChatBlurState(true, message);
+      setWidgetAccessUnlocked(false, message);
     }
 
     // Connect WebSocket
@@ -3338,8 +3764,8 @@
         return;
       }
 
-      if (currentBalance < getCurrentMinRequirement()) {
-        notifyUser(`You need at least ${formatNumber(getCurrentMinRequirement())} Luna to chat`, 'warning');
+      if (!hasDepositAccess && currentBalance < getCurrentMinRequirement()) {
+        notifyUser(`Hold ${formatNumber(getCurrentMinRequirement())} Luna or make a deposit to chat`, 'warning');
         await checkBalance();
         return;
       }
@@ -3461,12 +3887,12 @@
           finalBtnLoading.classList.add('hidden');
         }
         
-        const canChat = walletConnected && walletPublicKey && currentBalance >= getCurrentMinRequirement();
+        const canChat = walletConnected && walletPublicKey && hasChatAccess();
         setChatInputState(
           canChat,
           canChat
             ? 'Type a message... (or use /help for commands)'
-            : `Need at least ${formatNumber(getCurrentMinRequirement())} Luna to chat`
+            : `Hold ${formatNumber(getCurrentMinRequirement())} Luna or deposit to chat`
         );
         
         if (canChat && input) {

@@ -1,149 +1,199 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPEhtml>
+<htmllang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>404 - Page not found</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+<metacharset="UTF-8">
+<metaname="viewport"content="width=device-width,initial-scale=1.0">
+<title>404-Pagenotfound</title>
+<linkrel="stylesheet"href="/css/cyberpunk-neon.css">
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
 
-    body {
-      font-family: 'Courier New', 'Monaco', monospace;
-      background: #0a0a0a;
-      background-image: 
-        radial-gradient(circle at 20% 50%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(255, 0, 255, 0.1) 0%, transparent 50%),
-        linear-gradient(135deg, #0a0a0a 0%, #1a0a2e 50%, #16213e 100%);
-      color: #00ffff;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      position: relative;
-      overflow: hidden;
-    }
-    
-    body::before {
-      content: '';
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: 
-        repeating-linear-gradient(
-          0deg,
-          transparent,
-          transparent 2px,
-          rgba(0, 255, 255, 0.03) 2px,
-          rgba(0, 255, 255, 0.03) 4px
-        );
-      pointer-events: none;
-      z-index: 0;
-    }
+body{
+font-family:'SpaceGrotesk','CourierNew','Monaco',monospace;
+background:
+radial-gradient(circleat20%20%,rgba(0,255,255,0.12),transparent45%),
+radial-gradient(circleat85%5%,rgba(255,60,172,0.12),transparent55%),
+radial-gradient(circleat70%80%,rgba(116,39,255,0.15),transparent60%),
+linear-gradient(135deg,#02000d0%,#050b1f35%,#05052465%,#0b0140100%);
+background-attachment:fixed;
+color:rgba(255,255,255,0.92);
+display:flex;
+justify-content:center;
+align-items:center;
+min-height:100vh;
+position:relative;
+overflow:hidden;
+}
 
-    .error-container {
-      position: relative;
-      z-index: 1;
-      text-align: center;
-      padding: 40px;
-    }
+body::before{
+content:'';
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:
+repeating-linear-gradient(
+0deg,
+transparent,
+transparent2px,
+rgba(0,255,255,0.03)2px,
+rgba(0,255,255,0.03)4px
+);
+pointer-events:none;
+z-index:0;
+}
 
-    .error-code {
-      font-size: 8rem;
-      font-weight: bold;
-      text-shadow: 0 0 30px #00ffff, 0 0 60px #00ffff;
-      margin-bottom: 20px;
-      background: linear-gradient(135deg, #00ffff, #ff00ff);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
+.error-container{
+position:relative;
+z-index:1;
+text-align:center;
+padding:50px40px;
+background:rgba(5,8,30,0.75);
+border:1pxsolidrgba(0,255,255,0.25);
+border-radius:32px;
+backdrop-filter:blur(24px)saturate(140%);
+-webkit-backdrop-filter:blur(24px)saturate(140%);
+box-shadow:
+025px65pxrgba(2,10,30,0.65),
+00120pxrgba(0,255,255,0.12),
+inset01px0rgba(255,255,255,0.1);
+max-width:800px;
+width:90%;
+overflow:hidden;
+isolation:isolate;
+}
 
-    .error-message {
-      font-size: 2rem;
-      margin-bottom: 30px;
-      color: #a0ffff;
-    }
+.error-container::before{
+content:'';
+position:absolute;
+inset:0;
+border-radius:inherit;
+background:linear-gradient(120deg,rgba(0,255,255,0.8),rgba(116,39,255,0.65),rgba(255,60,172,0.6));
+opacity:0.35;
+filter:blur(25px);
+z-index:-2;
+animation:borderGlow6sease-in-outinfinite;
+}
 
-    .error-description {
-      font-size: 1.2rem;
-      color: #a0ffff;
-      margin-bottom: 40px;
-      line-height: 1.6;
-    }
+.error-container::after{
+content:'';
+position:absolute;
+inset:1px;
+border-radius:inherit;
+background:linear-gradient(130deg,rgba(255,255,255,0.08),transparent60%);
+z-index:-1;
+opacity:0.6;
+}
 
-    .btn {
-      display: inline-block;
-      padding: 15px 30px;
-      margin: 10px;
-      border: 2px solid #00ffff;
-      background: rgba(0, 255, 255, 0.1);
-      color: #00ffff;
-      text-decoration: none;
-      border-radius: 8px;
-      transition: all 0.3s;
-      font-family: 'Courier New', monospace;
-      font-size: 1.1rem;
-    }
+@keyframesborderGlow{
+0%,100%{opacity:0.15;filter:blur(0px);}
+50%{opacity:0.5;filter:blur(1px);}
+}
 
-    .btn:hover {
-      background: rgba(0, 255, 255, 0.2);
-      box-shadow: 0 0 20px #00ffff;
-      transform: translateY(-2px);
-    }
+.error-code{
+font-size:8rem;
+font-weight:bold;
+text-shadow:0030px#00ffff,0060px#00ffff;
+margin-bottom:20px;
+background:linear-gradient(135deg,#00ffff,#ff00ff);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+background-clip:text;
+}
 
-    .btn-primary {
-      background: linear-gradient(135deg, #00ffff, #ff00ff);
-      color: #0a0a0a;
-      border: none;
-      font-weight: bold;
-    }
+.error-message{
+font-size:2rem;
+margin-bottom:30px;
+color:#a0ffff;
+}
 
-    .btn-primary:hover {
-      box-shadow: 0 0 30px rgba(0, 255, 255, 0.8);
-    }
+.error-description{
+font-size:1.2rem;
+color:#a0ffff;
+margin-bottom:40px;
+line-height:1.6;
+}
 
-    @keyframes float {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-20px); }
-    }
+.btn{
+display:inline-block;
+padding:15px30px;
+margin:10px;
+border:1pxsolidrgba(0,255,255,0.5);
+background:rgba(5,8,30,0.65);
+color:#00ffff;
+text-decoration:none;
+border-radius:16px;
+transition:all0.3sease;
+font-family:'SpaceGrotesk','CourierNew',monospace;
+font-size:1.1rem;
+backdrop-filter:blur(10px)saturate(140%);
+-webkit-backdrop-filter:blur(10px)saturate(140%);
+box-shadow:08px20pxrgba(0,0,0,0.4),0015pxrgba(0,255,255,0.2);
+text-transform:uppercase;
+letter-spacing:0.1em;
+font-weight:600;
+}
 
-    .moon {
-      font-size: 5rem;
-      animation: float 3s ease-in-out infinite;
-      margin-bottom: 30px;
-    }
+.btn:hover{
+background:rgba(0,255,255,0.15);
+border-color:rgba(0,255,255,0.7);
+box-shadow:012px30pxrgba(0,0,0,0.5),0025pxrgba(0,255,255,0.4);
+transform:translateY(-2px);
+}
 
-    @media (max-width: 768px) {
-      .error-code {
-        font-size: 5rem;
-      }
+.btn-primary{
+background:linear-gradient(135deg,rgba(0,255,255,0.25),rgba(116,39,255,0.2));
+color:#00ffff;
+border:1pxsolidrgba(0,255,255,0.6);
+font-weight:bold;
+}
 
-      .error-message {
-        font-size: 1.5rem;
-      }
-    }
-  </style>
+.btn-primary:hover{
+background:linear-gradient(135deg,rgba(0,255,255,0.35),rgba(116,39,255,0.3));
+box-shadow:012px30pxrgba(0,0,0,0.5),0030pxrgba(0,255,255,0.6);
+}
+
+@keyframesfloat{
+0%,100%{transform:translateY(0px);}
+50%{transform:translateY(-20px);}
+}
+
+.moon{
+font-size:5rem;
+animation:float3sease-in-outinfinite;
+margin-bottom:30px;
+}
+
+@media(max-width:768px){
+.error-code{
+font-size:5rem;
+}
+
+.error-message{
+font-size:1.5rem;
+}
+}
+</style>
 </head>
-<body>
-  <div class="error-container">
-    <div class="moon">🌙</div>
-    <div class="error-code">404</div>
-    <div class="error-message">This page isn't available.</div>
-    <div class="error-description">
-      The link may be outdated or the route was moved.<br>
-      Jump back into the VS Luna experience or open the betting lobby.
-    </div>
-    <div>
-      <a href="/rps_vs_luna.html" class="btn btn-primary">Play VS Luna</a>
-      <a href="/rps_betting.html" class="btn">Betting Rooms</a>
-    </div>
-  </div>
+<bodyclass="cyber-page">
+<divclass="error-container">
+<divclass="moon">🌙</div>
+<divclass="error-code">404</div>
+<divclass="error-message">Thispageisn'tavailable.</div>
+<divclass="error-description">
+Thelinkmaybeoutdatedortheroutewasmoved.<br>
+JumpbackintotheVSLunaexperienceoropenthebettinglobby.
+</div>
+<div>
+<ahref="/rps_vs_luna.html"class="btnbtn-primary">PlayVSLuna</a>
+<ahref="/rps_betting.html"class="btn">BettingRooms</a>
+</div>
+</div>
 </body>
 </html>
 

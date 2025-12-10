@@ -77,20 +77,31 @@ export async function initDB() {
         min_requirement_usd REAL DEFAULT 0
       )`);
       db.run(`CREATE INDEX IF NOT EXISTS idx_luna_deposits_wallet ON luna_deposits(wallet, status)`);
+      db.run(`CREATE INDEX IF NOT EXISTS idx_luna_deposits_status_withdraw_intent ON luna_deposits(status, withdraw_intent_at)`);
+      db.run(`CREATE INDEX IF NOT EXISTS idx_luna_deposits_tx_signature ON luna_deposits(tx_signature)`);
       db.run(`CREATE TABLE IF NOT EXISTS rps_match_history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         player1_wallet TEXT NOT NULL,
         player2_wallet TEXT NOT NULL,
-        mode TEXT NOT NULL,
+        mode TEXT,
         player1_choice TEXT,
         player2_choice TEXT,
-        result TEXT NOT NULL,
+        result TEXT,
         winner_wallet TEXT,
         bet_amount REAL DEFAULT 0,
         prize_amount REAL DEFAULT 0,
-        timestamp INTEGER NOT NULL,
+        timestamp INTEGER,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
       )`);
+      db.run(`CREATE TABLE IF NOT EXISTS rps_leaderboard (
+        wallet TEXT PRIMARY KEY,
+        wins INTEGER DEFAULT 0,
+        losses INTEGER DEFAULT 0,
+        total_won REAL DEFAULT 0,
+        total_sol_won REAL DEFAULT 0,
+        updated_at INTEGER
+      )`);
+      db.run(`CREATE INDEX IF NOT EXISTS idx_rps_leaderboard_total_won ON rps_leaderboard(total_won)`);
       
       const alterStatements = [
         "ALTER TABLE luna_deposits ADD COLUMN tx_signature TEXT",
@@ -111,31 +122,43 @@ export async function initDB() {
           }
         });
       });
+
+      const rpsHistoryAlterStatements = [
+        "ALTER TABLE rps_match_history ADD COLUMN mode TEXT",
+        "ALTER TABLE rps_match_history ADD COLUMN player1_choice TEXT",
+        "ALTER TABLE rps_match_history ADD COLUMN player2_choice TEXT",
+        "ALTER TABLE rps_match_history ADD COLUMN result TEXT",
+        "ALTER TABLE rps_match_history ADD COLUMN winner_wallet TEXT",
+        "ALTER TABLE rps_match_history ADD COLUMN bet_amount REAL DEFAULT 0",
+        "ALTER TABLE rps_match_history ADD COLUMN prize_amount REAL DEFAULT 0",
+        "ALTER TABLE rps_match_history ADD COLUMN timestamp INTEGER"
+      ];
+      rpsHistoryAlterStatements.forEach((sql) => {
+        db.run(sql, (err) => {
+          if (err && !String(err.message).includes("duplicate column name")) {
+            console.warn("[db] migrate rps_match_history:", err.message);
+          }
+        });
+      });
     });
     
-    // Run migration for rps_match_history timestamp column (after serialize completes)
+    // Ensure indexes exist after migrations complete
     await new Promise((resolve) => {
-      db.run("ALTER TABLE rps_match_history ADD COLUMN timestamp INTEGER", (err) => {
-        if (err && !String(err.message).includes("duplicate column name")) {
-          console.warn("[db] migrate rps_match_history timestamp:", err.message);
+      db.run(`CREATE INDEX IF NOT EXISTS idx_rps_match_history_player1 ON rps_match_history(player1_wallet, timestamp DESC)`, (err) => {
+        if (err && !String(err.message).includes("no such column")) {
+          console.warn("[db] index player1:", err.message);
         }
-        // Create indexes after migration
-        db.run(`CREATE INDEX IF NOT EXISTS idx_rps_match_history_player1 ON rps_match_history(player1_wallet, timestamp DESC)`, (err) => {
-          if (err && !String(err.message).includes("no such column")) {
-            console.warn("[db] index player1:", err.message);
-          }
-        });
-        db.run(`CREATE INDEX IF NOT EXISTS idx_rps_match_history_player2 ON rps_match_history(player2_wallet, timestamp DESC)`, (err) => {
-          if (err && !String(err.message).includes("no such column")) {
-            console.warn("[db] index player2:", err.message);
-          }
-        });
-        db.run(`CREATE INDEX IF NOT EXISTS idx_rps_match_history_timestamp ON rps_match_history(timestamp DESC)`, (err) => {
-          if (err && !String(err.message).includes("no such column")) {
-            console.warn("[db] index timestamp:", err.message);
-          }
-          resolve();
-        });
+      });
+      db.run(`CREATE INDEX IF NOT EXISTS idx_rps_match_history_player2 ON rps_match_history(player2_wallet, timestamp DESC)`, (err) => {
+        if (err && !String(err.message).includes("no such column")) {
+          console.warn("[db] index player2:", err.message);
+        }
+      });
+      db.run(`CREATE INDEX IF NOT EXISTS idx_rps_match_history_timestamp ON rps_match_history(timestamp DESC)`, (err) => {
+        if (err && !String(err.message).includes("no such column")) {
+          console.warn("[db] index timestamp:", err.message);
+        }
+        resolve();
       });
     });
     
@@ -199,24 +222,49 @@ export async function initDB() {
       min_requirement_usd REAL DEFAULT 0
     )`);
     await pg.query(`CREATE INDEX IF NOT EXISTS idx_luna_deposits_wallet ON luna_deposits(wallet, status)`);
+    await pg.query(`CREATE INDEX IF NOT EXISTS idx_luna_deposits_status_withdraw_intent ON luna_deposits(status, withdraw_intent_at)`);
+    await pg.query(
+      `CREATE INDEX IF NOT EXISTS idx_luna_deposits_tx_signature ON luna_deposits(tx_signature) WHERE tx_signature IS NOT NULL`
+    );
     await pg.query(`CREATE TABLE IF NOT EXISTS rps_match_history (
       id SERIAL PRIMARY KEY,
       player1_wallet TEXT NOT NULL,
       player2_wallet TEXT NOT NULL,
-      mode TEXT NOT NULL,
+      mode TEXT,
       player1_choice TEXT,
       player2_choice TEXT,
-      result TEXT NOT NULL,
+      result TEXT,
       winner_wallet TEXT,
       bet_amount REAL DEFAULT 0,
       prize_amount REAL DEFAULT 0,
-      timestamp BIGINT NOT NULL,
+      timestamp BIGINT,
       created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     )`);
+    await pg.query(`CREATE TABLE IF NOT EXISTS rps_leaderboard (
+      wallet TEXT PRIMARY KEY,
+      wins INTEGER DEFAULT 0,
+      losses INTEGER DEFAULT 0,
+      total_won REAL DEFAULT 0,
+      total_sol_won REAL DEFAULT 0,
+      updated_at BIGINT
+    )`);
+    await pg.query(`CREATE INDEX IF NOT EXISTS idx_rps_leaderboard_total_won ON rps_leaderboard(total_won)`);
     await pg.query(`CREATE INDEX IF NOT EXISTS idx_rps_match_history_player1 ON rps_match_history(player1_wallet, timestamp DESC)`);
     await pg.query(`CREATE INDEX IF NOT EXISTS idx_rps_match_history_player2 ON rps_match_history(player2_wallet, timestamp DESC)`);
     await pg.query(`CREATE INDEX IF NOT EXISTS idx_rps_match_history_timestamp ON rps_match_history(timestamp DESC)`);
-    await pg.query(`ALTER TABLE rps_match_history ADD COLUMN IF NOT EXISTS timestamp BIGINT`);
+    const rpsHistoryAlterStatementsPg = [
+      "ALTER TABLE rps_match_history ADD COLUMN IF NOT EXISTS mode TEXT",
+      "ALTER TABLE rps_match_history ADD COLUMN IF NOT EXISTS player1_choice TEXT",
+      "ALTER TABLE rps_match_history ADD COLUMN IF NOT EXISTS player2_choice TEXT",
+      "ALTER TABLE rps_match_history ADD COLUMN IF NOT EXISTS result TEXT",
+      "ALTER TABLE rps_match_history ADD COLUMN IF NOT EXISTS winner_wallet TEXT",
+      "ALTER TABLE rps_match_history ADD COLUMN IF NOT EXISTS bet_amount REAL DEFAULT 0",
+      "ALTER TABLE rps_match_history ADD COLUMN IF NOT EXISTS prize_amount REAL DEFAULT 0",
+      "ALTER TABLE rps_match_history ADD COLUMN IF NOT EXISTS timestamp BIGINT"
+    ];
+    for (const sql of rpsHistoryAlterStatementsPg) {
+      await pg.query(sql);
+    }
     await pg.query(`ALTER TABLE luna_deposits ADD COLUMN IF NOT EXISTS tx_signature TEXT`);
     await pg.query(`ALTER TABLE luna_deposits ADD COLUMN IF NOT EXISTS gross_amount REAL`);
     await pg.query(`ALTER TABLE luna_deposits ADD COLUMN IF NOT EXISTS block_time BIGINT`);
@@ -439,24 +487,120 @@ export async function getTotalBurnedLuna() {
  */
 export async function getActiveDeposit(wallet) {
   if (driver === "sqlite" && db) {
-    return new Promise((resolve, reject) => {
-      db.get(
-        "SELECT * FROM luna_deposits WHERE wallet = ? AND status = 'active' ORDER BY deposit_date DESC LIMIT 1",
-        [wallet],
-        (err, row) => {
+      return new Promise((resolve, reject) => {
+        // Return only 'active' deposits - used to check if user can deposit
+        db.get(
+          "SELECT * FROM luna_deposits WHERE wallet = ? AND status = 'active' ORDER BY deposit_date DESC LIMIT 1",
+          [wallet],
+          (err, row) => {
+            if (err) reject(err);
+            else resolve(row || null);
+          }
+        );
+      });
+    } else if (driver === "postgres" && pg) {
+      const result = await pg.query(
+        // Return only 'active' deposits - used to check if user can deposit
+        "SELECT * FROM luna_deposits WHERE wallet = $1 AND status = 'active' ORDER BY deposit_date DESC LIMIT 1",
+        [wallet]
+      );
+      return result.rows[0] || null;
+  }
+  return null;
+}
+
+// Get deposit for status display (includes both active and withdrawn)
+export async function getDepositForStatus(wallet) {
+  if (!wallet) return null;
+  try {
+    if (driver === "sqlite" && db) {
+      return new Promise((resolve, reject) => {
+        // Return both 'active' and 'withdrawn' deposits for status display
+        db.get(
+          "SELECT * FROM luna_deposits WHERE wallet = ? AND (status = 'active' OR status = 'withdrawn') ORDER BY deposit_date DESC LIMIT 1",
+          [wallet],
+          (err, row) => {
+            if (err) reject(err);
+            else resolve(row || null);
+          }
+        );
+      });
+    } else if (driver === "postgres" && pg) {
+      const result = await pg.query(
+        // Return both 'active' and 'withdrawn' deposits for status display
+        "SELECT * FROM luna_deposits WHERE wallet = $1 AND (status = 'active' OR status = 'withdrawn') ORDER BY deposit_date DESC LIMIT 1",
+        [wallet]
+      );
+      return result.rows[0] || null;
+    }
+  } catch (error) {
+    log.error("[db] getDepositForStatus error:", error);
+    return null;
+  }
+  return null;
+}
+
+export async function getDepositBalance(wallet) {
+  if (!wallet) return 0;
+  const deposit = await getActiveDeposit(wallet);
+  return deposit ? Number(deposit.deposit_amount) || 0 : 0;
+}
+
+async function adjustDepositAmount(wallet, amountDelta) {
+  if (!wallet) {
+    return { ok: false, error: "WalletRequired", balance: 0 };
+  }
+  if (!Number.isFinite(amountDelta) || amountDelta === 0) {
+    const currentBalance = await getDepositBalance(wallet);
+    return { ok: true, balance: currentBalance };
+  }
+
+  const deposit = await getActiveDeposit(wallet);
+  if (!deposit) {
+    return { ok: false, error: "NoActiveDeposit", balance: 0 };
+  }
+
+  const currentAmount = Number(deposit.deposit_amount) || 0;
+  const nextAmount = currentAmount + amountDelta;
+
+  if (nextAmount < -1e-6) {
+    return { ok: false, error: "InsufficientDeposit", balance: currentAmount };
+  }
+
+  const params = [nextAmount, deposit.id];
+
+  if (driver === "sqlite" && db) {
+    await new Promise((resolve, reject) => {
+      db.run(
+        "UPDATE luna_deposits SET deposit_amount = ? WHERE id = ?",
+        params,
+        function (err) {
           if (err) reject(err);
-          else resolve(row || null);
+          else resolve(true);
         }
       );
     });
   } else if (driver === "postgres" && pg) {
-    const result = await pg.query(
-      "SELECT * FROM luna_deposits WHERE wallet = $1 AND status = 'active' ORDER BY deposit_date DESC LIMIT 1",
-      [wallet]
-    );
-    return result.rows[0] || null;
+    await pg.query("UPDATE luna_deposits SET deposit_amount = $1 WHERE id = $2", params);
+  } else {
+    return { ok: false, error: "DBUnavailable", balance: currentAmount };
   }
-  return null;
+
+  return { ok: true, balance: nextAmount };
+}
+
+export async function lockLunaDeposit(wallet, amount) {
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return { ok: false, error: "InvalidAmount", balance: await getDepositBalance(wallet) };
+  }
+  return adjustDepositAmount(wallet, -Math.abs(amount));
+}
+
+export async function unlockLunaDeposit(wallet, amount) {
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return { ok: true, balance: await getDepositBalance(wallet) };
+  }
+  return adjustDepositAmount(wallet, Math.abs(amount));
 }
 
 /**
@@ -490,8 +634,9 @@ export async function updateLunaDeposit(wallet, additionalAmount) {
 export async function withdrawDeposit(wallet, withdrawDate, withdrawSignature = null) {
   if (driver === "sqlite" && db) {
     return new Promise((resolve, reject) => {
+      // Allow withdrawal even if already withdrawn (user can withdraw anytime after depositing once)
       db.run(
-        "UPDATE luna_deposits SET status = 'withdrawn', withdraw_date = ?, withdraw_signature = ? WHERE wallet = ? AND status = 'active'",
+        "UPDATE luna_deposits SET status = 'withdrawn', withdraw_date = ?, withdraw_signature = ? WHERE wallet = ? AND (status = 'active' OR status = 'withdrawn')",
         [withdrawDate, withdrawSignature, wallet],
         function(err) {
           if (err) reject(err);
@@ -501,7 +646,8 @@ export async function withdrawDeposit(wallet, withdrawDate, withdrawSignature = 
     });
   } else if (driver === "postgres" && pg) {
     const result = await pg.query(
-      "UPDATE luna_deposits SET status = 'withdrawn', withdraw_date = $1, withdraw_signature = $2 WHERE wallet = $3 AND status = 'active'",
+      // Allow withdrawal even if already withdrawn (user can withdraw anytime after depositing once)
+      "UPDATE luna_deposits SET status = 'withdrawn', withdraw_date = $1, withdraw_signature = $2 WHERE wallet = $3 AND (status = 'active' OR status = 'withdrawn')",
       [withdrawDate, withdrawSignature, wallet]
     );
     return result.rowCount > 0;
@@ -601,6 +747,63 @@ export async function getPendingWithdrawals(limit = 20) {
     return result.rows || [];
   }
   return [];
+}
+
+export async function getQueueMetrics() {
+  const empty = {
+    totalDeposits: 0,
+    activeDeposits: 0,
+    withdrawnDeposits: 0,
+    pendingWithdrawals: 0,
+    lastDepositAt: null,
+    lastWithdrawIntentAt: null,
+    lastWithdrawAt: null,
+  };
+
+  const mapRow = (row = {}) => ({
+    totalDeposits: Number(row.total_deposits ?? row.totalDeposits ?? 0) || 0,
+    activeDeposits: Number(row.active_deposits ?? row.activeDeposits ?? 0) || 0,
+    withdrawnDeposits: Number(row.withdrawn_deposits ?? row.withdrawnDeposits ?? 0) || 0,
+    pendingWithdrawals: Number(row.pending_withdrawals ?? row.pendingWithdrawals ?? 0) || 0,
+    lastDepositAt: row.last_deposit_at ?? null,
+    lastWithdrawIntentAt: row.last_withdraw_intent_at ?? null,
+    lastWithdrawAt: row.last_withdraw_at ?? null,
+  });
+
+  const sql = `
+    SELECT
+      COUNT(*) AS total_deposits,
+      SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) AS active_deposits,
+      SUM(CASE WHEN status = 'withdrawn' THEN 1 ELSE 0 END) AS withdrawn_deposits,
+      SUM(CASE WHEN status = 'active' AND withdraw_intent_at IS NOT NULL THEN 1 ELSE 0 END) AS pending_withdrawals,
+      MAX(deposit_date) AS last_deposit_at,
+      MAX(withdraw_intent_at) AS last_withdraw_intent_at,
+      MAX(withdraw_date) AS last_withdraw_at
+    FROM luna_deposits
+  `;
+
+  if (driver === "sqlite" && db) {
+    return new Promise((resolve) => {
+      db.get(sql, [], (err, row) => {
+        if (err) {
+          console.warn("[db] queue metrics (sqlite):", err.message);
+          resolve(empty);
+        } else {
+          resolve(mapRow(row));
+        }
+      });
+    });
+  } else if (driver === "postgres" && pg) {
+    try {
+      const result = await pg.query(sql);
+      return mapRow(result.rows?.[0] || {});
+    } catch (err) {
+      console.warn("[db] queue metrics (postgres):", err.message);
+      return empty;
+    }
+  }
+
+  return empty;
 }
 
 /**
@@ -705,4 +908,239 @@ export async function getMatchHistory(wallet, limit = 100) {
   }
 
   return [];
+}
+
+function normalizeModeValue(mode) {
+  if (!mode || typeof mode !== "string") {
+    return null;
+  }
+  const trimmed = mode.trim();
+  if (!trimmed) {
+    return null;
+  }
+  const lowered = trimmed.toLowerCase();
+  if (["vs luna", "vs-luna", "vs_luna", "vs luna mode", "vsluna"].includes(lowered)) {
+    return "VS Luna";
+  }
+  if (["betting", "bet", "betting mode"].includes(lowered)) {
+    return "Betting";
+  }
+  if (["pvp", "matchmaking", "match-making", "p v p"].includes(lowered)) {
+    return "PvP";
+  }
+  return trimmed;
+}
+
+export async function getRpsStatsFromHistory({ wallet, mode = null } = {}) {
+  const emptyStats = {
+    totalGames: 0,
+    wins: 0,
+    losses: 0,
+    draws: 0,
+    totalWon: 0,
+    totalBet: 0,
+    mode: normalizeModeValue(mode),
+  };
+
+  if (!wallet || typeof wallet !== "string") {
+    return emptyStats;
+  }
+
+  const normalizedMode = emptyStats.mode;
+  const includeLegacyVsLuna = normalizedMode === "VS Luna";
+
+  const buildStatsResponse = (row = {}) => ({
+    totalGames: Number(row.totalGames) || 0,
+    wins: Number(row.wins) || 0,
+    losses: Number(row.losses) || 0,
+    draws: Number(row.draws) || 0,
+    totalWon: Number(row.totalWon) || 0,
+    totalBet: Number(row.totalBet) || 0,
+    mode: normalizedMode,
+  });
+
+  const aggregateSelect = `
+    SELECT
+      COUNT(*) AS totalGames,
+      SUM(CASE WHEN LOWER(result) = 'win' THEN 1 ELSE 0 END) AS wins,
+      SUM(CASE WHEN LOWER(result) IN ('lose','loss') THEN 1 ELSE 0 END) AS losses,
+      SUM(CASE WHEN LOWER(result) IN ('draw','tie') THEN 1 ELSE 0 END) AS draws,
+      SUM(COALESCE(prize_amount, 0)) AS totalWon,
+      SUM(COALESCE(bet_amount, 0)) AS totalBet
+    FROM rps_match_history
+  `;
+
+  if (driver === "sqlite" && db) {
+    const params = [wallet];
+    let whereClause = "player1_wallet = ?";
+    if (normalizedMode) {
+      let modeCondition = "LOWER(mode) = LOWER(?)";
+      if (includeLegacyVsLuna) {
+        modeCondition = `(${modeCondition} OR (mode IS NULL AND LOWER(player2_wallet) = 'luna'))`;
+      }
+      whereClause += ` AND ${modeCondition}`;
+      params.push(normalizedMode);
+    }
+    const query = `${aggregateSelect} WHERE ${whereClause}`;
+    return new Promise((resolve, reject) => {
+      db.get(query, params, (err, row) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(buildStatsResponse(row));
+        }
+      });
+    }).catch((err) => {
+      console.error("[db] Failed to aggregate RPS stats (sqlite):", err);
+      return emptyStats;
+    });
+  } else if (driver === "postgres" && pg) {
+    const params = [wallet];
+    let whereClause = "player1_wallet = $1";
+    if (normalizedMode) {
+      params.push(normalizedMode);
+      const modeParamIndex = params.length;
+      let modeCondition = `LOWER(mode) = LOWER($${modeParamIndex})`;
+      if (includeLegacyVsLuna) {
+        modeCondition = `(${modeCondition} OR (mode IS NULL AND LOWER(player2_wallet) = 'luna'))`;
+      }
+      whereClause += ` AND ${modeCondition}`;
+    }
+    const query = `${aggregateSelect} WHERE ${whereClause}`;
+    try {
+      const result = await pg.query(query, params);
+      return buildStatsResponse(result.rows?.[0]);
+    } catch (err) {
+      console.error("[db] Failed to aggregate RPS stats (postgres):", err);
+      return emptyStats;
+    }
+  }
+
+  return emptyStats;
+}
+
+function normalizeLeaderboardRow(row = {}) {
+  return {
+    wallet: row.wallet,
+    wins: Number(row.wins ?? row.WINS) || 0,
+    losses: Number(row.losses ?? row.LOSSES) || 0,
+    totalWon: Number(row.totalWon ?? row.total_won ?? row.TOTAL_WON) || 0,
+    totalSolWon: Number(row.totalSolWon ?? row.total_sol_won ?? row.TOTAL_SOL_WON) || 0,
+  };
+}
+
+export async function loadLeaderboardEntries() {
+  if (driver === "sqlite" && db) {
+    return new Promise((resolve, reject) => {
+      db.all(
+        "SELECT wallet, wins, losses, total_won AS totalWon, total_sol_won AS totalSolWon FROM rps_leaderboard",
+        [],
+        (err, rows = []) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(rows.map(normalizeLeaderboardRow));
+          }
+        }
+      );
+    });
+  } else if (driver === "postgres" && pg) {
+    const result = await pg.query(
+      'SELECT wallet, wins, losses, total_won AS "totalWon", total_sol_won AS "totalSolWon" FROM rps_leaderboard'
+    );
+    return (result.rows || []).map(normalizeLeaderboardRow);
+  }
+  return [];
+}
+
+export async function saveLeaderboardEntry(wallet, stats = {}) {
+  if (!wallet) {
+    return;
+  }
+
+  const payload = {
+    wallet,
+    wins: Number(stats.wins) || 0,
+    losses: Number(stats.losses) || 0,
+    totalWon: Number(stats.totalWon) || 0,
+    totalSolWon: Number(stats.totalSolWon) || 0,
+  };
+  const updatedAt = Date.now();
+
+  if (driver === "sqlite" && db) {
+    return new Promise((resolve, reject) => {
+      db.run(
+        `INSERT INTO rps_leaderboard (wallet, wins, losses, total_won, total_sol_won, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?)
+         ON CONFLICT(wallet) DO UPDATE SET
+           wins = excluded.wins,
+           losses = excluded.losses,
+           total_won = excluded.total_won,
+           total_sol_won = excluded.total_sol_won,
+           updated_at = excluded.updated_at`,
+        [payload.wallet, payload.wins, payload.losses, payload.totalWon, payload.totalSolWon, updatedAt],
+        (err) => {
+          if (err) reject(err);
+          else resolve();
+        }
+      );
+    });
+  } else if (driver === "postgres" && pg) {
+    await pg.query(
+      `INSERT INTO rps_leaderboard (wallet, wins, losses, total_won, total_sol_won, updated_at)
+       VALUES ($1,$2,$3,$4,$5,$6)
+       ON CONFLICT (wallet) DO UPDATE SET
+         wins = EXCLUDED.wins,
+         losses = EXCLUDED.losses,
+         total_won = EXCLUDED.total_won,
+         total_sol_won = EXCLUDED.total_sol_won,
+         updated_at = EXCLUDED.updated_at`,
+      [payload.wallet, payload.wins, payload.losses, payload.totalWon, payload.totalSolWon, updatedAt]
+    );
+  }
+}
+
+export async function clearLeaderboardEntries() {
+  if (driver === "sqlite" && db) {
+    return new Promise((resolve, reject) => {
+      db.run("DELETE FROM rps_leaderboard", [], (err) => {
+        if (err) reject(err);
+        else resolve(true);
+      });
+    });
+  } else if (driver === "postgres" && pg) {
+    await pg.query("DELETE FROM rps_leaderboard");
+    return true;
+  }
+  return false;
+}
+
+export async function getLeaderboardEntry(wallet) {
+  if (!wallet) {
+    return null;
+  }
+
+  if (driver === "sqlite" && db) {
+    return new Promise((resolve, reject) => {
+      db.get(
+        "SELECT wallet, wins, losses, total_won AS totalWon, total_sol_won AS totalSolWon FROM rps_leaderboard WHERE wallet = ?",
+        [wallet],
+        (err, row) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(row ? normalizeLeaderboardRow(row) : null);
+          }
+        }
+      );
+    });
+  } else if (driver === "postgres" && pg) {
+    const result = await pg.query(
+      'SELECT wallet, wins, losses, total_won AS "totalWon", total_sol_won AS "totalSolWon" FROM rps_leaderboard WHERE wallet = $1 LIMIT 1',
+      [wallet]
+    );
+    return result.rows?.[0] ? normalizeLeaderboardRow(result.rows[0]) : null;
+  }
+
+  return null;
 }

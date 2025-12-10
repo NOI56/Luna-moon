@@ -2,6 +2,7 @@
 // RPS Rewards Routes
 
 import { log } from "../modules/logger.js";
+import { Connection, PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
 
 /**
  * Setup RPS Rewards routes
@@ -12,10 +13,88 @@ export function setupRpsRewardsRoutes(app, dependencies) {
   const {
     rewardPool,
     rpsLeaderboard,
+    collectedFees,
+    BETTING_FEE_WALLET,
+    SOLANA_RPC_URL,
     REWARD_DISTRIBUTION_WALLET,
     REWARD_PERCENTAGES,
     distributeRewards,
   } = dependencies;
+
+  /**
+   * Resolve current reward pool value from dependency (supports primitive or state accessor)
+   */
+  function getRewardPoolValue() {
+    if (rewardPool && typeof rewardPool === "object") {
+      const value = rewardPool.value ?? (typeof rewardPool.get === "function" ? rewardPool.get() : undefined);
+      if (typeof value === "number" && Number.isFinite(value)) {
+        return value;
+      }
+    }
+    const numericValue = Number(rewardPool);
+    return Number.isFinite(numericValue) ? numericValue : 0;
+  }
+
+  /**
+   * Calculate total fees collected in SOL
+   */
+  function getTotalFeesCollected() {
+    if (!collectedFees || typeof collectedFees.forEach !== "function") {
+      return 0;
+    }
+
+    let total = 0;
+    if (typeof collectedFees.values === "function") {
+      for (const entry of collectedFees.values()) {
+        total += entry?.totalFees || 0;
+      }
+    } else if (Array.isArray(collectedFees)) {
+      collectedFees.forEach((entry) => {
+        total += entry?.totalFees || 0;
+      });
+    }
+    return total;
+  }
+
+  async function getFeeWalletBalanceInfo() {
+    const feeWallet = BETTING_FEE_WALLET || process.env.BETTING_FEE_WALLET;
+    if (!feeWallet) {
+      return {
+        wallet: null,
+        balanceLamports: null,
+        balanceSol: null,
+        available: false,
+        message: "BETTING_FEE_WALLET not configured",
+      };
+    }
+
+    const rpcEndpoint =
+      SOLANA_RPC_URL ||
+      process.env.SOLANA_RPC_URL ||
+      "https://api.mainnet-beta.solana.com";
+
+    try {
+      const connection = new Connection(rpcEndpoint, "confirmed");
+      const balanceLamports = await connection.getBalance(new PublicKey(feeWallet));
+      const balanceSol = balanceLamports / LAMPORTS_PER_SOL;
+
+      return {
+        wallet: feeWallet,
+        balanceLamports,
+        balanceSol,
+        available: true,
+      };
+    } catch (error) {
+      log.error("[rps] Fee wallet balance fetch error:", error);
+      return {
+        wallet: feeWallet,
+        balanceLamports: null,
+        balanceSol: null,
+        available: false,
+        error: error.message || "Failed to fetch fee wallet balance",
+      };
+    }
+  }
 
   /**
    * Distribute rewards to top 5 players
@@ -61,6 +140,17 @@ export function setupRpsRewardsRoutes(app, dependencies) {
   app.get("/luna/rps/rewards/pool", async (req, res) => {
     try {
       const isDemo = req.query.demo === 'true' || req.query.simulate === 'true';
+      const currentRewardPool = getRewardPoolValue();
+      const totalFeesCollected = getTotalFeesCollected();
+      const feeWalletBalance = isDemo
+        ? {
+            wallet: BETTING_FEE_WALLET || process.env.BETTING_FEE_WALLET || "MockFeeWallet123",
+            balanceLamports: 0,
+            balanceSol: 0,
+            available: false,
+            message: "Demo mode - fee wallet balance not fetched",
+          }
+        : await getFeeWalletBalanceInfo();
       
       let leaderboardArray;
       
@@ -95,17 +185,20 @@ export function setupRpsRewardsRoutes(app, dependencies) {
       const top5 = leaderboardArray.slice(0, 5);
       
       // For demo mode, use mock reward pool if real pool is empty
-      const displayRewardPool = isDemo && rewardPool === 0 ? 12.345678 : rewardPool;
+      const displayRewardPool = isDemo && currentRewardPool === 0 ? 12.345678 : currentRewardPool;
       
-      const distributionPlan = top5.map((player, index) => {
-        const rank = index + 1;
-        return {
-          rank: rank,
-          wallet: player.wallet,
-          percentage: REWARD_PERCENTAGES[rank] * 100,
-          estimatedAmount: displayRewardPool * REWARD_PERCENTAGES[rank],
-        };
-      });
+      const distributionPlan = [];
+      for (let rank = 1; rank <= 5; rank++) {
+        const player = top5[rank - 1] || null;
+        const percentage = REWARD_PERCENTAGES[rank] || 0;
+        distributionPlan.push({
+          rank,
+          wallet: player?.wallet || null,
+          percentage: percentage * 100,
+          estimatedAmount: displayRewardPool * percentage,
+          note: player ? null : "No player in this position yet",
+        });
+      }
       
       if (REWARD_DISTRIBUTION_WALLET) {
         distributionPlan.push({
@@ -127,6 +220,8 @@ export function setupRpsRewardsRoutes(app, dependencies) {
       return res.json({
         ok: true,
         rewardPool: displayRewardPool,
+        totalFeesCollected: totalFeesCollected,
+        feeWalletBalance,
         distributionPlan: distributionPlan,
         top5: top5,
       });

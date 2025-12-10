@@ -14,7 +14,17 @@ import bs58 from "bs58";
 import fetch from "node-fetch";
 
 import { callModel, callSimpleModel, isComplexQuestion } from "./modules/ai.js";
-import { initDB, logChat, saveGroupChatMessage, loadGroupChatMessages, clearAllDeposits } from "./modules/db.js";
+import {
+  initDB,
+  logChat,
+  saveGroupChatMessage,
+  loadGroupChatMessages,
+  clearAllDeposits,
+  loadLeaderboardEntries,
+  saveLeaderboardEntry,
+  clearLeaderboardEntries,
+  getLeaderboardEntry,
+} from "./modules/db.js";
 import { getUserMemory, updateUserMemory } from "./modules/memory.js";
 import { shouldRespondHeuristic, classifyEmotion, calculateEmotionIntensity, classifyMixedEmotions, classifyEmotionContext } from "./modules/classifier.js";
 import { startSolanaWatcher } from "./modules/solana.js";
@@ -64,19 +74,7 @@ import { logError } from "./utils/errorHandler.js";
 // Services
 import { broadcast as broadcastMessage } from "./services/websocketService.js";
 import { sendNotification as sendNotificationMessage } from "./services/notificationService.js";
-import {
-  logSuspiciousActivity as logSuspiciousActivityService,
-  getTotalUniquePlayers as getTotalUniquePlayersService,
-  getWalletOpponentCount as getWalletOpponentCountService,
-  getWalletTotalGames as getWalletTotalGamesService,
-  getDynamicSuspiciousThreshold as getDynamicSuspiciousThresholdService,
-  isSuspiciousWalletPair as isSuspiciousWalletPairService,
-  recordWalletPairMatch as recordWalletPairMatchService,
-  checkIpRateLimit as checkIpRateLimitService,
-  updateIpActivity as updateIpActivityService,
-  trackWalletIp as trackWalletIpService,
-  validateGameRequest as validateGameRequestService
-} from "./services/antiAbuseService.js";
+import * as antiAbuseService from "./services/antiAbuseService.js";
 import {
   fetchLunaPriceInSol as fetchLunaPriceInSolService,
   lunaToSol as lunaToSolService,
@@ -92,6 +90,20 @@ import {
 } from "./services/solanaService.js";
 import { getWalletBalance as getWalletBalanceService } from "./services/walletBalanceService.js";
 import { initializeCompetition as initializeCompetitionService } from "./services/competitionService.js";
+
+const {
+  logSuspiciousActivity: logSuspiciousActivityService,
+  getTotalUniquePlayers: getTotalUniquePlayersService,
+  getWalletOpponentCount: getWalletOpponentCountService,
+  getWalletTotalGames: getWalletTotalGamesService,
+  getDynamicSuspiciousThreshold: getDynamicSuspiciousThresholdService,
+  isSuspiciousWalletPair: isSuspiciousWalletPairService,
+  recordWalletPairMatch: recordWalletPairMatchService,
+  checkIpRateLimit: checkIpRateLimitService,
+  updateIpActivity: updateIpActivityService,
+  trackWalletIp: trackWalletIpService,
+  validateGameRequest: validateGameRequestService,
+} = antiAbuseService;
 
 // Config
 import {
@@ -176,6 +188,7 @@ log.info('[startup] Creating HTTP server...');
 const server = http.createServer(app);
 log.info('[startup] Creating WebSocket server...');
 const wss = new WebSocketServer({ server });
+let isDatabaseReady = false;
 
 const PORT = process.env.PORT || 8787;
 log.info(`[startup] Server will listen on port ${PORT}`);
@@ -509,7 +522,14 @@ let competitionEndTime = getNextMonday(); // End time (next Monday 00:00:00 UTC)
 
 // Wrapper function for competition initialization
 async function initializeCompetition() {
-  const result = await initializeCompetitionService(rpsLeaderboard, rewardPoolState, competitionStartTime, competitionEndTime, distributeRewards);
+  const result = await initializeCompetitionService(
+    rpsLeaderboard,
+    rewardPoolState,
+    competitionStartTime,
+    competitionEndTime,
+    distributeRewards,
+    { clearPersistentLeaderboard }
+  );
   competitionStartTime = result.competitionStartTime;
   competitionEndTime = result.competitionEndTime;
 }
@@ -568,8 +588,8 @@ function checkIpRateLimit(ip) {
   return checkIpRateLimitService(ipActivityMap, GAME_COOLDOWN, ip);
 }
 
-function updateIpActivity(ip) {
-  return updateIpActivityService(ipActivityMap, GAME_COOLDOWN, ip);
+function updateIpActivity(ip, customCooldownMs) {
+  return updateIpActivityService(ipActivityMap, GAME_COOLDOWN, ip, customCooldownMs);
 }
 
 function trackWalletIp(wallet, ip) {
@@ -597,6 +617,10 @@ if (!REWARD_DISTRIBUTION_WALLET) {
 
 // Luna token mint address (from env)
 const LUNA_TOKEN_MINT = process.env.LUNA_TOKEN_MINT || null;
+const BETTING_ESCROW_WALLET = process.env.BETTING_ESCROW_WALLET || null;
+const BETTING_ESCROW_PRIVATE_KEY = process.env.BETTING_ESCROW_PRIVATE_KEY || null;
+const BETTING_FEE_WALLET = process.env.BETTING_FEE_WALLET || null;
+const SOLANA_RPC_URL = process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com";
 
 /**
  * Pricing and Solana Functions
@@ -633,8 +657,44 @@ async function calculateFee(lunaAmount, wallet = null) {
   return calculateFeeService(priceCache, LUNA_TOKEN_MINT, SOL_MINT, PRICE_CACHE_TTL, FEE_PERCENTAGE, BETTING_FEE_DEFAULT, BETTING_FEE_3_DAYS, BETTING_FEE_6_DAYS, lunaAmount, wallet);
 }
 
-async function collectFee(wallet, feeInSol, roomId, betAmount) {
-  return collectFeeService(collectedFees, sendSol, wallet, feeInSol, roomId, betAmount, rewardPoolState);
+async function collectFee(wallet, feeInSol, roomId, betAmount, options = {}) {
+  return collectFeeService(collectedFees, sendSol, wallet, feeInSol, roomId, betAmount, rewardPoolState, options);
+}
+
+async function persistLeaderboardEntry(wallet, stats) {
+  if (!wallet || !isDatabaseReady) {
+    return;
+  }
+  try {
+    await saveLeaderboardEntry(wallet, stats);
+  } catch (error) {
+    const shortWallet = typeof wallet === "string" ? `${wallet.substring(0, 8)}...` : "";
+    log.error(`[rps] Failed to persist leaderboard entry ${shortWallet}:`, error);
+  }
+}
+
+async function clearPersistentLeaderboard() {
+  if (!isDatabaseReady) {
+    return;
+  }
+  try {
+    await clearLeaderboardEntries();
+  } catch (error) {
+    log.error("[rps] Failed to clear persistent leaderboard storage:", error);
+  }
+}
+
+async function getPersistedLeaderboardEntry(wallet) {
+  if (!wallet || !isDatabaseReady) {
+    return null;
+  }
+  try {
+    return await getLeaderboardEntry(wallet);
+  } catch (error) {
+    const shortWallet = typeof wallet === "string" ? `${wallet.substring(0, 8)}...` : "";
+    log.error(`[rps] Failed to load leaderboard entry ${shortWallet} from database:`, error);
+    return null;
+  }
 }
 
 // Wrapper functions for solana service
@@ -642,8 +702,11 @@ async function sendSol(toWallet, amountInSol) {
   return sendSolService(toWallet, amountInSol);
 }
 
-async function sendLunaToken(toWallet, amountInLuna) {
-  return sendLunaTokenService(toWallet, amountInLuna, LUNA_TOKEN_MINT);
+async function sendLunaToken(toWallet, amountInLuna, options = {}) {
+  return sendLunaTokenService(toWallet, amountInLuna, LUNA_TOKEN_MINT, {
+    rpcUrl: SOLANA_RPC_URL,
+    ...options,
+  });
 }
 
 async function distributeRewards(totalRewardPool = null) {
@@ -687,7 +750,7 @@ const rpsDependencies = {
   rpsBettingRooms,
   rpsLeaderboard,
   collectedFees,
-  rewardPool,
+  rewardPool: rewardPoolState,
   rewardBannedWallets,
   rewardBannedIps,
   blockedWallets,
@@ -713,12 +776,15 @@ const rpsDependencies = {
   fetchLunaPriceInSol: () => fetchLunaPriceInSol(),
   lunaToSol: (lunaAmount) => lunaToSol(lunaAmount),
   calculateFee: (lunaAmount, wallet) => calculateFee(lunaAmount, wallet),
-  collectFee: (wallet, feeInSol, roomId, betAmount) => collectFee(wallet, feeInSol, roomId, betAmount),
+  collectFee: (wallet, feeInSol, roomId, betAmount, options) => collectFee(wallet, feeInSol, roomId, betAmount, options),
   getBettingFeePercentage: (wallet) => getBettingFeePercentage(wallet),
   getWalletBalance: (options) => getWalletBalance(options),
   sendSol: (toWallet, amountInSol) => sendSol(toWallet, amountInSol),
-  sendLunaToken: (toWallet, amountInLuna) => sendLunaToken(toWallet, amountInLuna),
+  sendLunaToken: (toWallet, amountInLuna, options) => sendLunaToken(toWallet, amountInLuna, options),
   distributeRewards: (totalRewardPool) => distributeRewards(totalRewardPool),
+  saveLeaderboardEntry: (wallet, stats) => persistLeaderboardEntry(wallet, stats),
+  getLeaderboardEntry: (wallet) => getPersistedLeaderboardEntry(wallet),
+  generateTTSClip: (text, mode) => generateTTS(text, mode),
   
   // Constants
   MATCH_TIMEOUT,
@@ -727,6 +793,7 @@ const rpsDependencies = {
   BETTING_FEE_DEFAULT,
   BETTING_FEE_3_DAYS,
   BETTING_FEE_6_DAYS,
+  BETTING_FEE_WALLET,
   REWARD_DISTRIBUTION_WALLET,
   LUNA_TOKEN_MINT,
   SOL_MINT,
@@ -734,6 +801,9 @@ const rpsDependencies = {
   BALANCE_CACHE_TTL,
   PRICE_CACHE_TTL,
   REWARD_PERCENTAGES,
+  BETTING_ESCROW_WALLET,
+  BETTING_ESCROW_PRIVATE_KEY,
+  SOLANA_RPC_URL,
 };
 
 setupRpsRoutes(app, rpsDependencies);
@@ -1237,6 +1307,30 @@ server.listen(PORT, '0.0.0.0', async () => {
     log.info(`[startup] Initializing database...`);
     await initDB();
     log.info(`[startup] Database initialized successfully`);
+    isDatabaseReady = true;
+    
+    // Load leaderboard entries from database
+    try {
+      const persistedLeaderboard = await loadLeaderboardEntries();
+      if (persistedLeaderboard.length > 0) {
+        persistedLeaderboard.forEach((entry) => {
+          if (!entry.wallet) {
+            return;
+          }
+          rpsLeaderboard.set(entry.wallet, {
+            wins: entry.wins || 0,
+            losses: entry.losses || 0,
+            totalWon: entry.totalWon || 0,
+            totalSolWon: entry.totalSolWon || 0,
+          });
+        });
+        log.info(`[rps] Loaded ${persistedLeaderboard.length} leaderboard entries from database`);
+      } else {
+        log.info("[rps] No persisted leaderboard entries found in database");
+      }
+    } catch (leaderboardLoadError) {
+      log.error("[rps] Failed to load leaderboard entries from database:", leaderboardLoadError);
+    }
     
     // Load group chat messages from database
     try {

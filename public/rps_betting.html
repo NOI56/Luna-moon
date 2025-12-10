@@ -477,6 +477,63 @@
       text-align: left;
     }
 
+    .fee-breakdown {
+      margin-top: 16px;
+    }
+
+    .fee-breakdown__header {
+      text-transform: uppercase;
+      font-size: 0.85rem;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .fee-breakdown__list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .fee-breakdown__item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid rgba(62, 247, 255, 0.2);
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .fee-breakdown__wallet {
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: var(--text-base);
+    }
+
+    .fee-breakdown__amount {
+      text-align: right;
+      letter-spacing: 0.05em;
+    }
+
+    .fee-breakdown__meta {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+    }
+
+    .fee-breakdown__amount strong {
+      color: var(--text-strong);
+    }
+
+    .fee-breakdown__empty {
+      padding: 14px;
+      border: 1px dashed rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-md);
+      text-align: center;
+      color: var(--text-muted);
+    }
+
     .wallet-info strong {
       color: var(--text-strong);
     }
@@ -499,7 +556,8 @@
     }
 
     .create-room,
-    .available-rooms {
+    .available-rooms,
+    .history-card {
       padding: 32px;
       text-align: left;
       position: relative;
@@ -517,7 +575,8 @@
     }
 
     .create-room h2,
-    .available-rooms h2 {
+    .available-rooms h2,
+    .history-card h2 {
       font-family: 'Orbitron', 'Space Grotesk', sans-serif;
       text-transform: uppercase;
       letter-spacing: 0.15em;
@@ -551,6 +610,18 @@
       letter-spacing: 0.08em;
       backdrop-filter: blur(12px);
       transition: box-shadow var(--transition-fast), border var(--transition-fast);
+    }
+
+    .escrow-info {
+      margin-top: 16px;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      word-break: break-all;
+    }
+
+    .escrow-info strong {
+      color: var(--text-base);
     }
 
     .bet-input input:focus,
@@ -652,11 +723,211 @@
       margin-bottom: 12px;
     }
 
+    .room-meta--stacked {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .room-player {
+      color: var(--text-base);
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
     .room-note {
       margin: 12px 0;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.08em;
+    }
+
+
+    .history-card {
+      grid-column: span 2;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .history-item {
+      border: 1px solid rgba(62, 247, 255, 0.2);
+      border-radius: var(--radius-md);
+      padding: 14px 18px;
+      background: rgba(255, 255, 255, 0.02);
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 8px;
+      align-items: center;
+    }
+
+    .history-item__result {
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .history-item__result--win {
+      color: #1dd1a1;
+    }
+
+    .history-item__result--lose {
+      color: #ff6b6b;
+    }
+
+    .history-item__result--draw {
+      color: #feca57;
+    }
+
+    .history-item__opponent {
+      color: var(--text-base);
+    }
+
+    .history-empty {
+      padding: 18px;
+      text-align: center;
+      color: var(--text-muted);
+      border: 1px dashed rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-md);
+    }
+
+    .live-winners-panel {
+      position: fixed;
+      top: 250px;
+      right: 32px;
+      width: 280px;
+      padding: 20px;
+      background: var(--panel-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(25px);
+      z-index: 25;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      max-height: calc(100vh - 260px);
+      overflow: hidden;
+    }
+
+    .live-winners-panel.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .live-winners-toggle {
+      position: fixed;
+      top: 205px;
+      right: 32px;
+      padding: 8px 14px;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(62, 247, 255, 0.35);
+      background: rgba(13, 18, 42, 0.85);
+      color: var(--text-base);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      cursor: pointer;
+      box-shadow: var(--shadow-soft);
+      z-index: 26;
+    }
+
+    .live-winners-toggle:hover {
+      background: rgba(62, 247, 255, 0.12);
+    }
+
+    .live-winners__header {
+      font-family: 'Orbitron', 'Space Grotesk', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-strong);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .live-winners__sub {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+      text-transform: none;
+    }
+
+    .live-winners__list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .live-winner {
+      border: 1px solid rgba(62, 247, 255, 0.25);
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+      background: rgba(255, 255, 255, 0.02);
+      box-shadow: inset 0 0 12px rgba(62, 247, 255, 0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      animation: fadeIn 0.35s ease-out;
+    }
+
+    .live-winner__row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.95rem;
+    }
+
+    .live-winner__name {
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: var(--text-base);
+    }
+
+    .live-winner__time {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .live-winner--revealing {
+      align-items: center;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      gap: 8px;
+    }
+
+    .live-winner__meta {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .live-winners__empty {
+      padding: 12px;
+      border: 1px dashed rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-md);
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 1300px) {
+      .live-winners-panel {
+        position: static;
+        width: 100%;
+        max-height: none;
+        margin-bottom: 20px;
+        order: -1;
+      }
     }
 
     .cancel-btn {
@@ -799,6 +1070,68 @@
       letter-spacing: 0.1em;
     }
 
+    .choice-hud {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .choice-timer {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: center;
+      min-width: 220px;
+    }
+
+    .choice-timer__track {
+      width: 240px;
+      height: 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(62, 247, 255, 0.35);
+      background: rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+      box-shadow: inset 0 0 12px rgba(62, 247, 255, 0.25);
+    }
+
+    .choice-timer__bar {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(120deg, rgba(62, 247, 255, 0.9), rgba(255, 49, 217, 0.8));
+      transition: width 0.2s ease-out;
+    }
+
+    .choice-timer__label {
+      font-size: 0.95rem;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      display: flex;
+      gap: 6px;
+      align-items: baseline;
+    }
+
+    .choice-timer__label-text {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+    }
+
+    .choice-btn--warning {
+      border-color: rgba(255, 123, 71, 0.85);
+      box-shadow: 0 0 18px rgba(255, 123, 71, 0.35);
+      animation: choiceWarningPulse 0.6s ease-in-out infinite alternate;
+    }
+
+    @keyframes choiceWarningPulse {
+      from {
+        transform: translateY(-2px);
+      }
+      to {
+        transform: translateY(-6px);
+      }
+    }
+
     .hidden {
       display: none !important;
     }
@@ -860,6 +1193,17 @@
       100% {
         transform: scale(1);
         opacity: 0.8;
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
       }
     }
 
@@ -1142,7 +1486,7 @@
     <a href="/rps_vs_luna.html" id="vsLunaLink" aria-label="Play against Luna AI">🎮 VS Luna</a>
     <a href="/rps_game.html" id="pvpLink" aria-label="Find PvP match">Play PvP! Find</a>
     <a href="/rps_betting.html" class="highlighted current" aria-label="Betting mode (current page)" aria-current="page">💰 Betting Mode</a>
-    <a href="/rps_deposit.html" aria-label="Deposit Luna tokens">💾 Deposit Luna</a>
+    <a href="/rps_deposit.html" aria-label="Deposit Luna tokens">🏦 Deposit Luna</a>
     <a href="/group_chat.html" aria-label="Group chat">💬 Group Chat</a>
     <a href="/rps_leaderboard.html" aria-label="View leaderboard">🏆 Leaderboard</a>
     <a href="/rps_stats.html" aria-label="View statistics">📊 Stats</a>
@@ -1162,6 +1506,17 @@
 
   <!-- Scroll Progress Bar -->
   <div class="scroll-progress" id="scrollProgress"></div>
+
+  <button id="liveWinnersToggle" class="live-winners-toggle" type="button" aria-pressed="true">🙈 Hide Live Winners</button>
+  <div id="liveWinnersPanel" class="live-winners-panel" aria-live="polite">
+    <div class="live-winners__header">
+      🏅 Live Winners
+      <span class="live-winners__sub">Updated in real-time</span>
+    </div>
+    <div id="liveWinnersList" class="live-winners__list">
+      <div class="live-winners__empty">Waiting for the next winner...</div>
+    </div>
+  </div>
 
   <div class="game-container">
     <h1>Rock Paper Scissors</h1>
@@ -1203,6 +1558,9 @@
       <div class="stats-card__note">
         💡 Fees are automatically sent to: <span id="feeWalletAddress" class="mono">--</span>
       </div>
+      <div class="stats-card__note">
+        📡 Live fee wallet balance: <span id="feeWalletLiveBalance" class="mono">--</span> SOL
+      </div>
     </div>
 
     <div id="bettingSection" class="betting-section">
@@ -1223,7 +1581,7 @@
           />
           <div id="betAmountHelp" class="sr-only">Enter the amount of Luna tokens you want to bet (minimum 1)</div>
           <div id="feeDisplay" class="fee-card" style="display: none;" role="status" aria-live="polite">
-            <div>💰 Fee: <span id="feeAmount">0</span> SOL (1% of bet value)</div>
+            <div>💰 Fee: <span id="feeAmount">0</span> SOL (<span id="feePercentLabel">3%</span> of bet value)</div>
             <div class="fee-card__note">Bet value: <span id="betValueInSol">0</span> SOL</div>
           </div>
         </div>
@@ -1240,6 +1598,13 @@
           </span>
         </button>
         <div id="createRoomHelp" class="sr-only">Create a new betting room with your specified bet amount</div>
+        <div id="escrowWalletInfo" class="escrow-info hidden">
+          🧾 <strong>Betting Escrow:</strong>
+          <span id="escrowWalletDisplay" class="mono">--</span>
+          <div style="margin-top:8px;">
+            When you tap Create/Join, Phantom prompts <strong>once</strong> (covers the Luna transfer and SOL fee).
+          </div>
+        </div>
       </div>
 
       <!-- Available Rooms Section -->
@@ -1250,6 +1615,22 @@
         </div>
         <div class="info-card room-tip">
           ⚡ Rooms refresh automatically every few seconds. Create one to get the lobby buzzing!
+        </div>
+      </div>
+
+      <div class="history-card fee-leaders-card">
+        <div class="fee-breakdown">
+          <div class="fee-breakdown__header">Top Fee Contributors</div>
+          <div id="feeBreakdownList" class="fee-breakdown__list">
+            <div class="fee-breakdown__empty">No fees collected yet.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="history-card" id="historyCard">
+        <h2>📜 Recent Matches</h2>
+        <div id="historyList" class="history-list">
+          <div class="history-empty">Connect your wallet to load recent matches.</div>
         </div>
       </div>
     </div>
@@ -1271,6 +1652,18 @@
       <div id="result" class="result"></div>
 
       <div class="controls">
+        <div class="choice-hud">
+          <div id="status" class="status"></div>
+          <div class="choice-timer" aria-live="polite">
+            <div class="choice-timer__track" id="choiceCountdownTrack" role="progressbar" aria-valuemin="0" aria-valuemax="13" aria-valuenow="13">
+              <div class="choice-timer__bar" id="choiceCountdownBar"></div>
+            </div>
+            <div class="choice-timer__label">
+              <span class="choice-timer__label-text">Time left:</span>
+              <span id="choiceCountdownLabel">--</span>
+            </div>
+          </div>
+        </div>
         <div class="player-choices">
           <button class="choice-btn" data-choice="rock" id="rockBtn" aria-label="Choose Rock">
             <img src="/images/hands/rock.png" alt="Rock" loading="lazy" decoding="async" />
@@ -1282,7 +1675,6 @@
             <img src="/images/hands/scissors.png" alt="Scissors" loading="lazy" decoding="async" />
           </button>
         </div>
-        <div id="status" class="status"></div>
       </div>
     </div>
   </div>
@@ -1311,6 +1703,42 @@
       // Remove any non-alphanumeric characters except base58 chars
       return address.replace(/[^A-Za-z0-9]/g, '').substring(0, 44);
     }
+
+    function shortenWallet(address, visible = 4) {
+      if (!address || typeof address !== 'string') {
+        return '';
+      }
+      const sanitized = sanitizeWalletAddress(address);
+      if (sanitized.length <= visible * 2) {
+        return sanitized;
+      }
+      return `${sanitized.substring(0, visible)}...${sanitized.substring(sanitized.length - visible)}`;
+    }
+
+    function formatTimeAgo(timestamp) {
+      const ts = Number(timestamp);
+      if (!Number.isFinite(ts)) {
+        return 'just now';
+      }
+      const diff = Date.now() - ts;
+      if (diff < 0) {
+        return 'just now';
+      }
+      const seconds = Math.floor(diff / 1000);
+      if (seconds < 60) {
+        return `${Math.max(1, seconds)}s ago`;
+      }
+      const minutes = Math.floor(seconds / 60);
+      if (minutes < 60) {
+        return `${minutes}m ago`;
+      }
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24) {
+        return `${hours}h ago`;
+      }
+      const days = Math.floor(hours / 24);
+      return `${days}d ago`;
+    }
     
     // Security: Create safe HTML element
     function createSafeElement(tag, text, className = '') {
@@ -1319,9 +1747,20 @@
       el.textContent = text;
       return el;
     }
+
+    function base64ToUint8Array(base64) {
+      const binaryString = window.atob(base64);
+      const len = binaryString.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      return bytes;
+    }
     
     // Fee calculation constants
-    const FEE_PERCENTAGE = 0.01; // 1% fee
+    const FEE_PERCENTAGE = 0.03; // 3% base fee
+    const FEE_PERCENTAGE_LABEL = formatFeePercentage(FEE_PERCENTAGE);
     let LUNA_TO_SOL_RATE = 0.00009; // Will be fetched from backend
     let priceCacheTime = 0;
     const PRICE_CACHE_TTL = 60000; // 1 minute cache
@@ -1330,11 +1769,14 @@
     let playerBalance = 0;
     let currentRoomId = null;
     let opponentWallet = null;
+    let currentPlayerRole = null; // 'creator' | 'challenger' | null
     let gameActive = false;
     let ws = null;
     let roomsRefreshInterval = null;
     let handCycleInterval = null;
-    let countdownInterval = null;
+    let activeShuffleIntervals = new Set();
+    let choiceCountdownInterval = null;
+    let choiceAutoSelectTimeout = null;
     let balanceUpdateInterval = null;
     let solBalanceUpdateInterval = null;
     let solBalance = 0;
@@ -1342,6 +1784,24 @@
     let totalFeesUpdateInterval = null;
     let activeTimeouts = new Set();
     let isPageVisible = !document.hidden;
+    let bettingEscrowWallet = null;
+    let createRoomInProgress = false;
+    let joinRoomInProgress = false;
+    let choiceSubmitted = false;
+    let pendingCreatedRoomId = null;
+    const ignoredRoomIds = new Set();
+    const FEE_BREAKDOWN_STORAGE_KEY = 'bettingFeeBreakdownCache';
+    const FEE_BREAKDOWN_TTL_MS = Infinity; // Cache never expires
+    const LIVE_WINNERS_STORAGE_KEY = 'bettingLiveWinners';
+    const LIVE_WINNERS_VISIBILITY_KEY = 'liveWinnersVisible';
+    const LIVE_WINNERS_TTL_MS = 10 * 60 * 1000; // 10 minutes
+    const MAX_LIVE_WINNERS = 4;
+    let liveWinnerEntries = [];
+    let liveWinnersUserHidden = false;
+    let liveWinnersGameHidden = false;
+    const CREATE_ROOM_COOLDOWN_MS = 5000;
+    let createRoomCooldownUntil = 0;
+    let createRoomCooldownInterval = null;
     
     // Cleanup all intervals and timeouts
     function cleanupAll() {
@@ -1361,10 +1821,6 @@
         clearInterval(handCycleInterval);
         handCycleInterval = null;
       }
-      if (countdownInterval) {
-        clearInterval(countdownInterval);
-        countdownInterval = null;
-      }
       if (competitionTimerInterval) {
         clearInterval(competitionTimerInterval);
         competitionTimerInterval = null;
@@ -1375,8 +1831,130 @@
       }
       activeTimeouts.forEach(timeout => clearTimeout(timeout));
       activeTimeouts.clear();
+      activeShuffleIntervals.forEach(intervalId => clearInterval(intervalId));
+      activeShuffleIntervals.clear();
+      clearChoiceCountdown();
     }
     
+    function updateEscrowWalletDisplay() {
+      const info = document.getElementById('escrowWalletInfo');
+      const span = document.getElementById('escrowWalletDisplay');
+      if (!info || !span) return;
+      if (bettingEscrowWallet) {
+        span.textContent = bettingEscrowWallet;
+        info.classList.remove('hidden');
+      } else {
+        span.textContent = '--';
+        info.classList.add('hidden');
+      }
+    }
+    updateEscrowWalletDisplay();
+
+    async function requestStakeSignature(amountLuna) {
+      if (!bettingEscrowWallet) {
+        if (window.showToast) {
+          window.showToast('Betting escrow wallet not ready yet. Please refresh this page.', 'error');
+        } else {
+          alert('Betting escrow wallet not ready yet. Please refresh this page.');
+        }
+        return null;
+      }
+
+      if (!walletConnected || !walletPublicKey) {
+        if (window.showToast) {
+          window.showToast('Please connect your Phantom wallet first.', 'warning');
+        } else {
+          alert('Please connect your Phantom wallet first.');
+        }
+        return null;
+      }
+
+      if (!window.solana || !window.solana.isPhantom) {
+        if (window.showToast) {
+          window.showToast('Phantom wallet not detected in this browser.', 'error');
+        } else {
+          alert('Phantom wallet not detected in this browser.');
+        }
+        return null;
+      }
+
+      const SolanaWeb3 = window.solanaWeb3 || window.SolanaWeb3;
+      if (!SolanaWeb3 || !SolanaWeb3.Transaction) {
+        if (window.showToast) {
+          window.showToast('Unable to load Solana SDK. Please refresh.', 'error');
+        } else {
+          alert('Unable to load Solana SDK. Please refresh.');
+        }
+        return null;
+      }
+
+      try {
+        const buildResp = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/rps/betting/stake/build`, addCSRFToken({
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            wallet: walletPublicKey,
+            amount: amountLuna,
+          }),
+        }));
+        const buildData = await buildResp.json();
+
+        if (!buildData.ok || !buildData.transaction) {
+          const message = buildData?.message || 'Unable to build betting transaction.';
+          if (window.showToast) {
+            window.showToast(message, 'error');
+          } else {
+            alert(message);
+          }
+          return null;
+        }
+
+        if (buildData.feeInSol && buildData.feeInSol > 0) {
+          const msg = `This transaction includes a fee of ~${formatSol(buildData.feeInSol)} SOL`;
+          if (window.showToast) {
+            window.showToast(msg, 'info');
+          } else {
+            alert(msg);
+          }
+        }
+
+        const txBytes = base64ToUint8Array(buildData.transaction);
+        const transaction = SolanaWeb3.Transaction.from(txBytes);
+        const { signature } = await window.solana.signAndSendTransaction(transaction);
+
+        if (!signature) {
+          if (window.showToast) {
+            window.showToast('No signature returned from Phantom.', 'error');
+          } else {
+            alert('No signature returned from Phantom.');
+          }
+          return null;
+        }
+
+        if (window.showToast) {
+          window.showToast('Stake locked + fee confirmed! Sending request...', 'success');
+        }
+        return signature;
+      } catch (error) {
+        console.error('[Betting] Stake signature error:', error);
+        if (error?.code === 4001 || error?.message?.toLowerCase().includes('user rejected')) {
+          if (window.showToast) {
+            window.showToast('Luna transfer cancelled.', 'warning');
+          } else {
+            alert('Luna transfer cancelled.');
+          }
+          return null;
+        }
+        if (window.showToast) {
+          window.showToast(`Luna transfer failed: ${error?.message || 'unknown reason'}`, 'error');
+        } else {
+          alert(`Luna transfer failed: ${error?.message || 'unknown reason'}`);
+        }
+        return null;
+      }
+    }
+
+
     // Safe setTimeout wrapper
     function safeSetTimeout(callback, delay) {
       const timeoutId = setTimeout(() => {
@@ -1562,10 +2140,13 @@
       walletPublicKey = null;
       currentRoomId = null;
       opponentWallet = null;
+      currentPlayerRole = null;
       playerBalance = 0;
       solBalance = 0;
 
       resetWalletUI();
+      setHistoryPlaceholder('Connect your wallet to load recent matches.');
+      updateCreateButtonState();
     }
 
     async function attemptPhantomAutoConnect(handler) {
@@ -1663,8 +2244,10 @@
         await checkLunaBalance();
         await checkSolBalance();
         await loadRooms();
+        await loadRecentHistory();
         startBalanceUpdate();
         startSolBalanceUpdate();
+        updateCreateButtonState();
 
         if (typeof chatManager !== 'undefined' && walletPublicKey) {
           chatManager.init(walletPublicKey);
@@ -1754,15 +2337,11 @@
         if (balanceDisplay) {
           balanceDisplay.textContent = formatNumber(playerBalance) + ' Luna';
         }
-        if (document.getElementById('createRoomBtn')) {
-          document.getElementById('createRoomBtn').disabled = playerBalance < 1;
-        }
+        updateCreateButtonState();
       } catch (err) {
         console.error('[Betting] Balance check error:', err);
         if (balanceDisplay) balanceDisplay.textContent = 'Error';
-        if (document.getElementById('createRoomBtn')) {
-          document.getElementById('createRoomBtn').disabled = true;
-        }
+        updateCreateButtonState();
       } finally {
         if (balanceCheck) balanceCheck.classList.add('hidden');
       }
@@ -1813,11 +2392,13 @@
           if (solBalanceDisplay) {
             solBalanceDisplay.classList.remove('hidden');
           }
+          updateCreateButtonState();
         } else {
           console.error('[Betting] SOL balance check error:', data.error);
         }
       } catch (err) {
         console.error('[Betting] SOL balance check error:', err);
+        updateCreateButtonState();
       }
     }
 
@@ -1846,6 +2427,11 @@
 
     function formatNumber(num) {
       return num.toLocaleString('en-US');
+    }
+
+    function formatFeePercentage(percentDecimal) {
+      const percentValue = percentDecimal * 100;
+      return Number.isInteger(percentValue) ? `${percentValue}%` : `${percentValue.toFixed(2)}%`;
     }
 
     /**
@@ -1885,11 +2471,92 @@
     }
 
     /**
-     * Calculate 1% fee in SOL from Luna bet amount
+     * Calculate base betting fee (default 3%) in SOL from Luna bet amount
      */
     function calculateFee(lunaAmount) {
       const solValue = lunaToSol(lunaAmount);
       return solValue * FEE_PERCENTAGE;
+    }
+
+    function getCurrentBetAmount() {
+      const betInput = document.getElementById('betAmount');
+      if (!betInput) {
+        return 0;
+      }
+      const value = parseInt(betInput.value, 10);
+      return Number.isFinite(value) ? value : 0;
+    }
+
+    function updateCreateButtonState() {
+      const createBtn = document.getElementById('createRoomBtn');
+      if (!createBtn) {
+        return;
+      }
+      const btnText = createBtn.querySelector('.btn-text');
+      const btnLoading = createBtn.querySelector('.btn-loading');
+      if (!createBtn.dataset.defaultLabel && btnText) {
+        createBtn.dataset.defaultLabel = btnText.textContent || 'Create Room';
+      }
+      let disabledReason = '';
+      const betAmount = getCurrentBetAmount();
+      if (!walletConnected || !walletPublicKey) {
+        disabledReason = 'Connect your wallet to create a room';
+      } else if (!betAmount || betAmount < 1) {
+        disabledReason = 'Enter a valid bet amount';
+      } else if (playerBalance < betAmount) {
+        disabledReason = 'Insufficient Luna balance';
+      } else {
+        const solNeeded = calculateFee(betAmount) + SOL_FEE_BUFFER;
+        if (solBalance < solNeeded) {
+          const formattedSol = formatSol(solNeeded).replace(' SOL', '');
+          disabledReason = `Need ~${formattedSol} SOL for fees`;
+        }
+      }
+      const cooldownRemaining = Math.max(0, createRoomCooldownUntil - Date.now());
+      if (!disabledReason && cooldownRemaining > 0) {
+        const seconds = Math.ceil(cooldownRemaining / 1000);
+        disabledReason = `Please wait ${seconds}s before creating again`;
+        if (!createRoomInProgress && btnText) {
+          btnText.textContent = `Wait ${seconds}s`;
+        }
+        if (btnLoading) {
+          btnLoading.classList.add('hidden');
+        }
+      } else if (!createRoomInProgress && btnText && createBtn.dataset.defaultLabel) {
+        btnText.textContent = createBtn.dataset.defaultLabel;
+      }
+      const shouldDisable = !!disabledReason;
+      createBtn.disabled = shouldDisable;
+      if (shouldDisable) {
+        createBtn.setAttribute('title', disabledReason);
+      } else {
+        createBtn.removeAttribute('title');
+      }
+    }
+
+    function startCreateRoomCooldown() {
+      createRoomCooldownUntil = Date.now() + CREATE_ROOM_COOLDOWN_MS;
+      if (createRoomCooldownInterval) {
+        clearInterval(createRoomCooldownInterval);
+      }
+      createRoomCooldownInterval = setInterval(() => {
+        if (Date.now() >= createRoomCooldownUntil) {
+          clearInterval(createRoomCooldownInterval);
+          createRoomCooldownInterval = null;
+          createRoomCooldownUntil = 0;
+        }
+        updateCreateButtonState();
+      }, 250);
+      updateCreateButtonState();
+    }
+
+    function clearCreateRoomCooldown() {
+      createRoomCooldownUntil = 0;
+      if (createRoomCooldownInterval) {
+        clearInterval(createRoomCooldownInterval);
+        createRoomCooldownInterval = null;
+      }
+      updateCreateButtonState();
     }
 
     /**
@@ -1916,10 +2583,10 @@
         console.log('[Betting] WebSocket connected');
       };
       
-      ws.onmessage = (event) => {
+      ws.onmessage = async (event) => {
         try {
           const message = JSON.parse(event.data);
-          handleWebSocketMessage(message);
+          await handleWebSocketMessage(message);
         } catch (err) {
           console.error('[Betting] WebSocket message error:', err);
         }
@@ -1935,7 +2602,7 @@
       };
     }
 
-    function handleWebSocketMessage(message) {
+    async function handleWebSocketMessage(message) {
       console.log('[Betting] WebSocket message:', message);
       
       if (message.type === 'rps_betting_room_created') {
@@ -1956,6 +2623,7 @@
             alert('Room was cancelled.');
           }
           currentRoomId = null;
+          currentPlayerRole = null;
           gameActive = false;
           document.getElementById('bettingSection').classList.remove('hidden');
           document.getElementById('gameArea').classList.remove('active');
@@ -1970,13 +2638,15 @@
           alert('Room expired or was removed.');
           }
           currentRoomId = null;
+          currentPlayerRole = null;
           gameActive = false;
           document.getElementById('bettingSection').classList.remove('hidden');
           document.getElementById('gameArea').classList.remove('active');
         }
       } else if (message.type === 'rps_betting_match_result') {
+        recordLiveWinnerFromMessage(message);
         if (message.roomId === currentRoomId) {
-          handleMatchResult(message);
+          await handleMatchResult(message);
         }
       }
     }
@@ -2012,6 +2682,10 @@
         const data = await response.json();
         
         if (data.ok) {
+          if (data.escrowWallet && data.escrowWallet !== bettingEscrowWallet) {
+            bettingEscrowWallet = data.escrowWallet;
+            updateEscrowWalletDisplay();
+          }
           let rooms = data.rooms || [];
           displayRooms(rooms);
         } else {
@@ -2050,7 +2724,9 @@
           roomsList.innerHTML = testRooms.map(room => {
             const safeRoomId = escapeHtml(room.roomId);
             const safeBetAmount = escapeHtml(room.betAmount.toString());
-            const safeCreator = escapeHtml(room.creator);
+            const safeCreator = escapeHtml(shortenWallet(room.creator, 6));
+            const safeTimeAgo = escapeHtml(formatTimeAgo(room.timestamp));
+            const safeFee = escapeHtml(formatSol(calculateFee(room.betAmount)));
             return `
               <div class="room-card room-card--test">
                 <div class="room-header">
@@ -2060,6 +2736,11 @@
                 <div class="room-status">
                   🟡 Waiting for opponent...
                 </div>
+                <div class="room-meta room-meta--stacked">
+                  <div>🧑‍🤝‍🧑 <span class="room-player">${safeCreator}</span> vs <span class="room-player">Open slot</span></div>
+                  <div>⏱ Created ${safeTimeAgo}</div>
+                </div>
+                <div class="room-meta">💰 Fee: ${safeFee} SOL (${escapeHtml(FEE_PERCENTAGE_LABEL)} of bet)</div>
                 <button class="join-btn" onclick="joinTestRoom('${safeRoomId}', ${safeBetAmount}, '${safeCreator}')">
                   Join Room
                 </button>
@@ -2074,16 +2755,20 @@
       
       roomsList.innerHTML = rooms.map(room => {
         const isMyRoom = room.creator === walletPublicKey;
-        const canJoin = !isMyRoom && walletConnected && playerBalance >= room.betAmount;
+        const canJoin = !isMyRoom && walletConnected && !room.player2;
         const isTest = room.roomId && room.roomId.startsWith('test_');
         
         // Sanitize all user inputs
         const safeRoomId = escapeHtml(room.roomId);
         const safeBetAmount = escapeHtml(room.betAmount.toString());
-        const safeCreator = typeof room.creator === 'string' && room.creator.length > 16 
-          ? escapeHtml(room.creator.substring(0, 8) + '...' + room.creator.substring(room.creator.length - 8))
-          : escapeHtml(room.creator);
+        const creatorDisplay = room.creator ? shortenWallet(room.creator, 6) : 'Unknown';
+        const safeCreator = escapeHtml(creatorDisplay);
+        const opponentDisplay = room.player2 ? shortenWallet(room.player2, 6) : 'Open slot';
+        const safeOpponent = escapeHtml(opponentDisplay);
         const safeFee = escapeHtml(formatSol(calculateFee(room.betAmount)));
+        const safeFeePercent = escapeHtml(FEE_PERCENTAGE_LABEL);
+        const safeRoomAge = escapeHtml(formatTimeAgo(room.timestamp));
+        const statusLabel = room.player2 ? '🟢 Match in progress' : '🟡 Waiting for opponent...';
         
         const cardClasses = ['room-card'];
         if (isTest) cardClasses.push('room-card--test');
@@ -2096,18 +2781,22 @@
               <div class="room-creator">${safeCreator}</div>
             </div>
             <div class="room-status">
-              ${room.player2 ? '🟢 Match in progress' : '🟡 Waiting for opponent...'}
+              ${statusLabel}
+            </div>
+            <div class="room-meta room-meta--stacked">
+              <div>🧑‍🤝‍🧑 <span class="room-player">${safeCreator}</span> vs <span class="room-player">${safeOpponent}</span></div>
+              <div>⏱ Created ${safeRoomAge}</div>
             </div>
             <div class="room-meta">
-              💰 Fee: ${safeFee} SOL (1% of bet)
+              💰 Fee: ${safeFee} SOL (${safeFeePercent} of bet)
             </div>
             ${!isMyRoom && !room.player2 ? `
               <button class="join-btn" ${canJoin || isTest ? '' : 'disabled'} onclick="${isTest ? `joinTestRoom('${safeRoomId}', ${safeBetAmount}, '${safeCreator}')` : `joinRoom('${safeRoomId}', ${safeBetAmount})`}">
-                ${canJoin ? '🎮 Challenge!' : '❌ Insufficient balance'}
+                ${canJoin ? '🎮 Challenge!' : '🔒 Join unavailable'}
               </button>
             ` : ''}
             ${isMyRoom ? `
-              <div class="room-note">Your room - Waiting for challenger...</div>
+              <div class="room-note">${room.player2 ? 'Opponent connected! Click below to open the match.' : 'Your room - Waiting for challenger...'}</div>
               <button class="cancel-btn" onclick="cancelRoom('${safeRoomId}')">
                 ❌ Cancel Room
               </button>
@@ -2120,6 +2809,103 @@
           </div>
         `;
       }).join('');
+
+      if (walletConnected) {
+        let activeRoom = null;
+        if (currentRoomId) {
+          activeRoom = rooms.find((room) => room.roomId === currentRoomId);
+        }
+        if (!activeRoom) {
+          activeRoom = rooms.find((room) => (
+            (room.creator === walletPublicKey || room.player2 === walletPublicKey) &&
+            !ignoredRoomIds.has(room.roomId)
+          ));
+        }
+
+        if (activeRoom) {
+          if (!currentRoomId) {
+            currentRoomId = activeRoom.roomId;
+          }
+          const opponent =
+            activeRoom.creator === walletPublicKey ? activeRoom.player2 : activeRoom.creator;
+          const isRoundInProgress =
+            opponent &&
+            (!activeRoom.choices ||
+              !activeRoom.choices.player1 ||
+              !activeRoom.choices.player2);
+
+          if (isRoundInProgress) {
+            opponentWallet = opponent;
+            currentPlayerRole = activeRoom.creator === walletPublicKey ? 'creator' : 'challenger';
+            if (!gameActive && !choiceSubmitted) {
+              startGame();
+            }
+          }
+        }
+      }
+    }
+
+    function setHistoryPlaceholder(message) {
+      const historyList = document.getElementById('historyList');
+      if (!historyList) return;
+      historyList.innerHTML = `<div class="history-empty">${escapeHtml(message)}</div>`;
+    }
+
+    function formatHistoryAmount(value) {
+      const num = Number(value);
+      if (!Number.isFinite(num)) {
+        return '--';
+      }
+      return `${formatNumber(num)} Luna`;
+    }
+
+    async function loadRecentHistory() {
+      const historyList = document.getElementById('historyList');
+      if (!historyList) {
+        return;
+      }
+      if (!walletConnected || !walletPublicKey) {
+        setHistoryPlaceholder('Connect your wallet to load recent matches.');
+        return;
+      }
+      setHistoryPlaceholder('Loading recent matches...');
+      try {
+        const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/rps/history?wallet=${encodeURIComponent(walletPublicKey)}`);
+        const data = await response.json();
+        const entries = Array.isArray(data?.history) ? data.history.slice(0, 5) : [];
+        if (!entries.length) {
+          setHistoryPlaceholder('No matches yet. Play your first game!');
+          return;
+        }
+        historyList.innerHTML = entries.map((item) => {
+          const result = (item.result || 'draw').toLowerCase();
+          let resultClass = 'history-item__result--draw';
+          let resultLabel = 'Draw';
+          if (result === 'win') {
+            resultClass = 'history-item__result--win';
+            resultLabel = 'Win';
+          } else if (result === 'lose') {
+            resultClass = 'history-item__result--lose';
+            resultLabel = 'Lose';
+          }
+          const opponentLabel = item.opponent ? shortenWallet(item.opponent, 6) : 'Unknown';
+          const timeAgoLabel = formatTimeAgo(item.timestamp);
+          const betLabel = formatHistoryAmount(item.betAmount);
+          const prizeLabel = formatHistoryAmount(item.prizeAmount);
+          return `
+            <div class="history-item">
+              <div class="history-item__result ${resultClass}">${resultLabel}</div>
+              <div>🧑‍🤝‍🧑 <span class="history-item__opponent">${escapeHtml(opponentLabel)}</span></div>
+              <div>💰 Bet: ${escapeHtml(betLabel)}</div>
+              <div>🏆 Payout: ${escapeHtml(prizeLabel)}</div>
+              <div>⏱ ${escapeHtml(timeAgoLabel)}</div>
+            </div>
+          `;
+        }).join('');
+      } catch (error) {
+        console.error('[Betting] Load history error:', error);
+        setHistoryPlaceholder('Failed to load history. Please try again later.');
+      }
     }
 
     window.joinRoom = async function(roomId, betAmount) {
@@ -2132,22 +2918,41 @@
         return;
       }
       
-      if (playerBalance < betAmount) {
+      if (joinRoomInProgress) {
         if (window.showToast) {
-          window.showToast(`Insufficient balance! You need ${formatNumber(betAmount)} Luna tokens.`, 'warning');
-        } else {
-        alert(`Insufficient balance! You need ${formatNumber(betAmount)} Luna tokens.`);
+          window.showToast('Join request already running, please wait.', 'warning');
         }
         return;
       }
       
+      if (pendingCreatedRoomId) {
+        const shortId = pendingCreatedRoomId.length > 8
+          ? `${pendingCreatedRoomId.substring(0, 4)}...${pendingCreatedRoomId.substring(pendingCreatedRoomId.length - 4)}`
+          : pendingCreatedRoomId;
+        const warning = `You already created room ${shortId}.\nWait for a challenger or cancel your room first.`;
+        if (window.showToast) {
+          window.showToast(warning, 'warning', 6000);
+        } else {
+        alert(warning);
+        }
+        return;
+      }
+
+      joinRoomInProgress = true;
+      
       try {
+        const txSignature = await requestStakeSignature(betAmount);
+        if (!txSignature) {
+          joinRoomInProgress = false;
+          return;
+        }
         const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/rps/betting/join`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             wallet: walletPublicKey,
-            roomId: roomId
+            roomId: roomId,
+            txSignature: txSignature
           })
         });
         
@@ -2156,11 +2961,12 @@
         if (data.ok) {
           currentRoomId = roomId;
           opponentWallet = data.creator;
+          currentPlayerRole = 'challenger';
           const feeInSol = calculateFee(betAmount);
           if (window.showToast) {
-            window.showToast(`Joined room! Game starting...\n\nFee collected: ${formatSol(feeInSol)} SOL (1% of ${formatSol(lunaToSol(betAmount))} SOL)`, 'success', 6000);
+            window.showToast(`Joined room! Game starting...\n\nFee collected: ${formatSol(feeInSol)} SOL (${FEE_PERCENTAGE_LABEL} of ${formatSol(lunaToSol(betAmount))} SOL)`, 'success', 6000);
           } else {
-            alert(`Joined room! Game starting...\n\nFee collected: ${formatSol(feeInSol)} SOL (1% of ${formatSol(lunaToSol(betAmount))} SOL)`);
+            alert(`Joined room! Game starting...\n\nFee collected: ${formatSol(feeInSol)} SOL (${FEE_PERCENTAGE_LABEL} of ${formatSol(lunaToSol(betAmount))} SOL)`);
           }
           
           // Initialize chat for this room
@@ -2183,6 +2989,8 @@
         } else {
         alert('Failed to join room: ' + err.message);
         }
+      } finally {
+        joinRoomInProgress = false;
       }
     };
 
@@ -2217,6 +3025,7 @@
       
       currentRoomId = roomId;
       opponentWallet = creatorName;
+      currentPlayerRole = 'challenger';
       
       if (window.showToast) {
         window.showToast('Joined room! Game starting...', 'success');
@@ -2230,6 +3039,13 @@
       const createBtn = document.getElementById('createRoomBtn');
       const btnText = createBtn.querySelector('.btn-text');
       const btnLoading = createBtn.querySelector('.btn-loading');
+      
+      if (createRoomInProgress) {
+        if (window.showToast) {
+          window.showToast('Room creation already in progress, please wait.', 'warning');
+        }
+        return;
+      }
       
       const betAmount = parseInt(document.getElementById('betAmount').value);
       
@@ -2250,20 +3066,48 @@
         }
         return;
       }
-      
-      if (playerBalance < betAmount) {
+
+      if (pendingCreatedRoomId) {
+        const shortId = pendingCreatedRoomId.length > 8
+          ? `${pendingCreatedRoomId.substring(0, 4)}...${pendingCreatedRoomId.substring(pendingCreatedRoomId.length - 4)}`
+          : pendingCreatedRoomId;
+        const warning = `You already created room ${shortId}.\nWait for a challenger or cancel your room first.`;
         if (window.showToast) {
-          window.showToast(`Insufficient balance! You have ${formatNumber(playerBalance)} Luna, but need ${formatNumber(betAmount)} Luna.`, 'warning');
+          window.showToast(warning, 'warning', 6000);
         } else {
-        alert(`Insufficient balance! You have ${formatNumber(playerBalance)} Luna, but need ${formatNumber(betAmount)} Luna.`);
+        alert(warning);
         }
         return;
       }
+
+    const cooldownRemaining = Math.max(0, createRoomCooldownUntil - Date.now());
+    if (cooldownRemaining > 0) {
+      updateCreateButtonState();
+      const waitSeconds = Math.ceil(cooldownRemaining / 1000);
+      const cooldownMsg = `Please wait ${waitSeconds} seconds before creating again.`;
+      if (window.showToast) {
+        window.showToast(cooldownMsg, 'warning');
+      } else {
+        alert(cooldownMsg);
+      }
+      return;
+    }
       
-      // Show loading state
+      createRoomInProgress = true;
       createBtn.disabled = true;
       if (btnText) btnText.classList.add('hidden');
       if (btnLoading) btnLoading.classList.remove('hidden');
+
+    let shouldStartCooldown = false;
+      const txSignature = await requestStakeSignature(betAmount);
+      if (!txSignature) {
+        createRoomInProgress = false;
+        if (createBtn) createBtn.disabled = playerBalance < 1;
+        if (btnText) btnText.classList.remove('hidden');
+        if (btnLoading) btnLoading.classList.add('hidden');
+        return;
+      }
+    shouldStartCooldown = true;
       
       try {
         const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/rps/betting/create`, addCSRFToken({
@@ -2271,7 +3115,8 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             wallet: walletPublicKey,
-            betAmount: betAmount
+            betAmount: betAmount,
+            txSignature: txSignature
           })
         }));
         
@@ -2279,11 +3124,13 @@
         
         if (data.ok) {
           currentRoomId = data.roomId;
+          currentPlayerRole = 'creator';
+          pendingCreatedRoomId = data.roomId;
           const feeInSol = calculateFee(betAmount);
           if (window.showToast) {
-            window.showToast(`Room created! Waiting for challenger...\n\nFee collected: ${formatSol(feeInSol)} SOL (1% of ${formatSol(lunaToSol(betAmount))} SOL)`, 'success', 6000);
+            window.showToast(`Room created! Waiting for challenger...\n\nFee collected: ${formatSol(feeInSol)} SOL (${FEE_PERCENTAGE_LABEL} of ${formatSol(lunaToSol(betAmount))} SOL)`, 'success', 6000);
           } else {
-            alert(`Room created! Waiting for challenger...\n\nFee collected: ${formatSol(feeInSol)} SOL (1% of ${formatSol(lunaToSol(betAmount))} SOL)`);
+            alert(`Room created! Waiting for challenger...\n\nFee collected: ${formatSol(feeInSol)} SOL (${FEE_PERCENTAGE_LABEL} of ${formatSol(lunaToSol(betAmount))} SOL)`);
           }
           document.getElementById('betAmount').value = '';
           document.getElementById('feeDisplay').style.display = 'none';
@@ -2297,7 +3144,7 @@
           if (window.showToast) {
             window.showToast('Failed to create room: ' + (data.message || 'Unknown error'), 'error');
         } else {
-          alert('Failed to create room: ' + (data.message || 'Unknown error'));
+        alert('Failed to create room: ' + (data.message || 'Unknown error'));
           }
         }
       } catch (err) {
@@ -2308,95 +3155,205 @@
         alert('Failed to create room: ' + err.message);
         }
       } finally {
-        // Hide loading state
+        createRoomInProgress = false;
         const createBtn = document.getElementById('createRoomBtn');
         const btnText = createBtn?.querySelector('.btn-text');
         const btnLoading = createBtn?.querySelector('.btn-loading');
         if (createBtn) createBtn.disabled = playerBalance < 1;
         if (btnText) btnText.classList.remove('hidden');
         if (btnLoading) btnLoading.classList.add('hidden');
+      if (shouldStartCooldown) {
+        startCreateRoomCooldown();
+      } else {
+        updateCreateButtonState();
+      }
       }
     });
 
     // Game Logic
     function startGame() {
+      if (gameActive) {
+        return;
+      }
+      clearChoiceCountdown();
       gameActive = true;
+      choiceSubmitted = false;
+      if (currentPlayerRole === 'creator' && pendingCreatedRoomId === currentRoomId) {
+        pendingCreatedRoomId = null;
+      }
       document.getElementById('bettingSection').classList.add('hidden');
       document.getElementById('gameArea').classList.add('active');
-      
+      const winnersPanel = document.getElementById('liveWinnersPanel');
+      if (winnersPanel) {
+        winnersPanel.classList.add('hidden');
+      }
+      const opponentLabelEl = document.getElementById('opponentLabel');
+      if (opponentLabelEl) {
+        if (opponentWallet) {
+          const shortOpponent = `${opponentWallet.substring(0, 4)}...${opponentWallet.substring(opponentWallet.length - 4)}`;
+          opponentLabelEl.textContent = `Opponent (${shortOpponent})`;
+        } else {
+          opponentLabelEl.textContent = 'Opponent';
+        }
+      }
+      liveWinnersGameHidden = true;
+      syncLiveWinnersVisibility();
+
       // Reset hands
       updateHand('playerHand', 'default');
       updateHand('opponentHand', 'default');
-      
-      // Start countdown
-      startCountdown();
+
+      document.getElementById('status').textContent = 'Choose your hand!';
+      playStartGameSound();
+      enableChoiceButtons();
+      startChoiceCountdown();
     }
     
-    function startCountdown() {
-      let countdown = 3;
-      document.getElementById('status').textContent = `Game starting in ${countdown}...`;
+    function enableChoiceButtons() {
+      document.querySelectorAll('.choice-btn').forEach(btn => {
+        btn.disabled = false;
+        btn.onclick = handleChoice;
+      });
+    }
+    
+    function disableChoiceButtons() {
       document.querySelectorAll('.choice-btn').forEach(btn => {
         btn.disabled = true;
       });
-      
-      // Play countdown sound immediately
-      playCountdownSound();
-      
-      countdownInterval = setInterval(() => {
-        countdown--;
-        if (countdown > 0) {
-          document.getElementById('status').textContent = `Game starting in ${countdown}...`;
-          // Play countdown sound for each number
-          playCountdownSound();
-        } else {
-          clearInterval(countdownInterval);
-          document.getElementById('status').textContent = 'Choose your hand!';
-          // Enable choice buttons
-          document.querySelectorAll('.choice-btn').forEach(btn => {
-            btn.disabled = false;
-            btn.addEventListener('click', handleChoice);
-          });
+    }
+    
+    const CHOICE_TIMEOUT_MS = 13000;
+    const CHOICE_TIMEOUT_SECONDS = Math.ceil(CHOICE_TIMEOUT_MS / 1000);
+    const SOL_FEE_BUFFER = 0.00005; // Extra SOL to cover network fees
+    const BETTING_HAND_CHOICES = ['rock', 'paper', 'scissors'];
+    let handSelectAudioContext = null;
+    let startGameAudioContext = null;
+    
+    function playHandSelectSound() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) {
+          return;
         }
-      }, 1000);
+        if (!handSelectAudioContext) {
+          handSelectAudioContext = new AudioCtx();
+        }
+        if (handSelectAudioContext.state === 'suspended') {
+          handSelectAudioContext.resume().catch(() => {});
+        }
+        const osc = handSelectAudioContext.createOscillator();
+        const gain = handSelectAudioContext.createGain();
+        osc.type = 'triangle';
+        osc.frequency.value = 540;
+        osc.connect(gain);
+        gain.connect(handSelectAudioContext.destination);
+        gain.gain.setValueAtTime(0.28, handSelectAudioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, handSelectAudioContext.currentTime + 0.18);
+        osc.start(handSelectAudioContext.currentTime);
+        osc.stop(handSelectAudioContext.currentTime + 0.2);
+      } catch (error) {
+        console.warn('[betting] hand select sound failed:', error);
+      }
     }
 
-    function showCountdown(callback) {
-      // Create countdown overlay if it doesn't exist
-      let overlay = document.getElementById('countdownOverlay');
-      if (!overlay) {
-        overlay = document.createElement('div');
-        overlay.id = 'countdownOverlay';
-        overlay.className = 'countdown-overlay';
-        const countdownDiv = document.createElement('div');
-        countdownDiv.className = 'countdown-number';
-        countdownDiv.id = 'countdownNumber';
-        countdownDiv.textContent = '3';
-        overlay.innerHTML = '';
-        overlay.appendChild(countdownDiv);
-        document.body.appendChild(overlay);
-      }
-      
-      overlay.style.display = 'flex';
-      const countdownEl = document.getElementById('countdownNumber');
-      let countdown = 3;
-      
-      countdownEl.textContent = countdown;
-      
-      // Play countdown sound immediately
-      playCountdownSound();
-      
-      const countdownTimer = setInterval(() => {
-        countdown--;
-        if (countdown > 0) {
-          countdownEl.textContent = countdown;
-          // Play countdown sound for each number
-          playCountdownSound();
-        } else {
-          clearInterval(countdownTimer);
-          overlay.style.display = 'none';
-          if (callback) callback();
+    function playStartGameSound() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) {
+          return;
         }
-      }, 1000);
+        if (!startGameAudioContext) {
+          startGameAudioContext = new AudioCtx();
+        }
+        if (startGameAudioContext.state === 'suspended') {
+          startGameAudioContext.resume().catch(() => {});
+        }
+        const now = startGameAudioContext.currentTime;
+        const osc = startGameAudioContext.createOscillator();
+        const gain = startGameAudioContext.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(320, now);
+        osc.frequency.exponentialRampToValueAtTime(640, now + 0.25);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+        osc.connect(gain);
+        gain.connect(startGameAudioContext.destination);
+        osc.start(now);
+        osc.stop(now + 0.32);
+      } catch (error) {
+        console.warn('[Betting] Start game sound failed:', error);
+      }
+    }
+    
+    function runBettingRevealCountdown(handElements = []) {
+      return new Promise((resolve) => {
+        const countdownNumbers = [3, 2, 1];
+        
+        // Remove existing overlays
+        document.querySelectorAll('.countdown-overlay').forEach((overlay) => {
+          if (overlay && overlay.parentNode) {
+            overlay.parentNode.removeChild(overlay);
+          }
+        });
+        
+        const overlay = document.createElement('div');
+        overlay.id = 'bettingCountdownOverlay';
+        overlay.className = 'countdown-overlay';
+        document.body.appendChild(overlay);
+        
+        const targets = (Array.isArray(handElements) && handElements.length
+          ? handElements
+          : [
+              document.getElementById('playerHand'),
+              document.getElementById('opponentHand'),
+            ]).filter(Boolean);
+        
+        const shuffleIntervals = [];
+        const startShuffle = (handEl) => {
+          const intervalId = setInterval(() => {
+            const randomChoice = BETTING_HAND_CHOICES[Math.floor(Math.random() * BETTING_HAND_CHOICES.length)];
+            handEl.innerHTML = '';
+            const img = document.createElement('img');
+            img.src = HAND_IMAGES[randomChoice] || HAND_IMAGES.default;
+            img.alt = randomChoice;
+            handEl.appendChild(img);
+          }, 120);
+          shuffleIntervals.push(intervalId);
+          activeShuffleIntervals.add(intervalId);
+        };
+        
+        const stopShuffle = () => {
+          shuffleIntervals.forEach((intervalId) => {
+            clearInterval(intervalId);
+            activeShuffleIntervals.delete(intervalId);
+          });
+          shuffleIntervals.length = 0;
+        };
+        
+        targets.forEach(startShuffle);
+        
+        let countdownIndex = 0;
+        const showCountdown = () => {
+          if (countdownIndex < countdownNumbers.length) {
+            const countdownText = document.createElement('div');
+            countdownText.className = 'countdown-number';
+            countdownText.textContent = countdownNumbers[countdownIndex];
+            overlay.innerHTML = '';
+            overlay.appendChild(countdownText);
+            playCountdownSound();
+            countdownIndex++;
+            setTimeout(showCountdown, 1000);
+          } else {
+            stopShuffle();
+            if (overlay.parentNode) {
+              overlay.parentNode.removeChild(overlay);
+            }
+            resolve();
+          }
+        };
+        
+        showCountdown();
+      });
     }
     
     function startHandCycle(handId, finalChoice, duration = 2000) {
@@ -2427,109 +3384,206 @@
       handEl.appendChild(img);
     }
 
-    async function handleChoice(event) {
-      if (!gameActive || !currentRoomId) return;
-      
-      const choice = event.currentTarget.dataset.choice;
-      
-      // Disable buttons
-      document.querySelectorAll('.choice-btn').forEach(btn => {
-        btn.disabled = true;
-      });
-      
-      updateHand('playerHand', choice);
-      document.getElementById('status').textContent = 'Waiting for opponent...';
-      
-      // Show countdown before revealing result
-      showCountdown(async () => {
-        // Check if this is a test room
-        const isTestRoom = currentRoomId && currentRoomId.startsWith('test_');
-        
-        if (isTestRoom) {
-          // Simulate test room game flow
-          // Simulate opponent choice (random)
-          const opponentChoices = ['rock', 'paper', 'scissors'];
-          const opponentChoice = opponentChoices[Math.floor(Math.random() * opponentChoices.length)];
-          
-          // Start hand cycling animation before revealing result
-          document.getElementById('status').textContent = 'Revealing results...';
-          startHandCycle('opponentHand', opponentChoice, 2000);
-          
-          // Determine winner
-          let winner = null;
-          if (choice === opponentChoice) {
-            winner = 'draw';
-          } else if (
-            (choice === 'rock' && opponentChoice === 'scissors') ||
-            (choice === 'paper' && opponentChoice === 'rock') ||
-            (choice === 'scissors' && opponentChoice === 'paper')
-          ) {
-            winner = walletPublicKey; // Player wins
-          } else {
-            winner = opponentWallet; // Opponent wins
-          }
-          
-          // Get bet amount from test room (extract from roomId or use default)
-          let betAmount = 10000;
-          if (currentRoomId.includes('test_room_1')) {
-            betAmount = 10000;
-          } else if (currentRoomId.includes('test_room_2')) {
-            betAmount = 50000;
-          } else if (currentRoomId.includes('test_room_3')) {
-            betAmount = 100000;
-          }
-          
-          // Show result after hand cycling animation
-          setTimeout(() => {
-            handleMatchResult({
-              player1Choice: choice,
-              player2Choice: opponentChoice,
-              winner: winner,
-              player1Wallet: walletPublicKey,
-              player2Wallet: opponentWallet,
-              betAmount: betAmount
-            });
-          }, 2000); // Wait for hand cycling to complete
-        } else {
-          // Real room - call API
-      try {
-        const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/rps/betting/submit`, addCSRFToken({
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            wallet: walletPublicKey,
-            roomId: currentRoomId,
-            choice: choice
-          })
-        }));
-            
-            const data = await response.json();
-            
-            if (!data.ok) {
-              if (window.showToast) {
-                window.showToast('Failed to submit choice: ' + (data.message || 'Unknown error'), 'error');
-              } else {
-              alert('Failed to submit choice: ' + (data.message || 'Unknown error'));
-              }
-              document.querySelectorAll('.choice-btn').forEach(btn => {
-                btn.disabled = false;
-              });
-            }
-          } catch (err) {
-            console.error('[Betting] Submit choice error:', err);
-            if (window.showToast) {
-              window.showToast('Failed to submit choice: ' + err.message, 'error');
-            } else {
-            alert('Failed to submit choice: ' + err.message);
-            }
-            document.querySelectorAll('.choice-btn').forEach(btn => {
-              btn.disabled = false;
-            });
-          }
-        }
+    function setChoiceButtonsWarning(isWarning) {
+      document.querySelectorAll('.choice-btn').forEach((btn) => {
+        btn.classList.toggle('choice-btn--warning', !!isWarning);
       });
     }
 
+    function resetChoiceCountdownUI() {
+      const labelEl = document.getElementById('choiceCountdownLabel');
+      const barEl = document.getElementById('choiceCountdownBar');
+      const trackEl = document.getElementById('choiceCountdownTrack');
+      if (labelEl) {
+        labelEl.textContent = '--';
+      }
+      if (barEl) {
+        barEl.style.width = '0%';
+      }
+      if (trackEl) {
+        trackEl.setAttribute('aria-valuenow', '0');
+      }
+      setChoiceButtonsWarning(false);
+    }
+
+    function updateChoiceCountdownUI(secondsRemaining) {
+      const safeSeconds = Math.max(0, Math.min(CHOICE_TIMEOUT_SECONDS, secondsRemaining));
+      const ratio = CHOICE_TIMEOUT_SECONDS > 0 ? (safeSeconds / CHOICE_TIMEOUT_SECONDS) : 0;
+      const labelEl = document.getElementById('choiceCountdownLabel');
+      const barEl = document.getElementById('choiceCountdownBar');
+      const trackEl = document.getElementById('choiceCountdownTrack');
+      if (labelEl) {
+        labelEl.textContent = `${safeSeconds}s`;
+      }
+      if (barEl) {
+        barEl.style.width = `${ratio * 100}%`;
+      }
+      if (trackEl) {
+        trackEl.setAttribute('aria-valuenow', String(safeSeconds));
+      }
+      setChoiceButtonsWarning(safeSeconds <= 5 && safeSeconds > 0);
+    }
+
+    function clearChoiceCountdown() {
+      if (choiceCountdownInterval) {
+        clearInterval(choiceCountdownInterval);
+        choiceCountdownInterval = null;
+      }
+      if (choiceAutoSelectTimeout) {
+        clearTimeout(choiceAutoSelectTimeout);
+        activeTimeouts.delete(choiceAutoSelectTimeout);
+        choiceAutoSelectTimeout = null;
+      }
+      resetChoiceCountdownUI();
+    }
+
+    function startChoiceCountdown() {
+      clearChoiceCountdown();
+      if (!gameActive) return;
+
+      const statusEl = document.getElementById('status');
+      let remainingSeconds = CHOICE_TIMEOUT_SECONDS;
+      const updateStatus = () => {
+        if (statusEl) {
+          statusEl.textContent = `Choose your hand! (${remainingSeconds}s)`;
+        }
+      };
+      updateStatus();
+      updateChoiceCountdownUI(remainingSeconds);
+
+      choiceCountdownInterval = setInterval(() => {
+        remainingSeconds -= 1;
+        if (remainingSeconds <= 0) {
+          updateChoiceCountdownUI(0);
+          clearInterval(choiceCountdownInterval);
+          choiceCountdownInterval = null;
+          if (statusEl) {
+            statusEl.textContent = 'Auto-selecting your hand...';
+          }
+          return;
+        }
+        updateStatus();
+        updateChoiceCountdownUI(remainingSeconds);
+      }, 1000);
+
+      const timeoutId = setTimeout(() => {
+        activeTimeouts.delete(timeoutId);
+        choiceAutoSelectTimeout = null;
+        autoSelectChoice();
+      }, CHOICE_TIMEOUT_MS);
+      choiceAutoSelectTimeout = timeoutId;
+      activeTimeouts.add(timeoutId);
+    }
+
+    function autoSelectChoice() {
+      if (!gameActive || choiceSubmitted || !currentRoomId) return;
+      const randomChoice = BETTING_HAND_CHOICES[Math.floor(Math.random() * BETTING_HAND_CHOICES.length)];
+      if (window.showToast) {
+        window.showToast('Time expired. Auto-selecting your hand.', 'info', 3500);
+      }
+      submitChoice(randomChoice, { auto: true });
+    }
+
+    async function submitChoice(choice, options = {}) {
+      const { auto = false } = options;
+      if (!gameActive || !currentRoomId || choiceSubmitted) return;
+      choiceSubmitted = true;
+      gameActive = false;
+      clearChoiceCountdown();
+
+      const selectedChoice = BETTING_HAND_CHOICES.includes(choice) ? choice : BETTING_HAND_CHOICES[0];
+
+      if (!auto) {
+        playHandSelectSound();
+      }
+      
+      disableChoiceButtons();
+      updateHand('playerHand', selectedChoice);
+      const statusEl = document.getElementById('status');
+      if (statusEl) {
+        statusEl.textContent = 'Waiting for opponent...';
+      }
+      
+      const isTestRoom = currentRoomId && currentRoomId.startsWith('test_');
+      
+      if (isTestRoom) {
+        const opponentChoices = ['rock', 'paper', 'scissors'];
+        const opponentChoice = opponentChoices[Math.floor(Math.random() * opponentChoices.length)];
+        
+        let winner = null;
+        if (selectedChoice === opponentChoice) {
+          winner = 'draw';
+        } else if (
+          (selectedChoice === 'rock' && opponentChoice === 'scissors') ||
+          (selectedChoice === 'paper' && opponentChoice === 'rock') ||
+          (selectedChoice === 'scissors' && opponentChoice === 'paper')
+        ) {
+          winner = walletPublicKey; // Player wins
+        } else {
+          winner = opponentWallet; // Opponent wins
+        }
+        
+        let betAmount = 10000;
+        if (currentRoomId.includes('test_room_1')) {
+          betAmount = 10000;
+        } else if (currentRoomId.includes('test_room_2')) {
+          betAmount = 50000;
+        } else if (currentRoomId.includes('test_room_3')) {
+          betAmount = 100000;
+        }
+        
+        await handleMatchResult({
+          player1Choice: selectedChoice,
+          player2Choice: opponentChoice,
+          winner: winner,
+          player1Wallet: walletPublicKey,
+          player2Wallet: opponentWallet,
+          betAmount: betAmount
+        });
+      } else {
+        try {
+          const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/rps/betting/submit`, addCSRFToken({
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              wallet: walletPublicKey,
+              roomId: currentRoomId,
+              choice: selectedChoice
+            })
+          }));
+              
+          const data = await response.json();
+              
+          if (!data.ok) {
+            if (window.showToast) {
+              window.showToast('Failed to submit choice: ' + (data.message || 'Unknown error'), 'error');
+            } else {
+            alert('Failed to submit choice: ' + (data.message || 'Unknown error'));
+            }
+            enableChoiceButtons();
+          }
+        } catch (err) {
+          console.error('[Betting] Submit choice error:', err);
+          if (window.showToast) {
+            window.showToast('Failed to submit choice: ' + err.message, 'error');
+          } else {
+          alert('Failed to submit choice: ' + err.message);
+          }
+          enableChoiceButtons();
+        }
+      }
+    }
+
+    async function handleChoice(event) {
+      const choice = event?.currentTarget?.dataset?.choice;
+      if (!choice) {
+        return;
+      }
+      await submitChoice(choice);
+    }
+
+    let cancelRoomInProgress = false;
+    
     window.cancelRoom = async function(roomId) {
       if (!walletConnected || !walletPublicKey) {
         if (window.showToast) {
@@ -2540,11 +3594,19 @@
         return;
       }
       
+      if (cancelRoomInProgress) {
+        if (window.showToast) {
+          window.showToast('Room cancellation already running, please wait.', 'warning');
+        }
+        return;
+      }
+      
       // Use confirm for critical actions (can't easily replace with toast)
       if (!confirm('Are you sure you want to cancel this room?')) {
         return;
       }
       
+      cancelRoomInProgress = true;
       try {
         const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/rps/betting/cancel`, addCSRFToken({
           method: 'POST',
@@ -2598,7 +3660,11 @@
           alert('Room cancelled successfully!');
           }
           currentRoomId = null;
+          currentPlayerRole = null;
           gameActive = false;
+        if (pendingCreatedRoomId === roomId) {
+          pendingCreatedRoomId = null;
+        }
           // Reset UI
           document.getElementById('bettingSection').classList.remove('hidden');
           document.getElementById('gameArea').classList.remove('active');
@@ -2618,6 +3684,8 @@
         } else {
         alert('Failed to cancel room: ' + err.message);
         }
+      } finally {
+        cancelRoomInProgress = false;
       }
     };
 
@@ -2689,7 +3757,11 @@
           alert('Left room successfully!');
           }
           currentRoomId = null;
+          currentPlayerRole = null;
           gameActive = false;
+          if (pendingCreatedRoomId === roomId) {
+            pendingCreatedRoomId = null;
+          }
           // Reset UI
           document.getElementById('bettingSection').classList.remove('hidden');
           document.getElementById('gameArea').classList.remove('active');
@@ -2712,7 +3784,7 @@
       }
     };
 
-    function handleMatchResult(data) {
+    async function handleMatchResult(data) {
       gameActive = false;
       
       // Clear any intervals
@@ -2720,23 +3792,53 @@
         clearInterval(handCycleInterval);
         handCycleInterval = null;
       }
-      if (countdownInterval) {
-        clearInterval(countdownInterval);
-        countdownInterval = null;
-      }
       
       const { player1Choice, player2Choice, winner, player1Wallet, player2Wallet, betAmount } = data;
       
-      // Update opponent hand (should already be set by hand cycling, but ensure it's correct)
-      updateHand('opponentHand', player2Choice);
+      // Determine perspective (role tracking as fallback)
+      const isPlayer1 = walletPublicKey && player1Wallet === walletPublicKey;
+      const isPlayer2 = walletPublicKey && player2Wallet === walletPublicKey;
+      const perspective = currentPlayerRole || (isPlayer1 ? 'creator' : (isPlayer2 ? 'challenger' : null));
+      
+      let myChoice = player1Choice;
+      let opponentChoice = player2Choice;
+      
+      if (perspective === 'creator' || isPlayer1) {
+        myChoice = player1Choice;
+        opponentChoice = player2Choice;
+      } else if (perspective === 'challenger' || isPlayer2) {
+        myChoice = player2Choice;
+        opponentChoice = player1Choice;
+      }
+      
+      const playerHandEl = document.getElementById('playerHand');
+      const opponentHandEl = document.getElementById('opponentHand');
+      const statusEl = document.getElementById('status');
+      
+      if (statusEl) {
+        statusEl.textContent = 'Revealing results...';
+      }
+      
+      await runBettingRevealCountdown([opponentHandEl]);
+      
+      // Update both hands from the viewer's perspective
+      updateHand('playerHand', myChoice);
+      updateHand('opponentHand', opponentChoice);
       
       let resultText = '';
       if (winner === 'draw') {
         resultText = '🤝 Draw! Bet returned.';
         playTieSound(); // Play tie sound
       } else if (winner === walletPublicKey) {
-        resultText = `🎉 You Win! +${formatNumber(betAmount * 2)} Luna`;
+        const winnings = formatNumber(betAmount * 2);
+        resultText = `🎉 You Win! +${winnings} Luna`;
         playWinSound(); // Play win sound (cheer)
+        const winMessage = `Winner reward received: +${winnings} Luna`;
+        if (window.showToast) {
+          window.showToast(winMessage, 'success', 4500);
+        } else {
+        alert(winMessage);
+        }
       } else {
         resultText = `😢 You Lose! -${formatNumber(betAmount)} Luna`;
         playLoseSound(); // Play lose sound
@@ -2744,32 +3846,57 @@
       
       document.getElementById('result').textContent = resultText;
       document.getElementById('status').textContent = '';
-      
-      // Reset after 5 seconds
+
+      loadRecentHistory().catch((err) => {
+        console.warn('[Betting] Failed to refresh history after match:', err);
+      });
+
+      // Return to lobby after result shown briefly
       setTimeout(() => {
         resetGame();
-      }, 5000);
+      }, 2000);
     }
 
     function resetGame() {
+      disableChoiceButtons();
       gameActive = false;
+      choiceSubmitted = false;
+      clearChoiceCountdown();
+      if (currentRoomId) {
+        const roomToIgnore = currentRoomId;
+        ignoredRoomIds.add(roomToIgnore);
+        setTimeout(() => ignoredRoomIds.delete(roomToIgnore), 5000);
+      }
+      lastStartAnnouncementRoomId = null;
       currentRoomId = null;
       opponentWallet = null;
+      currentPlayerRole = null;
       
       // Clear any intervals
       if (handCycleInterval) {
         clearInterval(handCycleInterval);
         handCycleInterval = null;
       }
-      if (countdownInterval) {
-        clearInterval(countdownInterval);
-        countdownInterval = null;
+      const bettingSectionEl = document.getElementById('bettingSection');
+      const gameAreaEl = document.getElementById('gameArea');
+      if (bettingSectionEl) {
+        bettingSectionEl.classList.remove('hidden');
       }
-      
-      document.getElementById('bettingSection').classList.remove('hidden');
-      document.getElementById('gameArea').classList.remove('active');
+      if (gameAreaEl) {
+        gameAreaEl.classList.remove('active');
+      }
+      liveWinnersGameHidden = false;
+      syncLiveWinnersVisibility();
+      const winnersPanel = document.getElementById('liveWinnersPanel');
+      if (winnersPanel) {
+        winnersPanel.classList.remove('hidden');
+      }
       document.getElementById('result').textContent = '';
       document.getElementById('status').textContent = '';
+      const opponentLabelEl = document.getElementById('opponentLabel');
+      if (opponentLabelEl) {
+        opponentLabelEl.textContent = 'Opponent';
+      }
       updateHand('playerHand', 'default');
       updateHand('opponentHand', 'default');
       loadRooms();
@@ -2779,6 +3906,10 @@
     window.updateFeeDisplay = function() {
       const betAmount = parseInt(document.getElementById('betAmount').value) || 0;
       const feeDisplay = document.getElementById('feeDisplay');
+      const feePercentLabel = document.getElementById('feePercentLabel');
+      if (feePercentLabel) {
+        feePercentLabel.textContent = FEE_PERCENTAGE_LABEL;
+      }
       
       if (betAmount > 0) {
         const betValueInSol = lunaToSol(betAmount);
@@ -2790,6 +3921,7 @@
       } else {
         feeDisplay.style.display = 'none';
       }
+      updateCreateButtonState();
     };
 
     // Competition Timer Functions
@@ -2913,6 +4045,243 @@
     }
 
 
+    async function updateFeeWalletLiveBalance(wallet) {
+      const balanceEl = document.getElementById('feeWalletLiveBalance');
+      if (!balanceEl) {
+        return;
+      }
+      if (!wallet) {
+        balanceEl.textContent = '--';
+        return;
+      }
+      try {
+        const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/rps/sol/balance?wallet=${wallet}`);
+        const data = await response.json();
+        if (data?.ok && typeof data.balance === 'number') {
+          balanceEl.textContent = data.balance.toFixed(6);
+          balanceEl.dataset.wallet = wallet;
+        }
+      } catch (error) {
+        console.warn('[Fees] Failed to load fee wallet balance:', error);
+      }
+    }
+
+    function renderFeeBreakdownList(breakdown) {
+      const listEl = document.getElementById('feeBreakdownList');
+      if (!listEl) {
+        return;
+      }
+      const entries = breakdown
+        ? Object.entries(breakdown).map(([wallet, stats]) => ({
+            wallet,
+            totalFees: Number(stats?.totalFees || 0),
+            transactionCount: Number(stats?.transactionCount || 0),
+          }))
+        : [];
+      if (!entries.length) {
+        listEl.innerHTML = '<div class="fee-breakdown__empty">No fees collected yet.</div>';
+        return;
+      }
+      const sorted = entries
+        .sort((a, b) => b.totalFees - a.totalFees)
+        .slice(0, 5);
+      listEl.innerHTML = sorted
+        .map((entry) => {
+          const walletLabel = shortenWallet(entry.wallet, 6) || 'Wallet';
+          const solLabel = formatSol(entry.totalFees || 0);
+          const txLabel = entry.transactionCount === 1 ? '1 tx' : `${entry.transactionCount} tx`;
+          return `
+            <div class="fee-breakdown__item">
+              <div>
+                <div class="fee-breakdown__wallet">${escapeHtml(walletLabel)}</div>
+                <div class="fee-breakdown__meta">${escapeHtml(txLabel)}</div>
+              </div>
+              <div class="fee-breakdown__amount">
+                <strong>${escapeHtml(solLabel)}</strong>
+              </div>
+            </div>
+          `;
+        })
+        .join('');
+    }
+
+    function readStoredLiveWinners() {
+      try {
+        const raw = localStorage.getItem(LIVE_WINNERS_STORAGE_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+        const now = Date.now();
+        return parsed.filter(entry => entry && now - Number(entry.timestamp || 0) <= LIVE_WINNERS_TTL_MS);
+      } catch (error) {
+        console.warn('[LiveWinners] Failed to read cache:', error);
+        return [];
+      }
+    }
+
+    function writeStoredLiveWinners(entries) {
+      if (!Array.isArray(entries)) return;
+      try {
+        localStorage.setItem(LIVE_WINNERS_STORAGE_KEY, JSON.stringify(entries));
+      } catch (error) {
+        console.warn('[LiveWinners] Failed to write cache:', error);
+      }
+    }
+
+    function renderLiveWinnersPanel() {
+      const listEl = document.getElementById('liveWinnersList');
+      if (!listEl) return;
+      if (!liveWinnerEntries.length) {
+        listEl.innerHTML = '<div class="live-winners__empty">Waiting for the next winner...</div>';
+        return;
+      }
+      listEl.innerHTML = liveWinnerEntries.map((entry) => {
+        if (entry.revealed === false) {
+          return `
+            <div class="live-winner live-winner--revealing">
+              <div class="loading-spinner"></div>
+              <span>Revealing winner...</span>
+            </div>
+          `;
+        }
+        const safeName = escapeHtml(shortenWallet(entry.wallet, 6));
+        const timeAgo = escapeHtml(formatTimeAgo(entry.timestamp));
+        const totalLuna = Math.max(0, Number(entry.betAmount || 0) * 2);
+        const lunaAmount = escapeHtml(formatNumber(totalLuna));
+        const solAmount = Number.isFinite(entry.totalPotInSol)
+          ? ` • ~${escapeHtml(entry.totalPotInSol.toFixed(4))} SOL`
+          : '';
+        const opponentLabel = entry.opponent ? `vs ${escapeHtml(shortenWallet(entry.opponent, 4))}` : '';
+        return `
+          <div class="live-winner">
+            <div class="live-winner__row">
+              <span class="live-winner__name">${safeName}</span>
+              <span class="live-winner__time">${timeAgo}</span>
+            </div>
+            <div class="live-winner__meta">
+              <span>Win +${lunaAmount} Luna</span>
+              <span>${opponentLabel}${solAmount}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function loadLiveWinnersVisibilityPreference() {
+      try {
+        const stored = localStorage.getItem(LIVE_WINNERS_VISIBILITY_KEY);
+        liveWinnersUserHidden = stored === 'hidden';
+      } catch (error) {
+        liveWinnersUserHidden = false;
+      }
+    }
+
+    function persistLiveWinnersVisibilityPreference() {
+      try {
+        localStorage.setItem(LIVE_WINNERS_VISIBILITY_KEY, liveWinnersUserHidden ? 'hidden' : 'visible');
+      } catch (error) {
+        // ignore
+      }
+    }
+
+    function hydrateLiveWinnersFromStorage() {
+      liveWinnerEntries = readStoredLiveWinners();
+      if (liveWinnerEntries.length > MAX_LIVE_WINNERS) {
+        liveWinnerEntries = liveWinnerEntries.slice(0, MAX_LIVE_WINNERS);
+      }
+      liveWinnerEntries = liveWinnerEntries.map((entry) => ({
+        ...entry,
+        revealed: true,
+      }));
+      renderLiveWinnersPanel();
+    }
+
+    function syncLiveWinnersVisibility() {
+      const panel = document.getElementById('liveWinnersPanel');
+      const toggleBtn = document.getElementById('liveWinnersToggle');
+      const shouldHide = liveWinnersUserHidden || liveWinnersGameHidden;
+      if (panel) {
+        panel.classList.toggle('hidden', shouldHide);
+      }
+      if (toggleBtn) {
+        const label = liveWinnersUserHidden ? '👁️ Show Live Winners' : '🙈 Hide Live Winners';
+        toggleBtn.textContent = label;
+        toggleBtn.setAttribute('aria-pressed', String(!liveWinnersUserHidden));
+      }
+    }
+
+    function recordLiveWinnerFromMessage(message) {
+      if (!message || !message.winner || message.winner === 'draw') {
+        return;
+      }
+      const betAmount = Number(message.betAmount) || 0;
+      const totalPotInSol = Number(message.totalPotInSol);
+      const entry = {
+        wallet: message.winner,
+        opponent: message.winner === message.player1Wallet ? message.player2Wallet : message.player1Wallet,
+        betAmount,
+        totalPotInSol: Number.isFinite(totalPotInSol) ? totalPotInSol : null,
+        timestamp: Date.now(),
+        roomId: message.roomId || null,
+        revealed: false,
+      };
+      liveWinnerEntries.unshift(entry);
+      const now = Date.now();
+      liveWinnerEntries = liveWinnerEntries
+        .filter((item) => item && now - item.timestamp <= LIVE_WINNERS_TTL_MS)
+        .slice(0, MAX_LIVE_WINNERS);
+      renderLiveWinnersPanel();
+      safeSetTimeout(() => {
+        entry.revealed = true;
+        renderLiveWinnersPanel();
+        writeStoredLiveWinners(liveWinnerEntries);
+      }, 1200);
+    }
+
+    function readCachedFeeBreakdown() {
+      try {
+        const raw = localStorage.getItem(FEE_BREAKDOWN_STORAGE_KEY);
+        if (!raw) return null;
+        const payload = JSON.parse(raw);
+        if (!payload || typeof payload !== 'object') {
+          return null;
+        }
+        const { timestamp, data } = payload;
+        if (!data || typeof data !== 'object') {
+          return null;
+        }
+        if (timestamp && Date.now() - timestamp > FEE_BREAKDOWN_TTL_MS) {
+          return null;
+        }
+        return data;
+      } catch (error) {
+        console.warn('[Fees] Failed to read cached fee breakdown:', error);
+        return null;
+      }
+    }
+
+    function writeCachedFeeBreakdown(data) {
+      if (!data || typeof data !== 'object') {
+        return;
+      }
+      try {
+        const payload = {
+          timestamp: Date.now(),
+          data,
+        };
+        localStorage.setItem(FEE_BREAKDOWN_STORAGE_KEY, JSON.stringify(payload));
+      } catch (error) {
+        console.warn('[Fees] Failed to cache fee breakdown:', error);
+      }
+    }
+
+    function hydrateFeeBreakdownFromCache() {
+      const cached = readCachedFeeBreakdown();
+      if (cached) {
+        renderFeeBreakdownList(cached);
+      }
+    }
+
     // Total Fees Real-time Update
     async function updateTotalFees() {
       try {
@@ -2946,10 +4315,21 @@
             feeWalletEl.textContent = feeWallet.length > 16 
               ? `${feeWallet.substring(0, 8)}...${feeWallet.substring(feeWallet.length - 8)}`
               : feeWallet;
+            await updateFeeWalletLiveBalance(feeWallet);
+          } else {
+            await updateFeeWalletLiveBalance(null);
           }
+          writeCachedFeeBreakdown(data.feeBreakdown);
+          renderFeeBreakdownList(data.feeBreakdown);
         }
       } catch (error) {
         console.error('[Fees] Error updating total fees:', error);
+        const cached = readCachedFeeBreakdown();
+        if (cached) {
+          renderFeeBreakdownList(cached);
+        } else {
+          renderFeeBreakdownList(null);
+        }
       }
     }
     
@@ -3156,7 +4536,10 @@
       initScrollProgress();
       initSparkles();
       initSmoothScroll();
+      loadLiveWinnersVisibilityPreference();
       setupWalletConnection();
+      hydrateFeeBreakdownFromCache();
+      hydrateLiveWinnersFromStorage();
       connectWebSocket();
       // Fetch Luna price on page load
       await fetchLunaPrice();
@@ -3173,6 +4556,16 @@
       initFormValidation();
       initTooltips();
       initKeyboardShortcuts();
+      updateCreateButtonState();
+      syncLiveWinnersVisibility();
+      const liveWinnersToggleBtn = document.getElementById('liveWinnersToggle');
+      if (liveWinnersToggleBtn) {
+        liveWinnersToggleBtn.addEventListener('click', () => {
+          liveWinnersUserHidden = !liveWinnersUserHidden;
+          persistLiveWinnersVisibilityPreference();
+          syncLiveWinnersVisibility();
+        });
+      }
     });
 
     function initFormValidation() {
@@ -3203,7 +4596,7 @@
       const connectBtn = document.getElementById('connectWalletBtn');
       
       if (createBtn) {
-        window.lunaUtils.createTooltip(createBtn, 'Create a new betting room. Minimum bet: 1 Luna. Fee: 1% of bet value.', 'top');
+        window.lunaUtils.createTooltip(createBtn, `Create a new betting room. Minimum bet: 1 Luna. Fee: ${FEE_PERCENTAGE_LABEL} of bet value.`, 'top');
       }
       if (connectBtn) {
         window.lunaUtils.createTooltip(connectBtn, 'Connect your Phantom wallet to play', 'bottom');

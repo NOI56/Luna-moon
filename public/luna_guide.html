@@ -1234,7 +1234,16 @@
       display: flex;
       gap: 20px;
       justify-content: center;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      padding-bottom: 5px;
+    }
+
+    @media (max-width: 960px) {
+      .guide-top-section .dex-links {
+        flex-wrap: wrap;
+        overflow-x: visible;
+      }
     }
 
     .guide-top-section .dex-btn {
@@ -1270,19 +1279,23 @@
       opacity: 0;
       transition: opacity 0.3s ease;
       z-index: -1;
+      border-radius: inherit;
     }
 
     .guide-top-section .dex-btn:hover::before {
       opacity: 1;
     }
 
+    .guide-top-section .dex-btn:hover {
+      /* Keep hover glow without shifting position to avoid clipping top border */
+      transform: translateY(0);
+    }
+
     .guide-top-section .dex-btn-buy {
       background: rgba(255, 107, 53, 0.2);
       border-color: rgba(255, 107, 53, 0.6);
       color: #ff6b35;
-      box-shadow: 
-        0 8px 32px rgba(255, 107, 53, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
     }
 
     .guide-top-section .dex-btn-buy:hover {
@@ -1291,7 +1304,6 @@
       box-shadow: 
         0 0 30px rgba(255, 107, 53, 0.6),
         0 8px 32px rgba(255, 107, 53, 0.4);
-      transform: translateY(-2px);
       text-shadow: 0 0 10px rgba(255, 107, 53, 0.8);
     }
 
@@ -1299,9 +1311,7 @@
       background: rgba(116, 39, 255, 0.2);
       border-color: rgba(116, 39, 255, 0.6);
       color: #7427ff;
-      box-shadow: 
-        0 8px 32px rgba(116, 39, 255, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
     }
 
     .guide-top-section .dex-btn-community:hover {
@@ -1310,7 +1320,6 @@
       box-shadow: 
         0 0 30px rgba(116, 39, 255, 0.6),
         0 8px 32px rgba(116, 39, 255, 0.4);
-      transform: translateY(-2px);
       text-shadow: 0 0 10px rgba(116, 39, 255, 0.8);
     }
 
@@ -1318,9 +1327,7 @@
       background: rgba(255, 77, 109, 0.2);
       border-color: rgba(255, 77, 109, 0.6);
       color: #ff4d6d;
-      box-shadow:
-        0 8px 32px rgba(255, 77, 109, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
     }
 
     .guide-top-section .dex-btn-live:hover {
@@ -1329,7 +1336,6 @@
       box-shadow:
         0 0 30px rgba(255, 77, 109, 0.6),
         0 8px 32px rgba(255, 77, 109, 0.4);
-      transform: translateY(-2px);
       text-shadow: 0 0 10px rgba(255, 77, 109, 0.8);
     }
 
@@ -1337,9 +1343,7 @@
       background: rgba(110, 118, 129, 0.2);
       border-color: rgba(110, 118, 129, 0.6);
       color: #ced3db;
-      box-shadow:
-        0 8px 32px rgba(110, 118, 129, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
     }
 
     .guide-top-section .dex-btn-github:hover {
@@ -1348,14 +1352,53 @@
       box-shadow:
         0 0 30px rgba(110, 118, 129, 0.6),
         0 8px 32px rgba(110, 118, 129, 0.4);
-      transform: translateY(-2px);
       text-shadow: 0 0 10px rgba(206, 211, 219, 0.8);
+    }
+
+    .guide-top-section .dex-btn-streamflow {
+      background: rgba(0, 200, 200, 0.18);
+      border-color: rgba(0, 200, 200, 0.6);
+      color: #00f5ff;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    .guide-top-section .dex-btn-streamflow:hover {
+      background: rgba(0, 200, 200, 0.28);
+      border-color: #00f5ff;
+      box-shadow:
+        0 0 30px rgba(0, 200, 200, 0.65),
+        0 8px 32px rgba(0, 200, 200, 0.45);
+      text-shadow: 0 0 10px rgba(0, 245, 255, 0.8);
     }
 
     .guide-top-section .dex-btn span {
       font-size: 1.2em;
       filter: drop-shadow(0 0 5px currentColor);
     }
+
+    .guide-top-section .dex-btn .dex-btn-icon {
+      height: 26px;
+      width: auto;
+      display: inline-block;
+      margin-right: 8px;
+      vertical-align: middle;
+      filter: drop-shadow(0 0 6px currentColor);
+    }
+
+    /* Slightly larger icon for Watch Luna Live */
+    .guide-top-section .dex-btn-live .dex-btn-icon {
+      height: 30px;
+      margin-right: 10px;
+    }
+
+    /* Custom sizing for Buy Luna icon */
+    .guide-top-section .dex-btn-buy .dex-btn-icon-buy {
+      height: 30px;
+      width: auto;
+      margin-right: 10px;
+      filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.35));
+    }
+
 
     body.neon-off .guide-top-section .contract-section,
     body.neon-off .guide-top-section .dex-btn {
@@ -1379,7 +1422,7 @@
     <a href="/rps_vs_luna.html">🎮 VS Luna</a>
     <a href="/rps_game.html">Play PvP! Find</a>
     <a href="/rps_betting.html">💰 Betting Mode</a>
-    <a href="/rps_deposit.html">💾 Deposit Luna</a>
+    <a href="/rps_deposit.html">🏦 Deposit Luna</a>
     <a href="/group_chat.html">💬 Group Chat</a>
     <a href="/rps_leaderboard.html">🏆 Leaderboard</a>
     <a href="/rps_stats.html">📊 Stats</a>
@@ -1410,17 +1453,20 @@
 
       <!-- Buy Luna & Community Links -->
       <div class="dex-links">
-        <a href="#" id="buyDexLink" class="dex-btn dex-btn-buy" target="_blank" onclick="openBuyDex(event)">
-          <span>⚡</span> Buy Luna
+        <a href="#" id="buyDexLink" class="dex-btn dex-btn-buy" target="_blank" rel="noopener noreferrer">
+          <img class="dex-btn-icon dex-btn-icon-buy" src="/images/logo/favicon-256x256.png" alt="Luna"> Buy Luna
         </a>
-        <a href="#" id="communityLink" class="dex-btn dex-btn-community" target="_blank" onclick="openCommunity(event)">
-          <span>𝕏</span> Join Community
+        <a href="#" id="communityLink" class="dex-btn dex-btn-community" target="_blank" rel="noopener noreferrer">
+          <img class="dex-btn-icon" src="/images/logo/x-logo.svg" alt="X"> Join Community
+        </a>
+        <a href="https://streamflow.finance/" id="streamflowLink" class="dex-btn dex-btn-streamflow" target="_blank" rel="noopener noreferrer">
+          <img class="dex-btn-icon" src="/images/logo/streamflow.svg" alt="Streamflow"> Streamflow
         </a>
         <a href="https://www.youtube.com/@LunaMoonAI/live" id="liveStreamLink" class="dex-btn dex-btn-live" target="_blank" rel="noopener noreferrer">
-          <span>🎥</span> Watch Luna Live
+          <img class="dex-btn-icon" src="/images/logo/pumpfun-pill.svg" alt="Pump.fun"> Watch Luna Live
         </a>
         <a href="https://github.com/NOI56/Luna-moon" id="githubLink" class="dex-btn dex-btn-github" target="_blank" rel="noopener noreferrer">
-          <span>🐙</span> GitHub
+          <img class="dex-btn-icon" src="/images/logo/github-mark.svg" alt="GitHub"> GitHub
         </a>
       </div>
     </div>
@@ -1606,7 +1652,7 @@
 
     <!-- Deposit System -->
     <section class="section" id="deposit">
-      <h2>💾 Deposit Luna System</h2>
+      <h2>🏦 Deposit Luna System</h2>
       <p>Deposit Luna to reduce fees and access various features</p>
       
       <h3>Deposit Steps:</h3>
@@ -1779,7 +1825,7 @@
       <h2>🚀 Get Started</h2>
       <p style="margin-bottom: 30px;">Ready to get started? Choose your desired feature:</p>
       <a href="/rps_vs_luna.html" class="cta-button"><span>🎮 Challenge Luna</span></a>
-      <a href="/rps_deposit.html" class="cta-button"><span>💾 Deposit Luna</span></a>
+      <a href="/rps_deposit.html" class="cta-button"><span>🏦 Deposit Luna</span></a>
       <a href="/rps_game.html" class="cta-button"><span>🎯 Play PvP</span></a>
       <a href="/group_chat.html" class="cta-button"><span>💬 Group Chat</span></a>
     </section>
@@ -2169,36 +2215,6 @@
           window.showToast('Contract address not loaded yet. Please wait a moment and try again.', 'info');
         } else {
           alert('Contract address not loaded yet. Please wait a moment and try again.');
-        }
-      }
-    }
-
-    // Open buy DEX link
-    function openBuyDex(event) {
-      event.preventDefault();
-      const buyDexLink = document.getElementById('buyDexLink');
-      if (buyDexLink && buyDexLink.href && buyDexLink.href !== '#') {
-        window.open(buyDexLink.href, '_blank');
-      } else {
-        if (window.showToast) {
-          window.showToast('Contract address not loaded yet. Please wait a moment and try again.', 'info');
-        } else {
-          alert('Contract address not loaded yet. Please wait a moment and try again.');
-        }
-      }
-    }
-
-    // Open community link (X/Twitter)
-    function openCommunity(event) {
-      event.preventDefault();
-      const communityLink = document.getElementById('communityLink');
-      if (communityLink && communityLink.href && communityLink.href !== '#') {
-        window.open(communityLink.href, '_blank');
-      } else {
-        if (window.showToast) {
-          window.showToast('Community link not loaded yet. Please wait a moment and try again.', 'info');
-        } else {
-          alert('Community link not loaded yet. Please wait a moment and try again.');
         }
       }
     }

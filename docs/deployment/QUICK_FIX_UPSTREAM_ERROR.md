@@ -126,3 +126,14 @@ Server ไม่ start หรือ crash ก่อนที่จะรับ r
 - [ ] ทดสอบ Health Check (`/luna/health`)
 - [ ] ทดสอบหน้าเว็บ
 
+
+
+
+
+
+
+
+
+
+
+
