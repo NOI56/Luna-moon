@@ -53,6 +53,35 @@
   };
   global.__LUNA_ENV__ = env;
 
+  // #region agent log
+  (function agentLogRuntime() {
+    const payload = (hypothesisId, message, data) => fetch('http://127.0.0.1:7242/ingest/76e7b26c-011f-4a99-a9fd-9ede455768f0', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: 'debug-session',
+        runId: 'pre-fix-run2',
+        hypothesisId,
+        location: 'public/js/runtime-utils.js:init',
+        message,
+        data,
+        timestamp: Date.now()
+      })
+    }).catch(() => {});
+
+    payload('H6', 'clientEnv', {
+      hostname,
+      isProduction,
+      forceDebug
+    });
+
+    payload('H7', 'consoleSuppressionState', {
+      willSuppress: env.isProduction && !env.forceDebug,
+      consoleSuppressed
+    });
+  })();
+  // #endregion agent log
+
   function suppressConsole() {
     if (consoleSuppressed || !env.isProduction || env.forceDebug) {
       return;

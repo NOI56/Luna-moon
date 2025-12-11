@@ -806,6 +806,23 @@ export async function getQueueMetrics() {
   return empty;
 }
 
+// Lightweight connectivity probe for health checks
+export async function pingDb() {
+  if (driver === "postgres" && pg) {
+    await pg.query("SELECT 1");
+    return true;
+  }
+
+  if (driver === "sqlite" && db) {
+    await new Promise((resolve, reject) => {
+      db.get("SELECT 1", [], (err) => (err ? reject(err) : resolve()));
+    });
+    return true;
+  }
+
+  return false;
+}
+
 /**
  * Clear any active deposit records (used for testing/migration)
  */

@@ -127,6 +127,51 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// #region agent log
+const agentDebugSessionId = 'debug-session';
+const agentDebugRunId = 'pre-fix-run1';
+const agentLog = (hypothesisId, message, data = {}) => {
+  fetch('http://127.0.0.1:7242/ingest/76e7b26c-011f-4a99-a9fd-9ede455768f0', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      sessionId: agentDebugSessionId,
+      runId: agentDebugRunId,
+      hypothesisId,
+      location: 'index.js:startup',
+      message,
+      data,
+      timestamp: Date.now()
+    })
+  }).catch(() => {});
+};
+
+agentLog('H1', 'envFlags', {
+  debugEnvEnabled: process.env.DEBUG === 'true',
+  nodeEnv: process.env.NODE_ENV || 'undefined'
+});
+agentLog('H2', 'execArgsInspect', {
+  hasInspectFlag: process.execArgv.some(arg => arg.includes('inspect')),
+  execArgv: process.execArgv
+});
+agentLog('H3', 'frontendDebugToggle', {
+  forceDebugFrontEnd: process.env.ENABLE_DEBUG_UI === 'true',
+  corsOriginsSet: Boolean(process.env.CORS_ORIGINS)
+});
+agentLog('H4', 'loggingConfig', {
+  logLevel: process.env.LOG_LEVEL || 'info',
+  logConsole: process.env.LOG_CONSOLE,
+  logVerbose: process.env.LOG_VERBOSE,
+  enhancedLogging: process.env.ENHANCED_LOGGING
+});
+agentLog('H5', 'featureFlags', {
+  enableCsrf: process.env.ENABLE_CSRF,
+  idleMonologue: process.env.IDLE_MONOLOGUE_ENABLED,
+  ambientMurmur: process.env.AMBIENT_MURMUR_ENABLED,
+  debugFlag: process.env.DEBUG
+});
+// #endregion agent log
+
 // ----------------------
 // Configuration Validation
 // ----------------------

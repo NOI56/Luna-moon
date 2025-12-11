@@ -17,6 +17,7 @@ import {
   getPendingWithdrawals,
   getTotalBurnedLuna,
   getQueueMetrics,
+  pingDb,
 } from "../modules/db.js";
 import { getTokenInfoFromDexScreener } from "../modules/pumpfun_api.js";
 
@@ -159,14 +160,7 @@ export function setupDepositRoutes(app, dependencies) {
 
     // DB check: simple query depending on driver
     try {
-      if (pg) {
-        await pg.query("SELECT 1");
-      } else if (db) {
-        await new Promise((resolve, reject) => {
-          db.get("SELECT 1", [], (err) => (err ? reject(err) : resolve()));
-        });
-      }
-      dbOk = true;
+      dbOk = await pingDb();
     } catch (err) {
       dbOk = false;
       log.debug("[health] db check failed:", err?.message || err);
