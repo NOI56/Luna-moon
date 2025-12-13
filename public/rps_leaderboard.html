@@ -643,16 +643,6 @@
           </div>
         </div>
       </div>
-      <details style="margin-top: 10px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 10px; padding: 12px 14px; color: rgba(223, 251, 255, 0.9);">
-        <summary style="color: #ffd700; font-weight: 700; cursor: pointer;">View how we split the fee wallet</summary>
-        <ul style="margin-top: 10px; padding-left: 18px; line-height: 1.6;">
-          <li>40% allocated for betting rewards</li>
-          <li>15% allocated for playing against Luna</li>
-          <li>15% allocated for the core team</li>
-          <li>15% allocated for weekly Boost payouts</li>
-          <li>15% allocated for weekly Token Advertising</li>
-        </ul>
-      </details>
       <div id="distributionPlan" style="margin-top: 15px; font-size: 0.95em; color: rgba(223, 251, 255, 0.9);">
         <!-- Distribution plan will be populated here -->
       </div>
@@ -740,14 +730,14 @@
           
           // Display distribution plan
           if (distributionPlan) {
-            const planItems = (data.distributionPlan || []).filter(item => item.rank !== 'distribution');
-            if (planItems.length > 0) {
+            if (data.distributionPlan && data.distributionPlan.length > 0) {
               let planHtml = '<div style="margin-top: 15px;"><strong style="color: #ffd700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);">Reward Distribution Plan (live % from Fee Wallet):</strong><ul style="margin-top: 10px; padding-left: 20px; list-style: none; color: rgba(223, 251, 255, 0.9);">';
               
-              planItems.forEach((item) => {
+              data.distributionPlan.forEach((item) => {
                 const rankLabel = item.rank === 1 ? '🥇 Rank 1' : 
                                  item.rank === 2 ? '🥈 Rank 2' : 
                                  item.rank === 3 ? '🥉 Rank 3' :
+                                 item.rank === 'distribution' ? '📦 Distribution Wallet' :
                                  `#${item.rank}`;
                 let walletDisplay = 'N/A';
                 if (item.wallet && item.wallet.length > 16) {

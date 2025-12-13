@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Luna AI</title>
+  <style>
+    :root {
+      --bg: #070914;
+      --card: rgba(255, 255, 255, 0.04);
+      --border: rgba(255, 255, 255, 0.1);
+      --text: #e8f6ff;
+      --accent: #5af8ff;
+      --accent-2: #ff4ecd;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+      background: radial-gradient(circle at 20% 20%, rgba(90, 248, 255, 0.12), transparent 32%),
+                  radial-gradient(circle at 80% 10%, rgba(255, 78, 205, 0.12), transparent 32%),
+                  linear-gradient(140deg, #050712, #0c1026 50%, #070914);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 32px 20px 48px;
+      display: flex;
+      justify-content: center;
+    }
+    .container {
+      width: min(960px, 100%);
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+    .title {
+      font-size: clamp(28px, 4vw, 36px);
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--accent);
+      font-weight: 600;
+      font-size: 13px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+    }
+    .card {
+      padding: 18px;
+      border-radius: 14px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      transition: border-color 0.2s ease, transform 0.15s ease;
+    }
+    .card:hover {
+      border-color: rgba(90, 248, 255, 0.4);
+      transform: translateY(-2px);
+    }
+    .card h3 {
+      margin: 0 0 8px;
+      font-size: 17px;
+      letter-spacing: -0.2px;
+    }
+    .card p {
+      margin: 0 0 12px;
+      color: rgba(232, 246, 255, 0.8);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      background: rgba(90, 248, 255, 0.08);
+      border: 1px solid rgba(90, 248, 255, 0.2);
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    }
+    a:hover {
+      background: rgba(90, 248, 255, 0.14);
+      border-color: rgba(90, 248, 255, 0.35);
+      color: #fff;
+    }
+    footer {
+      margin-top: 28px;
+      color: rgba(232, 246, 255, 0.7);
+      font-size: 13px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="title">Luna AI Web</div>
+      <div class="badge">System entry point</div>
+    </header>
+
+    <div class="grid">
+      <div class="card">
+        <h3>Rock Paper Scissors</h3>
+        <p>เล่นเกม RPS กับ Luna หรือดวลผู้เล่นอื่น</p>
+        <div class="links">
+          <a href="/rps_game.html">PvP</a>
+          <a href="/rps_vs_luna.html">Vs Luna</a>
+          <a href="/rps_betting.html">Betting</a>
+          <a href="/rps_stats.html">Stats</a>
+          <a href="/rps_leaderboard.html">Leaderboard</a>
+          <a href="/rps_history.html">History</a>
+          <a href="/rps_overlay.html">Overlay</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Chat & Notifications</h3>
+        <p>ทดสอบระบบแชตและแจ้งเตือน</p>
+        <div class="links">
+          <a href="/chat_tester.html">Chat Tester</a>
+          <a href="/test_notifications.html">Notifications</a>
+          <a href="/group_chat.html">Group Chat</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Overlays</h3>
+        <p>โอเวอร์เลย์สำหรับสตรีมและสถานะ Luna</p>
+        <div class="links">
+          <a href="/overlay.html">Status Overlay</a>
+          <a href="/mood_overlay.html">Mood Overlay</a>
+          <a href="/luna_character.html">Character (web)</a>
+          <a href="/luna_character_vts.html">Character (VTS)</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Docs & API</h3>
+        <p>ดูตัวอย่างและ API สำหรับอินทิเกรต</p>
+        <div class="links">
+          <a href="/api-docs.html">API Docs</a>
+          <a href="/api-docs.json">OpenAPI</a>
+          <a href="/about.html">About</a>
+        </div>
+      </div>
+    </div>
+
+    <footer>พร้อมใช้งานเมื่อเซิร์ฟเวอร์รันที่ API_BASE ของคุณ</footer>
+  </div>
+</body>
+</html>

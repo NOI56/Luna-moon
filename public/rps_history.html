@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Luna RPS - History</title>
+  <style>
+    :root {
+      --bg: #050712;
+      --card: rgba(255, 255, 255, 0.04);
+      --border: rgba(255, 255, 255, 0.12);
+      --text: #e8f6ff;
+      --accent: #5af8ff;
+      --accent-2: #ff4ecd;
+      --muted: rgba(232, 246, 255, 0.75);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+      background: radial-gradient(circle at 15% 18%, rgba(90, 248, 255, 0.14), transparent 30%),
+                  radial-gradient(circle at 82% 12%, rgba(255, 78, 205, 0.14), transparent 30%),
+                  linear-gradient(135deg, #050712 0%, #0b0f24 45%, #0a0818 100%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 28px 16px 48px;
+      display: flex;
+      justify-content: center;
+    }
+    .container {
+      width: min(900px, 100%);
+    }
+    header {
+      margin-bottom: 18px;
+    }
+    h1 {
+      margin: 0 0 6px;
+      font-size: clamp(26px, 4vw, 32px);
+      letter-spacing: -0.4px;
+    }
+    p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .card {
+      margin-top: 16px;
+      padding: 18px;
+      border-radius: 14px;
+      background: var(--card);
+      border: 1px solid var(--border);
+    }
+    .form-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    label {
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text);
+    }
+    input[type="text"] {
+      flex: 1;
+      min-width: 260px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text);
+      outline: none;
+    }
+    button {
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(90, 248, 255, 0.35);
+      background: rgba(90, 248, 255, 0.12);
+      color: var(--text);
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+    }
+    button:hover {
+      background: rgba(90, 248, 255, 0.2);
+      border-color: rgba(90, 248, 255, 0.5);
+    }
+    button:active {
+      transform: translateY(1px);
+    }
+    .status {
+      margin-top: 8px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+    pre {
+      margin: 0;
+      padding: 12px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 13px;
+      overflow: auto;
+      max-height: 420px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .help {
+      margin-top: 12px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .help code {
+      background: rgba(255, 255, 255, 0.06);
+      padding: 2px 6px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>RPS History</h1>
+      <p>ดึงประวัติการเล่น RPS ของกระเป๋า (GET /luna/rps/history)</p>
+    </header>
+
+    <div class="card">
+      <div class="form-row">
+        <label for="wallet">Wallet</label>
+        <input id="wallet" type="text" placeholder="กรอกกระเป๋า Solana">
+        <button id="load">Load history</button>
+      </div>
+      <div class="status" id="status">ยังไม่ได้ดึงข้อมูล</div>
+      <pre id="output">[]</pre>
+      <div class="help">
+        ใช้ API: <code>/luna/rps/history?wallet=&lt;address&gt;</code>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const statusEl = document.getElementById('status');
+    const outputEl = document.getElementById('output');
+    const walletEl = document.getElementById('wallet');
+    const loadBtn = document.getElementById('load');
+
+    function setStatus(text, color = 'var(--muted)') {
+      statusEl.style.color = color;
+      statusEl.textContent = text;
+    }
+
+    async function loadHistory() {
+      const wallet = walletEl.value.trim();
+      if (!wallet) {
+        setStatus('กรอกกระเป๋าก่อน', '#ffb347');
+        return;
+      }
+      setStatus('กำลังดึงข้อมูล...', 'var(--accent)');
+      outputEl.textContent = '';
+      try {
+        const res = await fetch(`/luna/rps/history?wallet=${encodeURIComponent(wallet)}`);
+        const contentType = res.headers.get('content-type') || '';
+        if (!res.ok) {
+          setStatus(`เรียก API ไม่สำเร็จ (${res.status})`, '#ff8080');
+          const text = await res.text();
+          outputEl.textContent = text || 'No response body';
+          return;
+        }
+        if (contentType.includes('application/json')) {
+          const json = await res.json();
+          setStatus('โหลดสำเร็จ', 'var(--accent)');
+          outputEl.textContent = JSON.stringify(json, null, 2);
+        } else {
+          const text = await res.text();
+          setStatus('โหลดสำเร็จ (non-JSON)', 'var(--accent)');
+          outputEl.textContent = text;
+        }
+      } catch (err) {
+        setStatus(`ข้อผิดพลาด: ${err.message}`, '#ff8080');
+        outputEl.textContent = err.stack || err.message;
+      }
+    }
+
+    loadBtn.addEventListener('click', loadHistory);
+    walletEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        loadHistory();
+      }
+    });
+  </script>
+</body>
+</html>

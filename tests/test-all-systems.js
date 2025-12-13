@@ -9,6 +9,7 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const rootDir = path.join(__dirname, '..');
 
 const API_BASE = process.env.API_BASE || 'http://localhost:8787';
 const TEST_WALLET = 'TestWallet1111111111111111111111111111111111111111';
@@ -368,7 +369,7 @@ async function testStaticAssets() {
 async function testFileSystem() {
   logTest('File System Check');
   
-  const publicDir = path.join(__dirname, 'public');
+  const publicDir = path.join(rootDir, 'public');
   const requiredFiles = [
     'index.html',
     'about.html',
@@ -412,31 +413,31 @@ async function testConfiguration() {
   logTest('Configuration Check');
   
   // Check .env file
-  const envPath = path.join(__dirname, '.env');
+  const envPath = path.join(rootDir, '.env');
   const envExists = fs.existsSync(envPath);
   recordResult('Environment File (.env)', envExists,
     envExists ? 'Found' : 'Missing - using env.example');
   
   // Check env.example
-  const envExamplePath = path.join(__dirname, 'env.example');
+  const envExamplePath = path.join(rootDir, 'env.example');
   const envExampleExists = fs.existsSync(envExamplePath);
   recordResult('Environment Example (env.example)', envExampleExists,
     envExampleExists ? 'Found' : 'Missing');
   
   // Check package.json
-  const packagePath = path.join(__dirname, 'package.json');
+  const packagePath = path.join(rootDir, 'package.json');
   const packageExists = fs.existsSync(packagePath);
   recordResult('Package.json', packageExists,
     packageExists ? 'Found' : 'Missing');
   
   // Check node_modules
-  const nodeModulesPath = path.join(__dirname, 'node_modules');
+  const nodeModulesPath = path.join(rootDir, 'node_modules');
   const nodeModulesExists = fs.existsSync(nodeModulesPath);
   recordResult('Node Modules', nodeModulesExists,
     nodeModulesExists ? 'Found' : 'Missing - run npm install');
   
   // Check database
-  const dbPath = path.join(__dirname, 'tmp', 'luna.db');
+  const dbPath = path.join(rootDir, 'tmp', 'luna.db');
   const dbExists = fs.existsSync(dbPath);
   recordResult('Database (tmp/luna.db)', dbExists,
     dbExists ? 'Found' : 'Will be created on first run');
