@@ -11,6 +11,15 @@ class ChatManager {
     this.container = null;
     this.input = null;
     this.isOpen = false;
+    this.features = {
+      enableStickers: false,
+      autoOpen: false
+    };
+    this.stickers = {
+      rock: { label: 'Rock', src: '/images/hands/rock.png' },
+      paper: { label: 'Paper', src: '/images/hands/paper.png' },
+      scissors: { label: 'Scissors', src: '/images/hands/scissors.png' }
+    };
   }
 
   init(wallet, username = null) {
@@ -44,7 +53,13 @@ class ChatManager {
     };
   }
 
-  createUI(roomId, roomType = 'lobby') {
+  createUI(roomId, roomType = 'lobby', options = {}) {
+    const normalizedOptions = {
+      enableStickers: options.enableStickers ?? this.features.enableStickers,
+      autoOpen: options.autoOpen ?? false
+    };
+    this.features = normalizedOptions;
+    
     // Check if already exists for this room
     const existing = document.getElementById('chat-container');
     if (existing) {
@@ -53,10 +68,19 @@ class ChatManager {
         this.currentRoomId = roomId;
         this.loadMessages();
       }
+      
+      // Update feature-driven UI pieces without rebuilding
+      this.syncStickerBar();
+      if (this.features.autoOpen) {
+        this.setChatOpen(true);
+      }
       return; // Already created
     }
     
     this.currentRoomId = roomId;
+    if (this.features.autoOpen) {
+      this.isOpen = true;
+    }
 
     // Create chat container
     const container = document.createElement('div');
@@ -69,6 +93,14 @@ class ChatManager {
       </div>
       <div class="chat-body" id="chat-body" style="display: ${this.isOpen ? 'flex' : 'none'}">
         <div class="chat-messages" id="chat-messages"></div>
+        <div class="chat-sticker-bar" id="chat-sticker-bar" style="${this.features.enableStickers ? '' : 'display: none;'}">
+          ${Object.entries(this.stickers).map(([key, data]) => `
+            <button class="chat-sticker-btn" data-sticker="${key}" title="${data.label}">
+              <img src="${data.src}" alt="${data.label}">
+              <span>${data.label}</span>
+            </button>
+          `).join('')}
+        </div>
         <div class="chat-input-container">
           <input type="text" id="chat-input" placeholder="Type a message..." maxlength="500">
           <button onclick="chatManager.sendMessage()" id="chat-send-btn">Send</button>
@@ -81,6 +113,7 @@ class ChatManager {
 
     this.container = document.getElementById('chat-messages');
     this.input = document.getElementById('chat-input');
+    this.stickerBar = document.getElementById('chat-sticker-bar');
 
     // Enter key to send
     if (this.input) {
@@ -96,6 +129,16 @@ class ChatManager {
         this.input.disabled = true;
       }
     }
+    
+    // Sticker buttons
+    if (this.stickerBar) {
+      this.stickerBar.querySelectorAll('.chat-sticker-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const sticker = btn.dataset.sticker;
+          this.sendSticker(sticker);
+        });
+      });
+    }
 
     // Load messages
     this.loadMessages();
@@ -105,20 +148,7 @@ class ChatManager {
   }
 
   toggleChat() {
-    this.isOpen = !this.isOpen;
-    const body = document.getElementById('chat-body');
-    const toggle = document.querySelector('.chat-toggle');
-    
-    if (body) {
-      body.style.display = this.isOpen ? 'flex' : 'none';
-    }
-    if (toggle) {
-      toggle.textContent = this.isOpen ? '−' : '+';
-    }
-    
-    if (this.isOpen) {
-      this.scrollToBottom();
-    }
+    this.setChatOpen(!this.isOpen);
   }
 
   async loadMessages() {
@@ -144,6 +174,7 @@ class ChatManager {
     }
     
     this.messages.push(message);
+    this.notifySticker(message);
     
     // Keep only last 100 messages
     if (this.messages.length > 100) {
@@ -168,7 +199,7 @@ class ChatManager {
           <span class="chat-username">${msg.username || (msg.wallet ? msg.wallet.substring(0, 8) + '...' : 'Guest')}</span>
           <span class="chat-time">${this.formatTime(msg.timestamp)}</span>
         </div>
-        <div class="chat-message-content">${this.escapeHtml(msg.message)}</div>
+        <div class="chat-message-content">${this.renderMessageContent(msg)}</div>
       </div>
     `).join('');
   }
@@ -184,6 +215,32 @@ class ChatManager {
     const message = this.input.value.trim();
     if (message.length === 0) return;
 
+    const result = await this.submitMessage(message);
+    if (result?.ok && this.input) {
+      this.input.value = '';
+    }
+  }
+
+  async sendSticker(stickerKey) {
+    if (!this.currentRoomId) return;
+    if (!this.wallet) {
+      alert('Please connect your wallet to send stickers');
+      return;
+    }
+    
+    const normalizedKey = typeof stickerKey === 'string' ? stickerKey.toLowerCase() : '';
+    if (!this.stickers[normalizedKey]) {
+      return;
+    }
+    
+    const stickerMessage = `[sticker:${normalizedKey}]`;
+    const result = await this.submitMessage(stickerMessage);
+    if (result?.ok) {
+      this.playStickerSound();
+    }
+  }
+
+  async submitMessage(message) {
     try {
       const response = await fetch(`${window.location.origin}/luna/chat/send`, {
         method: 'POST',
@@ -198,14 +255,69 @@ class ChatManager {
 
       const data = await response.json();
       if (data.ok) {
-        this.input.value = '';
         // Message will be added via WebSocket
+        return { ok: true };
       } else {
         alert('Failed to send message: ' + (data.error || data.message));
+        return { ok: false, error: data.error || data.message };
       }
     } catch (error) {
       console.error('Failed to send message:', error);
       alert('Failed to send message. Please try again.');
+      return { ok: false, error: error?.message || 'network' };
+    }
+  }
+
+  renderMessageContent(msg) {
+    const sticker = this.parseSticker(msg?.message);
+    if (sticker) {
+      const src = this.getStickerSrc(sticker.key);
+      const label = this.stickers[sticker.key]?.label || 'Sticker';
+      const safeLabel = this.escapeHtml(label);
+      const safeSrc = this.escapeAttribute(src);
+      return `
+        <div class="chat-message-sticker">
+          <img src="${safeSrc}" alt="${safeLabel}">
+          <div class="chat-sticker-label">${safeLabel}</div>
+        </div>
+      `;
+    }
+
+    return this.escapeHtml(msg?.message || '');
+  }
+
+  parseSticker(message) {
+    if (!message || typeof message !== 'string') return null;
+    const match = message.trim().match(/^\[sticker:(rock|paper|scissors)\]$/i);
+    if (!match) return null;
+    const key = match[1].toLowerCase();
+    if (!this.stickers[key]) return null;
+    return { key };
+  }
+
+  getStickerSrc(key) {
+    return this.stickers[key]?.src || this.stickers.rock.src;
+  }
+
+  playStickerSound() {
+    if (typeof window.playSound === 'function') {
+      window.playSound(720, 0.12, 'square', 0.35);
+      return;
+    }
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      oscillator.type = 'square';
+      oscillator.frequency.value = 720;
+      gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + 0.12);
+    } catch (e) {
+      // Fallback: silent failure to avoid blocking UI
     }
   }
 
@@ -222,9 +334,55 @@ class ChatManager {
     return div.innerHTML;
   }
 
+  escapeAttribute(text) {
+    const div = document.createElement('div');
+    div.textContent = text || '';
+    return div.innerHTML.replace(/"/g, '&quot;');
+  }
+
   scrollToBottom() {
     if (this.container) {
       this.container.scrollTop = this.container.scrollHeight;
+    }
+  }
+
+  syncStickerBar() {
+    if (!this.stickerBar) return;
+    this.stickerBar.style.display = this.features.enableStickers ? 'flex' : 'none';
+  }
+
+  setChatOpen(isOpen) {
+    this.isOpen = isOpen;
+    const body = document.getElementById('chat-body');
+    const toggle = document.querySelector('.chat-toggle');
+
+    if (body) {
+      body.style.display = isOpen ? 'flex' : 'none';
+    }
+    if (toggle) {
+      toggle.textContent = isOpen ? '−' : '+';
+    }
+
+    if (isOpen) {
+      this.scrollToBottom();
+    }
+  }
+
+  notifySticker(message) {
+    const sticker = this.parseSticker(message?.message);
+    if (!sticker) return;
+    try {
+      if (typeof window.onChatStickerReceived === 'function') {
+        window.onChatStickerReceived({
+          sticker: sticker.key,
+          roomId: message?.roomId,
+          wallet: message?.wallet,
+          message
+        });
+      }
+    } catch (err) {
+      // Silent fail to avoid breaking chat flow
+      console.warn('[chat] sticker callback error:', err);
     }
   }
 }

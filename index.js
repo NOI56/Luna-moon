@@ -119,10 +119,38 @@ import {
   SOLANA_CONSTANTS
 } from "./config/constants.js";
 
+// Debug: show fee wallet loaded at runtime
+console.log("[env] BETTING_FEE_WALLET =", process.env.BETTING_FEE_WALLET);
+
 // State
 import { initializeState } from "./state/state.js";
 
+// Load environment early so downstream imports see values
 dotenv.config();
+
+// Hard-stop if fee wallet not configured to avoid misdirected transfers
+if (
+  !process.env.BETTING_FEE_WALLET ||
+  process.env.BETTING_FEE_WALLET.includes("your_fee_wallet_address_here")
+// eslint-disable-next-line no-console
+) {
+  console.error(
+    "[startup] BETTING_FEE_WALLET is not configured. Set it in .env and restart to prevent misdirected fee transfers."
+  );
+  process.exit(1);
+}
+
+// Hard-stop if deposit escrow wallet not configured (avoid fallback to hardcoded address)
+if (
+  !process.env.DEPOSIT_ESCROW_WALLET ||
+  process.env.DEPOSIT_ESCROW_WALLET.includes("your_escrow_wallet_here")
+) {
+  // eslint-disable-next-line no-console
+  console.error(
+    "[startup] DEPOSIT_ESCROW_WALLET is not configured. Set it in .env to prevent deposits going to the fallback address."
+  );
+  process.exit(1);
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

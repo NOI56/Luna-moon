@@ -14,13 +14,14 @@ import {
 } from "@solana/web3.js";
 import {
   TOKEN_PROGRAM_ID,
+  TOKEN_2022_PROGRAM_ID,
   getAssociatedTokenAddressSync,
   createAssociatedTokenAccountInstruction,
   createTransferInstruction,
 } from "@solana/spl-token";
 import bs58 from "bs58";
 
-const TOKEN_PROGRAM_ID_STR = TOKEN_PROGRAM_ID.toBase58();
+let TOKEN_PROGRAM_ID_STR = TOKEN_PROGRAM_ID.toBase58();
 
 /**
  * Setup RPS Betting routes
@@ -61,6 +62,9 @@ export function setupRpsBettingRoutes(app, dependencies) {
     BETTING_FEE_6_DAYS,
   } = dependencies;
 
+  // Toggle anti-abuse checks via env (default: enabled)
+  const ANTI_ABUSE_ENABLED = process.env.ANTI_ABUSE_ENABLED !== "false";
+
   // Specific cooldown for betting games to avoid long lockouts between rooms
   const BETTING_GAME_COOLDOWN_MS = 5 * 1000; // 5 seconds
   const MAX_BET_AMOUNT = 1000000000; // 1 billion Luna
@@ -82,6 +86,20 @@ export function setupRpsBettingRoutes(app, dependencies) {
   const rpcUrl = SOLANA_RPC_URL || process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com";
   const connection = new Connection(rpcUrl, "confirmed");
 
+  /**
+   * Rematch session state (in-memory)
+   * Map key: roomId of the finished match
+   * Value: {
+   *   betAmount,
+   *   creatorWallet,
+   *   challengerWallet,
+   *   ready: Set<wallet>,
+   *   paid: Set<wallet>,
+   *   cancelledBy: wallet|null
+   * }
+   */
+  const rematchSessions = new Map();
+
   let mintPublicKey = null;
   try {
     if (LUNA_TOKEN_MINT && LUNA_TOKEN_MINT !== "your_token_mint_address_from_pumpfun_here") {
@@ -96,6 +114,8 @@ export function setupRpsBettingRoutes(app, dependencies) {
   let bettingEscrowPublicKey = null;
   let bettingEscrowKeypair = null;
   let bettingEscrowTokenAccount = null;
+  let tokenProgramId = TOKEN_PROGRAM_ID;
+  let tokenProgramResolved = false;
 
   try {
     if (BETTING_ESCROW_WALLET) {
@@ -114,10 +134,45 @@ export function setupRpsBettingRoutes(app, dependencies) {
   }
 
   if (bettingEscrowPublicKey && mintPublicKey) {
-    bettingEscrowTokenAccount = getAssociatedTokenAddressSync(mintPublicKey, bettingEscrowPublicKey, false);
+    bettingEscrowTokenAccount = getAssociatedTokenAddressSync(
+      mintPublicKey,
+      bettingEscrowPublicKey,
+      false,
+      tokenProgramId
+    );
   }
 
-  const bettingEscrowReady = !!(mintPublicKey && bettingEscrowPublicKey && bettingEscrowKeypair && bettingEscrowTokenAccount);
+  const bettingEscrowReady = !!(mintPublicKey && bettingEscrowPublicKey && bettingEscrowKeypair);
+
+  async function ensureTokenProgramId() {
+    if (tokenProgramResolved || !mintPublicKey) return;
+    try {
+      const info = await connection.getAccountInfo(mintPublicKey);
+      const ownerStr = info?.owner?.toBase58 ? info.owner.toBase58() : info?.owner;
+      if (ownerStr === TOKEN_2022_PROGRAM_ID.toBase58()) {
+        tokenProgramId = TOKEN_2022_PROGRAM_ID;
+        TOKEN_PROGRAM_ID_STR = tokenProgramId.toBase58();
+        log.info("[rps-betting] Detected Token-2022 mint; using TOKEN_2022_PROGRAM_ID");
+      }
+    } catch (error) {
+      log.warn("[rps-betting] Failed to detect token program id:", error?.message || error);
+    } finally {
+      tokenProgramResolved = true;
+      if (bettingEscrowPublicKey && mintPublicKey) {
+        bettingEscrowTokenAccount = getAssociatedTokenAddressSync(
+          mintPublicKey,
+          bettingEscrowPublicKey,
+          false,
+          tokenProgramId
+        );
+      }
+    }
+  }
+
+  function getBettingEscrowAta() {
+    if (!bettingEscrowPublicKey || !mintPublicKey) return null;
+    return getAssociatedTokenAddressSync(mintPublicKey, bettingEscrowPublicKey, false, tokenProgramId);
+  }
 
   let mintDecimalsCache = null;
   async function getMintDecimals() {
@@ -144,14 +199,20 @@ export function setupRpsBettingRoutes(app, dependencies) {
       log.warn("[rps-betting] Cannot create betting escrow ATA: Betting escrow not configured.");
       return;
     }
-    if (!bettingEscrowKeypair || !bettingEscrowTokenAccount || !mintPublicKey) {
+    if (!bettingEscrowKeypair || !mintPublicKey) {
       log.warn("[rps-betting] Cannot create betting escrow ATA: Missing required configuration.");
       return;
     }
     try {
-      const info = await connection.getAccountInfo(bettingEscrowTokenAccount);
+      await ensureTokenProgramId();
+      const escrowAta = getBettingEscrowAta();
+      if (!escrowAta) {
+        log.warn("[rps-betting] Cannot create betting escrow ATA: Missing escrow ATA address.");
+        return;
+      }
+      const info = await connection.getAccountInfo(escrowAta);
       if (info) {
-        log.info("[rps-betting] Betting escrow ATA already exists:", bettingEscrowTokenAccount.toBase58());
+        log.info("[rps-betting] Betting escrow ATA already exists:", escrowAta.toBase58());
         return;
       }
       
@@ -166,9 +227,10 @@ export function setupRpsBettingRoutes(app, dependencies) {
       const tx = new Transaction().add(
         createAssociatedTokenAccountInstruction(
           bettingEscrowPublicKey,
-          bettingEscrowTokenAccount,
+          escrowAta,
           bettingEscrowPublicKey,
-          mintPublicKey
+          mintPublicKey,
+          tokenProgramId
         )
       );
       tx.feePayer = bettingEscrowPublicKey;
@@ -271,7 +333,97 @@ export function setupRpsBettingRoutes(app, dependencies) {
     }
   });
 
+  /**
+   * Rematch state update
+   * POST /luna/rps/betting/rematch/state
+   * Body: { roomId, betAmount, creatorWallet, challengerWallet, wallet, action: 'ready'|'cancel'|'paid' }
+   */
+  app.post("/luna/rps/betting/rematch/state", async (req, res) => {
+    try {
+      const { roomId, betAmount, creatorWallet, challengerWallet, wallet, action } = req.body || {};
+      if (!roomId || typeof roomId !== "string") {
+        return res.status(400).json({ ok: false, error: "roomId required" });
+      }
+      if (!betAmount || typeof betAmount !== "number" || betAmount <= 0) {
+        return res.status(400).json({ ok: false, error: "betAmount required" });
+      }
+      const normalizedAction = typeof action === "string" ? action.toLowerCase() : "";
+      if (!["ready", "cancel", "paid"].includes(normalizedAction)) {
+        return res.status(400).json({ ok: false, error: "invalid action" });
+      }
+
+      try {
+        validateWalletAddress(wallet, "wallet");
+        validateWalletAddress(creatorWallet, "creatorWallet");
+        validateWalletAddress(challengerWallet, "challengerWallet");
+      } catch (e) {
+        return res.status(400).json({ ok: false, error: "invalid wallet" });
+      }
+
+      const session =
+        rematchSessions.get(roomId) ||
+        {
+          betAmount,
+          creatorWallet,
+          challengerWallet,
+          ready: new Set(),
+          paid: new Set(),
+          cancelledBy: null,
+        };
+
+      // Ensure bet amount and participants match existing session if any
+      if (
+        session.betAmount !== betAmount ||
+        session.creatorWallet !== creatorWallet ||
+        session.challengerWallet !== challengerWallet
+      ) {
+        return res.status(400).json({ ok: false, error: "session mismatch" });
+      }
+
+      if (normalizedAction === "ready") {
+        session.ready.add(wallet);
+      } else if (normalizedAction === "paid") {
+        session.paid.add(wallet);
+      } else if (normalizedAction === "cancel") {
+        session.cancelledBy = wallet;
+      }
+
+      const payloadBase = {
+        type: "rps_betting_rematch_state",
+        roomId,
+        betAmount,
+        creatorWallet,
+        challengerWallet,
+        actor: wallet,
+        action: normalizedAction,
+        ready: Array.from(session.ready),
+        paid: Array.from(session.paid),
+        cancelledBy: session.cancelledBy,
+        bothReady:
+          session.ready.has(creatorWallet) && session.ready.has(challengerWallet) && !session.cancelledBy,
+        bothPaid:
+          session.paid.has(creatorWallet) && session.paid.has(challengerWallet) && !session.cancelledBy,
+      };
+
+      // Broadcast state to all clients
+      broadcast(payloadBase);
+
+      // If cancelled -> cleanup
+      if (normalizedAction === "cancel") {
+        rematchSessions.delete(roomId);
+      } else {
+        rematchSessions.set(roomId, session);
+      }
+
+      return res.json({ ok: true });
+    } catch (err) {
+      log.error("[rps-betting] rematch state error:", err);
+      return res.status(500).json({ ok: false, error: "internal_error" });
+    }
+  });
+
   async function verifyStakeTransaction(signature, wallet, requiredAmount, expectedFeeLamports = 0) {
+    await ensureTokenProgramId();
     if (!bettingEscrowReady) {
       throw new Error("Betting escrow wallet is not configured. Please contact administrator.");
     }
@@ -280,6 +432,18 @@ export function setupRpsBettingRoutes(app, dependencies) {
     }
     if (usedStakeSignatures.has(signature)) {
       throw new Error("This transaction signature has already been used.");
+    }
+
+    const signatureStatus = await connection.getSignatureStatus(signature, { searchTransactionHistory: true });
+    const statusValue = signatureStatus?.value;
+    if (!statusValue) {
+      throw new Error("Stake transaction not found yet. Please wait 10-30 seconds for confirmation, then retry.");
+    }
+    if (statusValue.err) {
+      throw new Error("Stake transaction failed on-chain. Please submit a successful transfer.");
+    }
+    if (statusValue.confirmationStatus !== "confirmed" && statusValue.confirmationStatus !== "finalized") {
+      throw new Error("Stake transaction is still pending confirmation. Please retry in a few seconds.");
     }
 
     const parsedTx = await connection.getParsedTransaction(signature, {
@@ -296,7 +460,10 @@ export function setupRpsBettingRoutes(app, dependencies) {
     }
 
     const instructions = parsedTx.transaction?.message?.instructions || [];
-    const escrowAtaBase58 = bettingEscrowTokenAccount.toBase58();
+    const escrowAtaBase58 = getBettingEscrowAta()?.toBase58();
+    if (!escrowAtaBase58) {
+      throw new Error("Betting escrow ATA unavailable. Please try again later.");
+    }
     const mintBase58 = mintPublicKey.toBase58();
 
     const transferInstruction = instructions.find((ix) => {
@@ -401,8 +568,14 @@ export function setupRpsBettingRoutes(app, dependencies) {
       throw new Error("Transfer amount exceeds supported range.");
     }
 
+    await ensureTokenProgramId();
+    const escrowAta = getBettingEscrowAta();
+    if (!escrowAta) {
+      throw new Error("Betting escrow ATA unavailable.");
+    }
+
     const toPublicKey = new PublicKey(toWallet);
-    const toTokenAccount = getAssociatedTokenAddressSync(mintPublicKey, toPublicKey, false);
+    const toTokenAccount = getAssociatedTokenAddressSync(mintPublicKey, toPublicKey, false, tokenProgramId);
     const instructions = [];
     const ataInfo = await connection.getAccountInfo(toTokenAccount);
     if (!ataInfo) {
@@ -411,17 +584,20 @@ export function setupRpsBettingRoutes(app, dependencies) {
           bettingEscrowPublicKey,
           toTokenAccount,
           toPublicKey,
-          mintPublicKey
+          mintPublicKey,
+          tokenProgramId
         )
       );
     }
 
     instructions.push(
       createTransferInstruction(
-        bettingEscrowTokenAccount,
+          escrowAta,
         toTokenAccount,
         bettingEscrowPublicKey,
-        rawAmount
+        rawAmount,
+        [],
+        tokenProgramId
       )
     );
 
@@ -486,6 +662,8 @@ export function setupRpsBettingRoutes(app, dependencies) {
 
       const { wallet, amount } = req.body || {};
 
+      await ensureTokenProgramId();
+
       try {
         validateWalletAddress(wallet, "wallet");
       } catch (error) {
@@ -513,7 +691,7 @@ export function setupRpsBettingRoutes(app, dependencies) {
       }
 
       const ip = typeof getClientIp === "function" ? getClientIp(req) : null;
-      if (ip && typeof checkIpRateLimit === "function") {
+      if (ANTI_ABUSE_ENABLED && ip && typeof checkIpRateLimit === "function") {
         const rateLimitCheck = checkIpRateLimit(ip);
         if (!rateLimitCheck.allowed) {
           return res.status(429).json({
@@ -536,9 +714,19 @@ export function setupRpsBettingRoutes(app, dependencies) {
       }
 
       const userPublicKey = new PublicKey(wallet);
-      const userTokenAccount = getAssociatedTokenAddressSync(mintPublicKey, userPublicKey, false);
+      const userTokenAccount = getAssociatedTokenAddressSync(mintPublicKey, userPublicKey, false, tokenProgramId);
+      const escrowAta = getBettingEscrowAta();
+      if (!escrowAta) {
+        return res.status(503).json({
+          ok: false,
+          error: "EscrowUnavailable",
+          message: "Betting escrow ATA unavailable. Please try again later.",
+        });
+      }
 
       const instructions = [];
+
+      // Ensure user ATA exists (payer: user)
       const userAtaInfo = await connection.getAccountInfo(userTokenAccount);
       if (!userAtaInfo) {
         instructions.push(
@@ -546,13 +734,28 @@ export function setupRpsBettingRoutes(app, dependencies) {
             userPublicKey,
             userTokenAccount,
             userPublicKey,
-            mintPublicKey
+            mintPublicKey,
+            tokenProgramId
+          )
+        );
+      }
+
+      // Ensure escrow ATA exists (payer: user) to avoid TX failure when escrow has no SOL
+      const escrowAtaInfo = await connection.getAccountInfo(escrowAta);
+      if (!escrowAtaInfo) {
+      instructions.push(
+          createAssociatedTokenAccountInstruction(
+            userPublicKey,
+            escrowAta,
+            bettingEscrowPublicKey,
+            mintPublicKey,
+            tokenProgramId
           )
         );
       }
 
       instructions.push(
-        createTransferInstruction(userTokenAccount, bettingEscrowTokenAccount, userPublicKey, rawAmount)
+        createTransferInstruction(userTokenAccount, escrowAta, userPublicKey, rawAmount, [], tokenProgramId)
       );
 
       let feeInSol = 0;
@@ -561,6 +764,12 @@ export function setupRpsBettingRoutes(app, dependencies) {
         feeInSol = await calculateFee(amount, wallet);
         if (Number.isFinite(feeInSol) && feeInSol > 0) {
           feeLamports = Math.max(1, Math.round(feeInSol * LAMPORTS_PER_SOL));
+          log.info(
+            "[rps-betting][stake.build] fee wallet",
+            feeWalletPublicKey.toBase58 ? feeWalletPublicKey.toBase58() : feeWalletPublicKey,
+            "feeLamports",
+            feeLamports
+          );
           instructions.push(
             SystemProgram.transfer({
               fromPubkey: userPublicKey,
@@ -569,6 +778,12 @@ export function setupRpsBettingRoutes(app, dependencies) {
             })
           );
         }
+      } else {
+        return res.status(503).json({
+          ok: false,
+          error: "FeeWalletUnavailable",
+          message: "Fee wallet is not configured on server. Please try again later.",
+        });
       }
 
       if (instructions.length === 0) {
@@ -683,14 +898,16 @@ export function setupRpsBettingRoutes(app, dependencies) {
 
       // Anti-abuse: Check IP cooldown only
       const ip = getClientIp(req);
-      const rateLimitCheck = checkIpRateLimit(ip);
-      if (!rateLimitCheck.allowed) {
-        return res.status(429).json({
-          ok: false,
-          error: "Cooldown active",
-          message: rateLimitCheck.reason,
-          code: "COOLDOWN"
-        });
+      if (ANTI_ABUSE_ENABLED) {
+        const rateLimitCheck = checkIpRateLimit(ip);
+        if (!rateLimitCheck.allowed) {
+          return res.status(429).json({
+            ok: false,
+            error: "Cooldown active",
+            message: rateLimitCheck.reason,
+            code: "COOLDOWN"
+          });
+        }
       }
 
       const feeInSol = await calculateFee(betAmount, wallet);
@@ -980,14 +1197,16 @@ export function setupRpsBettingRoutes(app, dependencies) {
       }
 
       // Anti-abuse: Validate game request
-      const validation = validateGameRequest(room.creator, wallet, req);
-      if (!validation.valid) {
-        return res.status(403).json({
-          ok: false,
-          error: validation.error,
-          code: validation.code,
-          message: validation.error
-        });
+      if (ANTI_ABUSE_ENABLED) {
+        const validation = validateGameRequest(room.creator, wallet, req);
+        if (!validation.valid) {
+          return res.status(403).json({
+            ok: false,
+            error: validation.error,
+            code: validation.code,
+            message: validation.error
+          });
+        }
       }
 
       const feeInSol = await calculateFee(room.betAmount, wallet);
@@ -1238,14 +1457,14 @@ export function setupRpsBettingRoutes(app, dependencies) {
         const betAmountInSol = await lunaToSol(room.betAmount);
         const totalPot = betAmountInSol * 2; // Both players bet the same amount
         
-        // Anti-abuse: Record wallet pair match
-        recordWalletPairMatch(room.creator, room.player2);
-        
-        // Anti-abuse: Update IP activity (both players)
-        const creatorIp = walletIpMap.get(room.creator) || getClientIp(req);
-        const player2Ip = walletIpMap.get(room.player2) || getClientIp(req);
-        updateIpActivity(creatorIp, BETTING_GAME_COOLDOWN_MS);
-        updateIpActivity(player2Ip, BETTING_GAME_COOLDOWN_MS);
+        // Anti-abuse: Record wallet pair match + IP activity
+        if (ANTI_ABUSE_ENABLED) {
+          recordWalletPairMatch(room.creator, room.player2);
+          const creatorIp = walletIpMap.get(room.creator) || getClientIp(req);
+          const player2Ip = walletIpMap.get(room.player2) || getClientIp(req);
+          updateIpActivity(creatorIp, BETTING_GAME_COOLDOWN_MS);
+          updateIpActivity(player2Ip, BETTING_GAME_COOLDOWN_MS);
+        }
 
         if (bettingEscrowReady) {
           const escrow = ensureRoomEscrow(room);

@@ -1544,7 +1544,7 @@
             <div class="chat-blur-overlay__content">
               <div class="chat-blur-overlay__title">Hold Luna to unlock chat</div>
               <div class="chat-blur-overlay__message" id="chatBlurMessage">
-                Connect your Phantom wallet and hold Luna tokens to view the conversation.
+                Hold the required Luna or make a Deposit Luna to unlock chat permanently (even if your balance later drops).
               </div>
             </div>
           </div>
@@ -3504,7 +3504,7 @@
         const minRequirement = getCurrentMinRequirement();
         const meetsRequirement = currentBalance >= minRequirement;
         if (!meetsRequirement) {
-          const needHoldMsg = `Hold at least ${formatNumber(minRequirement)} Luna or make a 1% burn deposit to unlock chat permanently.`;
+          const needHoldMsg = `Hold at least ${formatNumber(minRequirement)} Luna or make a Deposit Luna to unlock chat permanently (even if balance later drops).`;
           setChatBlurState(true, needHoldMsg);
           setWidgetAccessUnlocked(false, needHoldMsg);
         } else {

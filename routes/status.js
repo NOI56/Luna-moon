@@ -206,7 +206,30 @@ export function setupStatusRoutes(app, dependencies) {
       });
     }
   });
+
+  /**
+   * Frontend config (for demo/simulation flags)
+   * GET /luna/frontend-config
+   */
+  app.get("/luna/frontend-config", (_req, res) => {
+    const simulationMode = process.env.SIMULATION_MODE === "true";
+    const topWinnersDemo = process.env.TOP_WINNERS_DEMO === "true";
+    return res.json({
+      ok: true,
+      simulationMode,
+      topWinnersDemo,
+      message: simulationMode
+        ? "Simulation mode enabled (frontend demo only)"
+        : "Simulation mode disabled",
+    });
+  });
 }
+
+
+
+
+
+
 
 
 

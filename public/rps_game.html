@@ -999,6 +999,194 @@
       transform: scaleX(1) rotate(-90deg) !important;
     }
 
+    /* Sticker + Rematch (PvP) */
+    .hand-icon-wrapper {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .sticker-trigger-btn {
+      position: absolute;
+      bottom: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(62, 247, 255, 0.18);
+      border: 1px solid rgba(62, 247, 255, 0.6);
+      color: #f6fffe;
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      box-shadow: 0 0 14px rgba(62, 247, 255, 0.35);
+      backdrop-filter: blur(6px);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .sticker-trigger-btn:hover {
+      box-shadow: 0 0 18px rgba(62, 247, 255, 0.55);
+      transform: translateX(-50%) translateY(-1px);
+    }
+
+    .sticker-trigger-btn:active {
+      transform: translateX(-50%) scale(0.97);
+    }
+
+    .sticker-picker {
+      position: absolute;
+      bottom: -105px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(5, 10, 26, 0.9);
+      border: 1px solid rgba(62, 247, 255, 0.4);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+      border-radius: 12px;
+      padding: 8px;
+      display: flex;
+      gap: 8px;
+      z-index: 20;
+      backdrop-filter: blur(6px);
+    }
+
+    .sticker-picker.hidden {
+      display: none;
+    }
+
+    .sticker-pick-btn {
+      background: rgba(62, 247, 255, 0.08);
+      border: 1px solid rgba(62, 247, 255, 0.35);
+      border-radius: 10px;
+      padding: 6px;
+      cursor: pointer;
+      transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+    }
+
+    .sticker-pick-btn img {
+      width: 52px;
+      height: 52px;
+      object-fit: contain;
+      display: block;
+    }
+
+    .sticker-pick-btn:hover {
+      transform: translateY(-1px);
+      border-color: #00ffff;
+      box-shadow: 0 0 14px rgba(62, 247, 255, 0.35);
+    }
+
+    .sticker-pick-btn:active {
+      transform: scale(0.97);
+    }
+
+    .sticker-bubble {
+      position: absolute;
+      top: -18px;
+      right: -18px;
+      width: 96px;
+      height: 96px;
+      border-radius: 16px;
+      background: radial-gradient(circle, rgba(62, 247, 255, 0.16), rgba(255, 49, 217, 0.16));
+      border: 1px solid rgba(62, 247, 255, 0.35);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4), 0 0 18px rgba(62, 247, 255, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(6px);
+    }
+
+    .sticker-bubble.hidden {
+      display: none;
+    }
+
+    .sticker-bubble img {
+      width: 70px;
+      height: 70px;
+      object-fit: contain;
+    }
+
+    .rematch-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(3, 4, 12, 0.82);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 20000;
+    }
+
+    .rematch-card {
+      background: rgba(10, 12, 30, 0.92);
+      border: 1px solid rgba(62, 247, 255, 0.35);
+      border-radius: 16px;
+      padding: 18px 20px;
+      width: min(460px, 90vw);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55), 0 0 22px rgba(62, 247, 255, 0.35);
+      color: var(--text-base);
+    }
+
+    .rematch-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+    }
+
+    .rematch-countdown {
+      font-size: 1rem;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .rematch-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .rematch-btn {
+      flex: 1;
+      min-width: 140px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(62, 247, 255, 0.5);
+      background: rgba(62, 247, 255, 0.08);
+      color: #f6fffe;
+      cursor: pointer;
+      transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+      font-weight: 600;
+    }
+
+    .rematch-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 14px rgba(62, 247, 255, 0.35);
+      border-color: #00ffff;
+    }
+
+    .rematch-btn:active {
+      transform: scale(0.98);
+    }
+
+    .rematch-btn.secondary {
+      background: rgba(255, 71, 71, 0.1);
+      border-color: rgba(255, 71, 71, 0.55);
+      color: #ffdede;
+    }
+
+    .rematch-status {
+      margin-top: 10px;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .rematch-hidden {
+      display: none;
+    }
+
     body.pvp-page .player-choices {
       gap: 24px;
       flex-wrap: wrap;
@@ -1236,12 +1424,22 @@
     <div class="hands-container">
       <div class="hand">
         <div class="hand-label">You</div>
-        <div id="playerHand" class="hand-icon"></div>
+        <div class="hand-icon-wrapper">
+          <div id="playerHand" class="hand-icon"></div>
+          <button id="stickerTrigger" class="sticker-trigger-btn" type="button" aria-label="Send hand sticker">
+            🖐️
+          </button>
+          <div id="stickerPicker" class="sticker-picker hidden" role="menu" aria-label="Send sticker"></div>
+          <div id="playerSticker" class="sticker-bubble hidden" aria-live="polite"></div>
+        </div>
       </div>
       <div class="vs">VS</div>
       <div class="hand">
         <div class="hand-label" id="opponentLabel">Opponent</div>
-        <div id="lunaHand" class="hand-icon"></div>
+        <div class="hand-icon-wrapper">
+          <div id="lunaHand" class="hand-icon"></div>
+          <div id="opponentSticker" class="sticker-bubble hidden" aria-live="polite"></div>
+        </div>
       </div>
     </div>
 
@@ -1254,6 +1452,19 @@
         <button class="choice-btn" data-choice="scissors" id="scissorsBtn"></button>
       </div>
       <div id="status" class="status"></div>
+    </div>
+    
+    <!-- Rematch Modal -->
+    <div id="rematchModal" class="rematch-modal rematch-hidden" role="dialog" aria-modal="true" aria-labelledby="rematchTitle">
+      <div class="rematch-card">
+        <div class="rematch-title" id="rematchTitle">🔄 Play again?</div>
+        <div class="rematch-countdown" id="rematchCountdown">6s</div>
+        <div class="rematch-status" id="rematchStatus">Both players must agree within 6s. No stake needed.</div>
+        <div class="rematch-actions">
+          <button id="rematchReadyBtn" class="rematch-btn" type="button">Play again</button>
+          <button id="rematchCancelBtn" class="rematch-btn secondary" type="button">Not now</button>
+        </div>
+      </div>
     </div>
     
     <div style="text-align: center;">
@@ -1270,6 +1481,12 @@
     const MATCH_COUNTDOWN_WARNING_THRESHOLD = 10;
     const MATCH_COUNTDOWN_CRITICAL_THRESHOLD = 5;
     const SESSION_STATS_STORAGE_KEY = 'pvpSessionStats';
+    const STICKER_KEYS = ['rock', 'paper', 'scissors'];
+    const STICKER_COOLDOWN_MS = 3000;
+    const STICKER_DISPLAY_MS = 6000;
+    const REMATCH_COUNTDOWN_MS = 6000;
+    const REMATCH_STICKER_API = `${API_BASE}/luna/rps/match/sticker`;
+    const REMATCH_STATE_API = `${API_BASE}/luna/rps/match/rematch`;
     const dynamicRequirementState = {
       amount: DEFAULT_PVP_MIN_BALANCE,
       usd: null,
@@ -1303,6 +1520,11 @@
     let matchCountdownInterval = null;
     let matchCountdownRemaining = 0;
     let hasSubmittedChoice = false;
+    let stickerPickerVisible = false;
+    let stickerCooldownUntil = 0;
+    let stickerCooldownTimer = null;
+    let rematchSession = null;
+    let rematchCountdownTimer = null;
     
     // Cleanup all intervals and timeouts
     function cleanupAll() {
@@ -1903,6 +2125,277 @@
       return img;
     }
 
+    // Sticker helpers (PvP, no stake)
+    function setupStickerControls() {
+      const trigger = document.getElementById('stickerTrigger');
+      const picker = document.getElementById('stickerPicker');
+      if (!trigger || !picker) return;
+
+      picker.innerHTML = STICKER_KEYS.map((key) => `
+        <button class="sticker-pick-btn" data-sticker="${key}" type="button" aria-label="Send ${key} sticker">
+          <img src="${HAND_IMAGES[key]}" alt="${key}">
+        </button>
+      `).join('');
+
+      trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleStickerPicker();
+      });
+
+      picker.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-sticker]');
+        if (!btn) return;
+        e.stopPropagation();
+        const sticker = btn.dataset.sticker;
+        sendPvpSticker(sticker);
+      });
+
+      document.addEventListener('click', (e) => {
+        const pickerOpen = !picker.classList.contains('hidden');
+        if (!pickerOpen) return;
+        if (picker.contains(e.target) || trigger.contains(e.target)) return;
+        hideStickerPicker();
+      });
+
+      updateStickerTriggerState();
+    }
+
+    function toggleStickerPicker() {
+      if (stickerPickerVisible) {
+        hideStickerPicker();
+        return;
+      }
+      const picker = document.getElementById('stickerPicker');
+      if (!picker) return;
+      picker.classList.remove('hidden');
+      stickerPickerVisible = true;
+    }
+
+    function hideStickerPicker() {
+      const picker = document.getElementById('stickerPicker');
+      if (!picker) return;
+      picker.classList.add('hidden');
+      stickerPickerVisible = false;
+    }
+
+    async function sendPvpSticker(stickerKey) {
+      if (isStickerOnCooldown()) {
+        const waitSec = Math.ceil((stickerCooldownUntil - Date.now()) / 1000);
+        if (window.showToast) {
+          window.showToast(`Please wait ${waitSec}s before sending another sticker.`, 'info');
+        }
+        return;
+      }
+      if (!walletConnected || !walletPublicKey) {
+        if (window.showToast) {
+          window.showToast('Connect wallet to send stickers', 'warning');
+        }
+        return;
+      }
+      if (!currentMatchId) {
+        if (window.showToast) {
+          window.showToast('Join a match before sending stickers', 'warning');
+        }
+        return;
+      }
+      const normalizedKey = typeof stickerKey === 'string' ? stickerKey.toLowerCase() : '';
+      if (!STICKER_KEYS.includes(normalizedKey)) return;
+      showPlayerSticker(normalizedKey);
+      try {
+        await fetch(REMATCH_STICKER_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            matchId: currentMatchId,
+            wallet: walletPublicKey,
+            sticker: normalizedKey,
+          }),
+        });
+        hideStickerPicker();
+        startStickerCooldown();
+      } catch (err) {
+        console.error('[PvP] send sticker error:', err);
+        if (window.showToast) {
+          window.showToast('Failed to send sticker', 'error');
+        }
+      }
+    }
+
+    function showPlayerSticker(stickerKey) {
+      const bubble = document.getElementById('playerSticker');
+      if (!bubble) return;
+      const img = document.createElement('img');
+      img.src = HAND_IMAGES[stickerKey] || HAND_IMAGES.default;
+      img.alt = stickerKey;
+      bubble.innerHTML = '';
+      bubble.appendChild(img);
+      bubble.classList.remove('hidden');
+      setTimeout(() => {
+        bubble.classList.add('hidden');
+      }, STICKER_DISPLAY_MS);
+    }
+
+    function showOpponentSticker(stickerKey) {
+      const bubble = document.getElementById('opponentSticker');
+      if (!bubble) return;
+      const img = document.createElement('img');
+      img.src = HAND_IMAGES[stickerKey] || HAND_IMAGES.default;
+      img.alt = stickerKey;
+      bubble.innerHTML = '';
+      bubble.appendChild(img);
+      bubble.classList.remove('hidden');
+      setTimeout(() => {
+        bubble.classList.add('hidden');
+      }, STICKER_DISPLAY_MS);
+    }
+
+    function startStickerCooldown() {
+      stickerCooldownUntil = Date.now() + STICKER_COOLDOWN_MS;
+      updateStickerTriggerState();
+      if (stickerCooldownTimer) {
+        clearInterval(stickerCooldownTimer);
+      }
+      stickerCooldownTimer = setInterval(() => {
+        if (!isStickerOnCooldown()) {
+          clearInterval(stickerCooldownTimer);
+          stickerCooldownTimer = null;
+          updateStickerTriggerState();
+        }
+      }, 250);
+    }
+
+    function isStickerOnCooldown() {
+      return Date.now() < stickerCooldownUntil;
+    }
+
+    function updateStickerTriggerState() {
+      const trigger = document.getElementById('stickerTrigger');
+      if (!trigger) return;
+      const onCooldown = isStickerOnCooldown();
+      trigger.disabled = onCooldown;
+      trigger.classList.toggle('disabled', onCooldown);
+      if (!onCooldown) {
+        trigger.title = 'Send hand sticker';
+        return;
+      }
+      const waitSec = Math.ceil((stickerCooldownUntil - Date.now()) / 1000);
+      trigger.title = `Please wait ${waitSec}s`;
+    }
+
+    // Rematch helpers (PvP, no stake)
+    function openRematchPromptPvP({ matchId, player1, player2 }) {
+      const modal = document.getElementById('rematchModal');
+      if (!matchId || !modal) return;
+      rematchSession = {
+        matchId,
+        player1,
+        player2,
+        readySent: false,
+      };
+      modal.classList.remove('rematch-hidden');
+      startRematchCountdown();
+      updateRematchStatus('Both players must agree within 6s. No stake needed.');
+      const readyBtn = document.getElementById('rematchReadyBtn');
+      const cancelBtn = document.getElementById('rematchCancelBtn');
+      if (readyBtn) {
+        readyBtn.disabled = false;
+        readyBtn.textContent = 'Play again';
+        readyBtn.onclick = () => sendRematchStatePvP('ready');
+      }
+      if (cancelBtn) {
+        cancelBtn.onclick = () => sendRematchStatePvP('cancel');
+      }
+    }
+
+    function closeRematchPromptPvP(clearState = false) {
+      const modal = document.getElementById('rematchModal');
+      if (modal) modal.classList.add('rematch-hidden');
+      if (rematchCountdownTimer) {
+        clearInterval(rematchCountdownTimer);
+        rematchCountdownTimer = null;
+      }
+      if (clearState) rematchSession = null;
+    }
+
+    function startRematchCountdown() {
+      const endAt = Date.now() + REMATCH_COUNTDOWN_MS;
+      const countdownEl = document.getElementById('rematchCountdown');
+      if (rematchCountdownTimer) clearInterval(rematchCountdownTimer);
+      const tick = () => {
+        const remaining = Math.max(0, endAt - Date.now());
+        const sec = Math.ceil(remaining / 1000);
+        if (countdownEl) countdownEl.textContent = `${sec}s`;
+        if (remaining <= 0 && rematchSession) {
+          sendRematchStatePvP('cancel');
+          return;
+        }
+      };
+      tick();
+      rematchCountdownTimer = setInterval(tick, 250);
+    }
+
+    function updateRematchStatus(text) {
+      const statusEl = document.getElementById('rematchStatus');
+      if (statusEl) statusEl.textContent = text;
+    }
+
+    async function sendRematchStatePvP(action) {
+      if (!rematchSession || !walletPublicKey) return;
+      if (action === 'ready' && rematchSession.readySent) return;
+      try {
+        const body = {
+          matchId: rematchSession.matchId,
+          player1: rematchSession.player1,
+          player2: rematchSession.player2,
+          wallet: walletPublicKey,
+          action,
+        };
+        await fetch(REMATCH_STATE_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        if (action === 'cancel') {
+          closeRematchPromptPvP(true);
+          resetAfterMatchUI();
+        } else if (action === 'ready') {
+          rematchSession.readySent = true;
+          const readyBtn = document.getElementById('rematchReadyBtn');
+          if (readyBtn) {
+            readyBtn.disabled = true;
+            readyBtn.textContent = 'Waiting...';
+          }
+          updateRematchStatus('Waiting for opponent to ready...');
+        }
+      } catch (err) {
+        console.error('[PvP] rematch state send error:', err);
+      }
+    }
+
+    function handleRematchStateMessage(msg) {
+      if (!rematchSession) return;
+      if (!msg || msg.matchId !== rematchSession.matchId) return;
+      if (msg.cancelledBy) {
+        updateRematchStatus('Opponent cancelled. Rematch closed.');
+        closeRematchPromptPvP(true);
+        resetAfterMatchUI();
+        return;
+      }
+      if (msg.bothReady && msg.newMatchId) {
+        if (rematchCountdownTimer) {
+          clearInterval(rematchCountdownTimer);
+          rematchCountdownTimer = null;
+        }
+        updateRematchStatus('Both ready! Starting new round...');
+        closeRematchPromptPvP(true);
+        rematchSession = null;
+        // rps_match_found will follow with newMatchId
+        return;
+      }
+      const readyCount = Array.isArray(msg.ready) ? msg.ready.length : 0;
+      updateRematchStatus(`Ready: ${readyCount}/2`);
+    }
+
     // Initialize
     // Neon Toggle System
     function initNeonToggle() {
@@ -2195,6 +2688,7 @@
       }, 5 * 1000); // Check every 5 seconds
       connectWebSocket();
       setupMatchSystem();
+      setupStickerControls();
       
       hasValidSignature = false;
       walletConnected = false;
@@ -2297,6 +2791,14 @@
           } else if (msg.type === 'rps_match_result') {
             console.log('[WebSocket] Match result:', msg);
             await handleMatchResult(msg);
+          } else if (msg.type === 'rps_match_sticker') {
+            if (msg.matchId && msg.matchId === currentMatchId && msg.wallet !== walletPublicKey) {
+              if (msg.sticker) {
+                showOpponentSticker(msg.sticker);
+              }
+            }
+          } else if (msg.type === 'rps_match_rematch_state') {
+            handleRematchStateMessage(msg);
           }
         } catch (e) {
           console.error('WebSocket message error:', e);
@@ -2483,6 +2985,8 @@
     // Handle Match Found
     function handleMatchFound(data) {
       console.log('[RPS] handleMatchFound called with:', data);
+      // Close any rematch modal from previous game
+      closeRematchPromptPvP(true);
       const matchSection = document.getElementById('matchSection');
       const matchStatus = document.getElementById('matchStatus');
       const matchTimerEl = document.getElementById('matchTimer');
@@ -2607,6 +3111,7 @@
       }
 
       currentMatchId = data.matchId;
+      rematchSession = null;
       const opponentCandidates = [];
       const derivedOpponent = data.player1 === walletPublicKey ? data.player2 : data.player1;
       if (derivedOpponent) opponentCandidates.push(derivedOpponent);
@@ -2832,47 +3337,56 @@
         }
       }
 
-      // Reset after 3 seconds
-      setTimeout(() => {
-        result.textContent = '';
-        status.textContent = '';
+      // Offer rematch (no stake)
+      safeSetTimeout(() => {
+        if (rematchSession) return;
+        openRematchPromptPvP({
+          matchId: data.matchId,
+          player1: data.player1,
+          player2: data.player2,
+        });
+      }, 2000);
+    }
+
+    function resetAfterMatchUI() {
+      const result = document.getElementById('result');
+      const status = document.getElementById('status');
+      const playerHand = document.getElementById('playerHand');
+      const lunaHand = document.getElementById('lunaHand');
+      if (result) result.textContent = '';
+      if (status) status.textContent = '';
+      if (playerHand) {
         playerHand.innerHTML = '';
         playerHand.appendChild(getHandDisplay('rock'));
+      }
+      if (lunaHand) {
         lunaHand.innerHTML = '';
         lunaHand.appendChild(getHandDisplay('rock'));
-        
-        // Reset match state
-        currentMatchId = null;
-        opponentWallet = null;
-        isWaitingForOpponent = false;
-        
-        // Reset UI
-        const matchSection = document.getElementById('matchSection');
-        const matchStatus = document.getElementById('matchStatus');
-        const matchTimerEl = document.getElementById('matchTimer');
-        const opponentInfo = document.getElementById('opponentInfo');
-        const findMatchBtn = document.getElementById('findMatchBtn');
-        const cancelMatchBtn = document.getElementById('cancelMatchBtn');
-        
-        if (matchSection) {
-          matchSection.classList.remove('hidden');
-        }
-        resetMatchStatusUI();
-        unlockChoiceButtons();
-        if (findMatchBtn) {
-          findMatchBtn.classList.remove('hidden');
-          findMatchBtn.style.display = 'inline-block';
-        }
-        if (cancelMatchBtn) {
-          cancelMatchBtn.classList.add('hidden');
-          cancelMatchBtn.style.display = 'none';
-        }
-        
-        // Disable game buttons (wait for new match)
-        disableGame();
-        
-        console.log('[RPS] ✅ Match completed, ready for new match');
-      }, 3000);
+      }
+      
+      currentMatchId = null;
+      opponentWallet = null;
+      isWaitingForOpponent = false;
+      
+      const matchSection = document.getElementById('matchSection');
+      const findMatchBtn = document.getElementById('findMatchBtn');
+      const cancelMatchBtn = document.getElementById('cancelMatchBtn');
+      
+      if (matchSection) {
+        matchSection.classList.remove('hidden');
+      }
+      resetMatchStatusUI();
+      unlockChoiceButtons();
+      if (findMatchBtn) {
+        findMatchBtn.classList.remove('hidden');
+        findMatchBtn.style.display = 'inline-block';
+      }
+      if (cancelMatchBtn) {
+        cancelMatchBtn.classList.add('hidden');
+        cancelMatchBtn.style.display = 'none';
+      }
+      disableGame();
+      console.log('[RPS] ✅ Match completed, ready for new match');
     }
 
     // Play PvP Match

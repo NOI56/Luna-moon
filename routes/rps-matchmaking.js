@@ -29,6 +29,12 @@ export function setupRpsMatchmakingRoutes(app, dependencies) {
     process.env.LUNA_TOKEN_MINT ||
     "CbB4ivri6wLfqx4NwrWY3ArD7mXv1e91HeYeq3KBpump";
 
+  /**
+   * Rematch sessions (PvP, no stake)
+   * Map: matchId -> { player1, player2, ready: Set, cancelledBy: string|null }
+   */
+  const rematchSessions = new Map();
+
   async function verifyWalletEligibility(wallet, { forceRefresh = false } = {}) {
     try {
       validateWalletAddress(wallet, "wallet");
@@ -548,6 +554,146 @@ export function setupRpsMatchmakingRoutes(app, dependencies) {
         error: e.message,
         message: "Failed to submit choice",
       });
+    }
+  });
+
+  /**
+   * Send PvP sticker (no stake). Broadcast to match players.
+   * POST /luna/rps/match/sticker
+   * Body: { matchId, wallet, sticker } where sticker in ['rock','paper','scissors']
+   */
+  app.post("/luna/rps/match/sticker", async (req, res) => {
+    try {
+      const { matchId, wallet, sticker } = req.body || {};
+      if (!matchId || typeof matchId !== "string") {
+        return res.status(400).json({ ok: false, error: "matchId required" });
+      }
+      if (!wallet || typeof wallet !== "string") {
+        return res.status(400).json({ ok: false, error: "wallet required" });
+      }
+      try {
+        validateWalletAddress(wallet, "wallet");
+      } catch (e) {
+        return res.status(400).json({ ok: false, error: "invalid wallet" });
+      }
+      const allowed = ["rock", "paper", "scissors"];
+      if (!allowed.includes(sticker)) {
+        return res.status(400).json({ ok: false, error: "invalid sticker" });
+      }
+      const match = rpsActiveMatches.get(matchId);
+      if (!match) {
+        return res.status(404).json({ ok: false, error: "match not found" });
+      }
+      if (match.player1 !== wallet && match.player2 !== wallet) {
+        return res.status(403).json({ ok: false, error: "not in match" });
+      }
+      broadcast({
+        type: "rps_match_sticker",
+        matchId,
+        wallet,
+        sticker,
+      });
+      return res.json({ ok: true });
+    } catch (err) {
+      log.error("[rps] sticker error:", err);
+      return res.status(500).json({ ok: false, error: "internal_error" });
+    }
+  });
+
+  /**
+   * Rematch state for PvP (no stake).
+   * POST /luna/rps/match/rematch
+   * Body: { matchId, player1, player2, wallet, action: 'ready'|'cancel' }
+   */
+  app.post("/luna/rps/match/rematch", async (req, res) => {
+    try {
+      const { matchId, player1, player2, wallet, action } = req.body || {};
+      if (!matchId || typeof matchId !== "string") {
+        return res.status(400).json({ ok: false, error: "matchId required" });
+      }
+      if (!player1 || !player2 || !wallet) {
+        return res.status(400).json({ ok: false, error: "player1, player2, wallet required" });
+      }
+      const normalizedAction = typeof action === "string" ? action.toLowerCase() : "";
+      if (!["ready", "cancel"].includes(normalizedAction)) {
+        return res.status(400).json({ ok: false, error: "invalid action" });
+      }
+      try {
+        validateWalletAddress(player1, "player1");
+        validateWalletAddress(player2, "player2");
+        validateWalletAddress(wallet, "wallet");
+      } catch (e) {
+        return res.status(400).json({ ok: false, error: "invalid wallet" });
+      }
+
+      const session =
+        rematchSessions.get(matchId) || {
+          player1,
+          player2,
+          ready: new Set(),
+          cancelledBy: null,
+        };
+
+      if (session.player1 !== player1 || session.player2 !== player2) {
+        return res.status(400).json({ ok: false, error: "session mismatch" });
+      }
+
+      if (normalizedAction === "ready") {
+        session.ready.add(wallet);
+      } else if (normalizedAction === "cancel") {
+        session.cancelledBy = wallet;
+      }
+
+      const payloadBase = {
+        type: "rps_match_rematch_state",
+        matchId,
+        player1,
+        player2,
+        actor: wallet,
+        action: normalizedAction,
+        ready: Array.from(session.ready),
+        cancelledBy: session.cancelledBy,
+      };
+
+      // If both ready -> create new match immediately, broadcast as new match_found
+      const bothReady = session.ready.has(player1) && session.ready.has(player2) && !session.cancelledBy;
+      if (bothReady) {
+        const newMatchId = `${player1}_${player2}_${Date.now()}`;
+        rpsActiveMatches.set(newMatchId, {
+          player1,
+          player2,
+          choices: {},
+          timestamp: Date.now(),
+        });
+        // Cleanup rematch session
+        rematchSessions.delete(matchId);
+
+        // Broadcast rematch start/state + new match
+        broadcast({
+          ...payloadBase,
+          bothReady: true,
+          newMatchId,
+        });
+        broadcast({
+          type: "rps_match_found",
+          matchId: newMatchId,
+          player1,
+          player2,
+        });
+        return res.json({ ok: true, bothReady: true, newMatchId });
+      }
+
+      if (normalizedAction === "cancel") {
+        rematchSessions.delete(matchId);
+      } else {
+        rematchSessions.set(matchId, session);
+      }
+
+      broadcast(payloadBase);
+      return res.json({ ok: true, bothReady: false });
+    } catch (err) {
+      log.error("[rps] rematch error:", err);
+      return res.status(500).json({ ok: false, error: "internal_error" });
     }
   });
 

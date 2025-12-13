@@ -171,6 +171,168 @@
       margin-bottom: 30px;
     }
 
+    /* VS Luna Leaderboard (page-scoped) */
+    :root {
+      /* Raise the leaderboard slightly to avoid overlap with bottom edge */
+      --vs-luna-leaderboard-offset: 120px;
+    }
+
+    .vs-luna-leaderboard {
+      position: fixed;
+      right: 20px;
+      bottom: calc(var(--vs-luna-leaderboard-offset) - 20px); /* move slightly down */
+      width: 320px;
+      border-radius: 16px;
+      border: 1px solid var(--glass-border);
+      background: rgba(8, 10, 24, 0.82);
+      box-shadow:
+        0 14px 24px rgba(0, 0, 0, 0.55),
+        0 0 24px rgba(0, 255, 255, 0.12);
+      padding: 14px 14px 12px;
+      z-index: 1200;
+      backdrop-filter: blur(10px);
+      color: var(--text-base);
+      font-size: 0.95rem;
+    }
+
+    .vs-luna-leaderboard.hidden {
+      display: none;
+    }
+
+    .vs-luna-leaderboard__header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .vs-luna-leaderboard__title {
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-size: 0.9rem;
+      color: var(--text-strong);
+    }
+
+    .vs-luna-leaderboard__subtitle {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+      text-align: right;
+    }
+
+  .vs-luna-leaderboard__list {
+      max-height: 500px; /* slightly taller to match larger card */
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+
+  .vs-luna-leaderboard__item {
+      display: grid;
+      grid-template-columns: 48px 1fr 96px;
+      gap: 7px;
+      align-items: center;
+      padding: 8px 11px;
+      border-radius: 13px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      margin-bottom: 7px;
+    }
+
+  .vs-luna-leaderboard__rank {
+      width: 44px;
+      height: 44px;
+      border-radius: 13px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1rem;
+      color: #0ff;
+      background: linear-gradient(140deg, rgba(0, 255, 255, 0.2), rgba(255, 0, 255, 0.15));
+      border: 1px solid rgba(0, 255, 255, 0.25);
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.18);
+    }
+
+    .vs-luna-leaderboard__wallet {
+      font-family: var(--mono);
+      font-size: 0.88rem;
+      color: var(--text-strong);
+      letter-spacing: 0.02em;
+      word-break: break-word;
+    }
+
+    .vs-luna-leaderboard__stats {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      letter-spacing: 0.02em;
+    }
+
+    .vs-luna-leaderboard__badge {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #00ff9d;
+    }
+
+    .vs-luna-leaderboard__luna {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-strong);
+      text-align: right;
+    }
+    .vs-luna-leaderboard__luna .percent {
+      color: #00ff9d;
+    }
+
+    .vs-luna-leaderboard__footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 6px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .vs-luna-leaderboard__refresh {
+      border: 1px solid var(--glass-border);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-strong);
+      border-radius: 10px;
+      padding: 6px 10px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all var(--transition-fast);
+    }
+
+    .vs-luna-leaderboard__refresh:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35), 0 0 12px rgba(0, 255, 255, 0.24);
+    }
+
+    .vs-luna-leaderboard__status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    @media (max-width: 768px) {
+      .vs-luna-leaderboard {
+        position: fixed;
+        left: 12px;
+        right: 12px;
+        bottom: var(--vs-luna-leaderboard-offset);
+        width: auto;
+      }
+
+      .vs-luna-leaderboard__item {
+        grid-template-columns: 46px 1fr 90px;
+      }
+    }
+
     .contract-section {
       margin: 25px 0;
       padding: 24px;
@@ -717,6 +879,24 @@
     <div id="walletInfoFixed" class="wallet-info hidden"></div>
   </div>
 
+  <!-- VS Luna Leaderboard (Bottom Right) -->
+  <div id="vsLunaLeaderboard" class="vs-luna-leaderboard hidden" aria-live="polite">
+    <div class="vs-luna-leaderboard__header">
+      <div>
+        <div class="vs-luna-leaderboard__title">🏆 Top Luna Winners</div>
+        <div class="vs-luna-leaderboard__subtitle">Most wins vs Luna • Top 10 shown (scroll to 50)</div>
+      </div>
+      <button id="refreshVsLunaLeaderboard" class="vs-luna-leaderboard__refresh" type="button" aria-label="Refresh leaderboard">
+        ⟳ Refresh
+      </button>
+    </div>
+    <div id="vsLunaLeaderboardList" class="vs-luna-leaderboard__list" role="list"></div>
+    <div class="vs-luna-leaderboard__footer">
+      <span id="vsLunaLeaderboardStatus" class="vs-luna-leaderboard__status">Loading leaderboard…</span>
+      <span id="vsLunaLeaderboardTotal" class="vs-luna-leaderboard__status"></span>
+    </div>
+  </div>
+
   <!-- Neon Toggle Button (Bottom Right) -->
   <button id="neonToggle" title="Toggle Neon Effects">💡 Neon: ON</button>
   </div>
@@ -868,6 +1048,50 @@
       source: 'fallback',
       updatedAt: null,
     };
+    const VS_LUNA_LEADERBOARD_MAX = 50;
+    const VS_LUNA_VISIBLE_ROWS = 10;
+    const VS_LUNA_FEE_SPLIT = {
+      1: 7,
+      2: 3.5,
+      3: 2,
+      4: 1.5,
+      5: 1,
+    };
+    const VS_LUNA_DEMO_MODE = (() => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        // Force live with ?live=true
+        if (params.get('live') === 'true') return false;
+        // Explicit simulate/demo param
+        if (params.get('demo') === 'true' || params.get('simulate') === 'true') return true;
+        // Env toggle from backend config
+        if (window.__LUNA_FRONTEND_CONFIG__?.topWinnersDemo === true) return true;
+        // Default: do NOT auto-enable demo on localhost anymore
+        return false;
+      } catch (_) {
+        return false;
+      }
+    })();
+    const SIM_MODE = window.lunaSimulation?.enabled === true || VS_LUNA_DEMO_MODE;
+    let vsLunaLeaderboard = [];
+    let vsLunaLeaderboardUpdatedAt = null;
+    let vsLunaLeaderboardTotalPlayers = 0;
+    let rewardPoolSol = null; // total pool in SOL (from /luna/rps/rewards/pool)
+    function buildMockVsLunaLeaderboard() {
+      return Array.from({ length: 50 }).map((_, idx) => {
+        const rank = idx + 1;
+        const wins = Math.max(3, 52 - idx);
+        const losses = Math.max(1, 10 + Math.floor(idx / 2));
+        const totalWon = Math.max(10_000 * (51 - rank), 500);
+        return {
+          rank,
+          wallet: `Demo${rank.toString().padStart(2, "0")}Walletxxxxxxxxxxxxxx`,
+          wins,
+          losses,
+          totalWon,
+        };
+      });
+    }
     // Mint address will be read from backend (.env) automatically
     // No need to hardcode here
     
@@ -911,6 +1135,19 @@
       }
       activeTimeouts.forEach(timeout => clearTimeout(timeout));
       activeTimeouts.clear();
+
+      // Load persisted cooldown
+      try {
+        const storedCd = localStorage.getItem('vsLunaCooldownUntil');
+        if (storedCd) {
+          const ts = Number(storedCd);
+          if (Number.isFinite(ts) && ts > Date.now()) {
+            window.__VS_LUNA_COOLDOWN_UNTIL = ts;
+          } else {
+            localStorage.removeItem('vsLunaCooldownUntil');
+          }
+        }
+      } catch (_) {}
     }
     
     // Safe setTimeout wrapper that tracks timeouts
@@ -1039,6 +1276,186 @@
       if (price >= 0.01) return `$${price.toFixed(4)}`;
       if (price >= 0.0001) return `$${price.toFixed(6)}`;
       return `$${price.toExponential(2)}`;
+    }
+
+    function setVsLunaLeaderboardStatus(text, totalText = '') {
+      const statusEl = document.getElementById('vsLunaLeaderboardStatus');
+      const totalEl = document.getElementById('vsLunaLeaderboardTotal');
+      if (statusEl && typeof text === 'string') {
+        statusEl.textContent = text;
+      }
+      if (totalEl) {
+        totalEl.textContent = totalText || '';
+      }
+    }
+
+    async function fetchRewardPoolSol() {
+      if (rewardPoolSol !== null) return rewardPoolSol;
+      const fallbackDemoPool = 0.005; // small fallback so UI shows value even if API missing
+      if (SIM_MODE) {
+        rewardPoolSol = fallbackDemoPool;
+        return rewardPoolSol;
+      }
+      try {
+        const resp = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/rps/rewards/pool`);
+        const data = await resp.json();
+        const parsedPool = Number(data?.totalPool);
+        if (data && data.ok && Number.isFinite(parsedPool) && parsedPool > 0) {
+          rewardPoolSol = parsedPool;
+        } else {
+          rewardPoolSol = fallbackDemoPool;
+        }
+      } catch (_) {
+        rewardPoolSol = fallbackDemoPool;
+      }
+      return rewardPoolSol;
+    }
+
+    function renderVsLunaLeaderboard() {
+      const listEl = document.getElementById('vsLunaLeaderboardList');
+      const cardEl = document.getElementById('vsLunaLeaderboard');
+      if (!listEl || !cardEl) return;
+
+      listEl.innerHTML = '';
+
+      if (!vsLunaLeaderboard.length) {
+        setVsLunaLeaderboardStatus('No leaderboard data yet', '');
+        cardEl.classList.remove('hidden');
+        return;
+      }
+
+      const frag = document.createDocumentFragment();
+      vsLunaLeaderboard.forEach((entry, index) => {
+        const item = document.createElement('div');
+        item.className = 'vs-luna-leaderboard__item';
+        item.setAttribute('role', 'listitem');
+
+        const rank = document.createElement('div');
+        rank.className = 'vs-luna-leaderboard__rank';
+        rank.textContent = `#${entry.rank || index + 1}`;
+
+        const feeShare = VS_LUNA_FEE_SPLIT[entry.rank] || null;
+        const wallet = document.createElement('div');
+        wallet.innerHTML = `
+          <div class="vs-luna-leaderboard__wallet">${formatShortWallet(entry.wallet)}</div>
+          <div class="vs-luna-leaderboard__stats">
+            <span class="vs-luna-leaderboard__badge">${formatNumberDetailed(entry.wins || 0)} wins</span>
+            &nbsp;•&nbsp;${formatNumberDetailed(entry.losses || 0)} losses
+          </div>
+        `;
+
+        const luna = document.createElement('div');
+        luna.className = 'vs-luna-leaderboard__luna';
+        const poolSol = Number(rewardPoolSol);
+        const estRewardSol = Number.isFinite(poolSol) && feeShare
+          ? poolSol * 0.15 * (feeShare / 100)
+          : null;
+        luna.innerHTML = `
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
+            ${feeShare ? `<span class="percent">${feeShare}%</span>` : ''}
+            <span>${estRewardSol !== null ? `${estRewardSol.toFixed(6)} SOL` : ''}</span>
+          </div>
+        `;
+
+        item.appendChild(rank);
+        item.appendChild(wallet);
+        item.appendChild(luna);
+        frag.appendChild(item);
+      });
+
+      listEl.appendChild(frag);
+
+      const visibleCount = Math.min(vsLunaLeaderboard.length, VS_LUNA_VISIBLE_ROWS);
+      const updatedText = vsLunaLeaderboardUpdatedAt
+        ? `Updated ${formatDateTime(vsLunaLeaderboardUpdatedAt)}`
+        : '';
+      const totalText = `Total players: ${vsLunaLeaderboardTotalPlayers || vsLunaLeaderboard.length}` +
+        (updatedText ? ` • ${updatedText}` : '');
+        const demoTag = VS_LUNA_DEMO_MODE ? ' (demo)' : '';
+        setVsLunaLeaderboardStatus(`Showing top ${visibleCount} • Wins vs Luna only${demoTag}`, totalText);
+      cardEl.classList.remove('hidden');
+    }
+
+    async function fetchVsLunaLeaderboard(force = false) {
+      const cardEl = document.getElementById('vsLunaLeaderboard');
+      if (!cardEl) return;
+
+      setVsLunaLeaderboardStatus(force ? 'Refreshing...' : 'Loading leaderboard...', '');
+
+      // In simulation mode, skip backend and use mock data directly
+      if (SIM_MODE) {
+        await fetchRewardPoolSol();
+        vsLunaLeaderboard = buildMockVsLunaLeaderboard();
+        vsLunaLeaderboardTotalPlayers = vsLunaLeaderboard.length;
+        vsLunaLeaderboardUpdatedAt = Date.now();
+        renderVsLunaLeaderboard();
+        setVsLunaLeaderboardStatus('Simulation leaderboard (demo)', '');
+        return;
+      }
+
+      try {
+        await fetchRewardPoolSol();
+        const url = new URL('/luna/rps/leaderboard', API_BASE);
+        url.searchParams.set('limit', VS_LUNA_LEADERBOARD_MAX);
+        url.searchParams.set('context', 'vs-luna'); // hint backend for VS Luna context if supported
+        url.searchParams.set('mode', 'vs-luna'); // explicit intent for Luna-only matches
+        if (VS_LUNA_DEMO_MODE) {
+          url.searchParams.set('demo', 'true');
+        }
+        const response = await (window.lunaUtils?.retryFetch || fetch)(url.toString());
+        const data = await response.json();
+
+        if (!data.ok || !Array.isArray(data.leaderboard)) {
+          if (!SIM_MODE) throw new Error(data.message || 'Failed to load leaderboard');
+          vsLunaLeaderboard = buildMockVsLunaLeaderboard();
+        } else {
+          vsLunaLeaderboard = data.leaderboard
+            .map((entry, idx) => ({
+              rank: entry.rank || idx + 1,
+              wallet: entry.wallet || 'Unknown',
+              wins: Number(entry.wins) || 0,
+              losses: Number(entry.losses) || 0,
+              totalWon: Number(entry.totalWon) || 0,
+            }))
+            // Prioritize most wins vs Luna; fall back to Luna won as tiebreaker
+            .sort((a, b) => (b.wins || 0) - (a.wins || 0) || (b.totalWon || 0) - (a.totalWon || 0))
+            .slice(0, VS_LUNA_LEADERBOARD_MAX);
+        }
+
+        if (SIM_MODE && (!vsLunaLeaderboard || !vsLunaLeaderboard.length)) {
+          vsLunaLeaderboard = buildMockVsLunaLeaderboard();
+        }
+
+        vsLunaLeaderboardTotalPlayers = Number(data.totalPlayers) || vsLunaLeaderboard.length;
+        vsLunaLeaderboardUpdatedAt = Date.now();
+        renderVsLunaLeaderboard();
+      } catch (err) {
+        console.warn('[VS Luna] Failed to load leaderboard:', err);
+        if (SIM_MODE) {
+          vsLunaLeaderboard = buildMockVsLunaLeaderboard();
+          vsLunaLeaderboardTotalPlayers = vsLunaLeaderboard.length;
+          vsLunaLeaderboardUpdatedAt = Date.now();
+          renderVsLunaLeaderboard();
+          setVsLunaLeaderboardStatus('Simulation leaderboard (demo)', '');
+        } else {
+          setVsLunaLeaderboardStatus('Unable to load leaderboard', '');
+          const cardEl = document.getElementById('vsLunaLeaderboard');
+          if (cardEl) {
+            cardEl.classList.remove('hidden');
+          }
+        }
+      }
+    }
+
+    function initVsLunaLeaderboard() {
+      const refreshBtn = document.getElementById('refreshVsLunaLeaderboard');
+      if (refreshBtn) {
+        refreshBtn.addEventListener('click', () => {
+          fetchVsLunaLeaderboard(true).catch((err) => console.warn('[VS Luna] Refresh leaderboard failed:', err));
+        });
+      }
+
+      fetchVsLunaLeaderboard().catch((err) => console.warn('[VS Luna] Initial leaderboard load failed:', err));
     }
 
     function getCurrentMinRequirement() {
@@ -2154,6 +2571,16 @@
     async function continueGame(playerChoice, playerHand, lunaHand, status, result) {
       stopHandCycle();
       
+      // Cooldown check
+      const now = Date.now();
+      if (window.__VS_LUNA_COOLDOWN_UNTIL && now < window.__VS_LUNA_COOLDOWN_UNTIL) {
+        const waitMs = window.__VS_LUNA_COOLDOWN_UNTIL - now;
+        const waitMin = Math.ceil(waitMs / 60000);
+        status.textContent = `Please wait ${waitMin} minute(s) before playing again.`;
+        status.className = 'status error';
+        return;
+      }
+
       try {
         const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/rps/play`, {
           method: 'POST',
@@ -2170,6 +2597,13 @@
         if (!data.ok) {
           throw new Error(data.message || 'Game failed');
         }
+
+        // Set cooldown 10 minutes
+        window.__VS_LUNA_COOLDOWN_UNTIL = Date.now() + 10 * 60 * 1000;
+        // Persist to localStorage so refresh keeps the cooldown
+        try {
+          localStorage.setItem('vsLunaCooldownUntil', String(window.__VS_LUNA_COOLDOWN_UNTIL));
+        } catch (_) {}
 
         const lunaChoice = data.lunaChoice;
         lunaHand.innerHTML = '';
@@ -2559,6 +2993,7 @@
       setupEventListeners(); // Setup event listeners AFTER initializeHands (to prevent them from being removed)
       setupTransparencyPanel();
       loadContractAddress();
+      initVsLunaLeaderboard();
       
       // Initialize form validation, tooltips, and keyboard shortcuts
       initFormValidation();

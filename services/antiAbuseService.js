@@ -1,4 +1,4 @@
-﻿// services/antiAbuseService.js
+// services/antiAbuseService.js
 // Anti-Abuse System Service
 
 import { log } from "../modules/logger.js";
@@ -309,14 +309,17 @@ export function checkIpRateLimit(ipActivityMap, GAME_COOLDOWN, ip) {
  * @param {Map} ipActivityMap - IP activity map
  * @param {number} GAME_COOLDOWN - Game cooldown in milliseconds
  * @param {string} ip - IP address
+ * @param {number} [customCooldownMs] - Optional custom cooldown override
  */
-export function updateIpActivity(ipActivityMap, GAME_COOLDOWN, ip) {
+export function updateIpActivity(ipActivityMap, GAME_COOLDOWN, ip, customCooldownMs) {
   const now = Date.now();
   const ipData = ipActivityMap.get(ip) || { gameCount: 0, lastGameTime: 0, cooldownUntil: 0 };
   
   ipData.gameCount++;
   ipData.lastGameTime = now;
-  ipData.cooldownUntil = now + GAME_COOLDOWN;
+  const cooldownMs =
+    Number.isFinite(customCooldownMs) && customCooldownMs > 0 ? customCooldownMs : GAME_COOLDOWN;
+  ipData.cooldownUntil = now + cooldownMs;
   
   ipActivityMap.set(ip, ipData);
 }

@@ -690,6 +690,7 @@
   <script src="/js/toast.js"></script>
   <script>
     const API_BASE = window.location.origin;
+    const SIM_MODE = window.lunaSimulation?.enabled === true;
     let walletPublicKey = null;
     let allHistory = []; // Store all history for filtering
 
@@ -836,12 +837,40 @@
       }
     }
 
+    function getSimulationStats() {
+      const now = Date.now();
+      return {
+        ok: true,
+        stats: {
+          totalGames: 128,
+          wins: 72,
+          losses: 40,
+          draws: 16,
+          winRate: 0.5625,
+          totalWon: 123_456,
+        },
+        rewards: { pending: 12_345 },
+        system: { ts: now, note: `Simulation data as of ${new Date(now).toLocaleString()}` },
+      };
+    }
+
+    function getSimulationHistory() {
+      const now = Date.now();
+      return {
+        ok: true,
+        history: [
+          { result: 'win', betAmount: 20000, prizeAmount: 20000, opponent: 'DemoBot', mode: 'PvP', timestamp: now - 60_000 },
+          { result: 'lose', betAmount: 15000, opponent: 'DemoWhale', mode: 'PvP', timestamp: now - 120_000 },
+        ],
+      };
+    }
+
     async function loadStats() {
       const loadingEl = document.getElementById('loading');
       const errorEl = document.getElementById('error');
       const gridEl = document.getElementById('statsGrid');
 
-      if (!walletPublicKey) {
+      if (!walletPublicKey && !SIM_MODE) {
         loadingEl.style.display = 'block';
         loadingEl.textContent = 'Please connect your wallet to view stats';
         errorEl.style.display = 'none';
@@ -850,8 +879,9 @@
       }
 
       try {
-        const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/rps/stats?wallet=${walletPublicKey}`);
-        const data = await response.json();
+        const data = SIM_MODE
+          ? getSimulationStats()
+          : await (await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/rps/stats?wallet=${walletPublicKey}`)).json();
 
         if (!data.ok) {
           throw new Error(data.error || 'Failed to load stats');
@@ -889,7 +919,7 @@
       const historyTableEl = document.getElementById('historyTable');
       const filterSection = document.getElementById('filterSection');
 
-      if (!walletPublicKey) {
+      if (!walletPublicKey && !SIM_MODE) {
         if (historyLoadingEl) historyLoadingEl.style.display = 'none';
         if (historyErrorEl) historyErrorEl.style.display = 'none';
         if (historyTableEl) historyTableEl.style.display = 'none';
@@ -904,8 +934,9 @@
         }
         if (historyErrorEl) historyErrorEl.style.display = 'none';
 
-        const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/rps/history?wallet=${walletPublicKey}`);
-        const data = await response.json();
+        const data = SIM_MODE
+          ? getSimulationHistory()
+          : await (await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/rps/history?wallet=${walletPublicKey}`)).json();
 
         if (!data.ok) {
           throw new Error(data.error || 'Failed to load history');

@@ -964,6 +964,13 @@
       gap: 16px;
     }
 
+    .hand-icon-wrapper {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
     .hand-label {
       font-size: 1.15rem;
       letter-spacing: 0.08em;
@@ -996,6 +1003,199 @@
     .hand-icon img {
       width: 110px;
       height: 110px;
+      object-fit: contain;
+    }
+
+    /* Rematch modal */
+    .rematch-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(3, 4, 12, 0.82);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 20000;
+    }
+
+    .rematch-card {
+      background: rgba(10, 12, 30, 0.92);
+      border: 1px solid rgba(62, 247, 255, 0.35);
+      border-radius: 16px;
+      padding: 18px 20px;
+      width: min(460px, 90vw);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55), 0 0 22px rgba(62, 247, 255, 0.35);
+      color: var(--text-base);
+    }
+
+    .rematch-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+    }
+
+    .rematch-countdown {
+      font-size: 1rem;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .rematch-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .rematch-btn {
+      flex: 1;
+      min-width: 140px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(62, 247, 255, 0.5);
+      background: rgba(62, 247, 255, 0.08);
+      color: #f6fffe;
+      cursor: pointer;
+      transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+      font-weight: 600;
+    }
+
+    .rematch-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 14px rgba(62, 247, 255, 0.35);
+      border-color: #00ffff;
+    }
+
+    .rematch-btn:active {
+      transform: scale(0.98);
+    }
+
+    .rematch-btn.secondary {
+      background: rgba(255, 71, 71, 0.1);
+      border-color: rgba(255, 71, 71, 0.55);
+      color: #ffdede;
+    }
+
+    .rematch-status {
+      margin-top: 10px;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .rematch-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      background: rgba(62, 247, 255, 0.1);
+      border: 1px solid rgba(62, 247, 255, 0.35);
+      color: #f6fffe;
+      font-size: 0.9rem;
+    }
+
+    .rematch-hidden {
+      display: none;
+    }
+
+    .sticker-trigger-btn {
+      position: absolute;
+      bottom: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(62, 247, 255, 0.18);
+      border: 1px solid rgba(62, 247, 255, 0.6);
+      color: #f6fffe;
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      box-shadow: 0 0 14px rgba(62, 247, 255, 0.35);
+      backdrop-filter: blur(6px);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .sticker-trigger-btn:hover {
+      box-shadow: 0 0 18px rgba(62, 247, 255, 0.55);
+      transform: translateX(-50%) translateY(-1px);
+    }
+
+    .sticker-trigger-btn:active {
+      transform: translateX(-50%) scale(0.97);
+    }
+
+    .sticker-picker {
+      position: absolute;
+      bottom: -105px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(5, 10, 26, 0.9);
+      border: 1px solid rgba(62, 247, 255, 0.4);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+      border-radius: 12px;
+      padding: 8px;
+      display: flex;
+      gap: 8px;
+      z-index: 20;
+      backdrop-filter: blur(6px);
+    }
+
+    .sticker-picker.hidden {
+      display: none;
+    }
+
+    .sticker-pick-btn {
+      background: rgba(62, 247, 255, 0.08);
+      border: 1px solid rgba(62, 247, 255, 0.35);
+      border-radius: 10px;
+      padding: 6px;
+      cursor: pointer;
+      transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+    }
+
+    .sticker-pick-btn img {
+      width: 52px;
+      height: 52px;
+      object-fit: contain;
+      display: block;
+    }
+
+    .sticker-pick-btn:hover {
+      transform: translateY(-1px);
+      border-color: #00ffff;
+      box-shadow: 0 0 14px rgba(62, 247, 255, 0.35);
+    }
+
+    .sticker-pick-btn:active {
+      transform: scale(0.97);
+    }
+
+    .sticker-bubble {
+      position: absolute;
+      top: -18px;
+      right: -18px;
+      width: 96px;
+      height: 96px;
+      border-radius: 16px;
+      background: radial-gradient(circle, rgba(62, 247, 255, 0.16), rgba(255, 49, 217, 0.16));
+      border: 1px solid rgba(62, 247, 255, 0.35);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4), 0 0 18px rgba(62, 247, 255, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(6px);
+    }
+
+    .sticker-bubble.hidden {
+      display: none;
+    }
+
+    .sticker-bubble img {
+      width: 70px;
+      height: 70px;
       object-fit: contain;
     }
 
@@ -1640,12 +1840,22 @@
       <div class="hands-container">
         <div class="hand">
           <div class="hand-label">You</div>
-          <div id="playerHand" class="hand-icon"></div>
+          <div class="hand-icon-wrapper">
+            <div id="playerHand" class="hand-icon"></div>
+            <button id="stickerTrigger" class="sticker-trigger-btn" type="button" aria-label="Send hand sticker">
+              🖐️
+            </button>
+            <div id="stickerPicker" class="sticker-picker hidden" role="menu" aria-label="Send sticker"></div>
+            <div id="playerSticker" class="sticker-bubble hidden" aria-live="polite"></div>
+          </div>
         </div>
         <div class="vs">VS</div>
         <div class="hand">
           <div class="hand-label" id="opponentLabel">Opponent</div>
-          <div id="opponentHand" class="hand-icon"></div>
+          <div class="hand-icon-wrapper">
+            <div id="opponentHand" class="hand-icon"></div>
+            <div id="opponentSticker" class="sticker-bubble hidden" aria-live="polite"></div>
+          </div>
         </div>
       </div>
 
@@ -1677,6 +1887,19 @@
         </div>
       </div>
     </div>
+
+    <!-- Rematch Modal -->
+    <div id="rematchModal" class="rematch-modal rematch-hidden" role="dialog" aria-modal="true" aria-labelledby="rematchTitle">
+      <div class="rematch-card">
+        <div class="rematch-title" id="rematchTitle">🔄 Play again?</div>
+        <div class="rematch-countdown" id="rematchCountdown">6s</div>
+        <div class="rematch-status" id="rematchStatus">Both players must agree within 6s. Bet stays the same.</div>
+        <div class="rematch-actions">
+          <button id="rematchReadyBtn" class="rematch-btn" type="button">Play again</button>
+          <button id="rematchCancelBtn" class="rematch-btn secondary" type="button">Not now</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
@@ -1685,7 +1908,7 @@
   <script src="/js/toast.js"></script>
   <script>
     const API_BASE = window.location.origin;
-    const TEST_MODE = false; // Using real Luna token
+    const TEST_MODE = window.lunaSimulation?.enabled === true; // Simulation uses mock data, no on-chain calls
     // Mint address will be read from backend (.env) automatically
     // No need to hardcode here
     
@@ -2075,6 +2298,16 @@
       scissors: '/images/hands/scissors.png',
       default: '/images/hands/rock.png'
     };
+    const STICKER_KEYS = ['rock', 'paper', 'scissors'];
+    const REMATCH_COUNTDOWN_MS = 6000;
+    const REMATCH_API = `${API_BASE}/luna/rps/betting/rematch/state`;
+    const STICKER_COOLDOWN_MS = 3000;
+    const STICKER_DISPLAY_MS = 6000;
+    let stickerPickerVisible = false;
+    let stickerCooldownUntil = 0;
+    let stickerCooldownTimer = null;
+    let rematchSession = null;
+    let rematchCountdownTimer = null;
 
     function resetWalletUI() {
       const connectBtn = document.getElementById('connectWalletBtn');
@@ -2104,6 +2337,186 @@
         roomsList.innerHTML = '<div class="empty-rooms">Connect your wallet to view rooms.</div>';
       }
     }
+
+    function ensureChatReadyForRoom(roomId) {
+      if (typeof chatManager === 'undefined') return;
+      if (walletPublicKey && !chatManager.wallet) {
+        chatManager.init(walletPublicKey);
+      }
+      const targetRoom = `betting_room_${roomId}`;
+      if (chatManager.currentRoomId !== targetRoom) {
+        chatManager.createUI(targetRoom, 'betting', {
+          enableStickers: true
+        });
+      }
+    }
+
+    function setupStickerControls() {
+      const trigger = document.getElementById('stickerTrigger');
+      const picker = document.getElementById('stickerPicker');
+      if (!trigger || !picker) return;
+
+      picker.innerHTML = STICKER_KEYS.map((key) => `
+        <button class="sticker-pick-btn" data-sticker="${key}" type="button" aria-label="Send ${key} sticker">
+          <img src="${HAND_IMAGES[key]}" alt="${key}">
+        </button>
+      `).join('');
+
+      trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleStickerPicker();
+      });
+
+      picker.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-sticker]');
+        if (!btn) return;
+        e.stopPropagation();
+        const sticker = btn.dataset.sticker;
+        sendHandSticker(sticker);
+      });
+
+      document.addEventListener('click', (e) => {
+        const pickerOpen = !picker.classList.contains('hidden');
+        if (!pickerOpen) return;
+        if (picker.contains(e.target) || trigger.contains(e.target)) return;
+        hideStickerPicker();
+      });
+
+      updateStickerTriggerState();
+    }
+
+    function toggleStickerPicker() {
+      if (stickerPickerVisible) {
+        hideStickerPicker();
+        return;
+      }
+      const picker = document.getElementById('stickerPicker');
+      if (!picker) return;
+      picker.classList.remove('hidden');
+      stickerPickerVisible = true;
+    }
+
+    function hideStickerPicker() {
+      const picker = document.getElementById('stickerPicker');
+      if (!picker) return;
+      picker.classList.add('hidden');
+      stickerPickerVisible = false;
+    }
+
+    async function sendHandSticker(stickerKey) {
+      if (isStickerOnCooldown()) {
+        const waitSec = Math.ceil((stickerCooldownUntil - Date.now()) / 1000);
+        if (window.showToast) {
+          window.showToast(`Please wait ${waitSec}s before sending another sticker.`, 'info');
+        }
+        return;
+      }
+      if (!walletConnected || !walletPublicKey) {
+        if (window.showToast) {
+          window.showToast('Connect wallet to send stickers', 'warning');
+        }
+        return;
+      }
+      if (!currentRoomId) {
+        if (window.showToast) {
+          window.showToast('Join or create a room first', 'warning');
+        }
+        return;
+      }
+      ensureChatReadyForRoom(currentRoomId);
+      if (typeof chatManager === 'undefined') return;
+      try {
+        // Show immediately for sender
+        showPlayerSticker(stickerKey);
+        await chatManager.sendSticker(stickerKey);
+        hideStickerPicker();
+        startStickerCooldown();
+      } catch (err) {
+        console.error('[Betting] send sticker error:', err);
+        if (window.showToast) {
+          window.showToast('Failed to send sticker', 'error');
+        }
+      }
+    }
+
+    function showPlayerSticker(stickerKey) {
+      const bubble = document.getElementById('playerSticker');
+      if (!bubble) return;
+      const img = document.createElement('img');
+      img.src = HAND_IMAGES[stickerKey] || HAND_IMAGES.default;
+      img.alt = stickerKey;
+      bubble.innerHTML = '';
+      bubble.appendChild(img);
+      bubble.classList.remove('hidden');
+      setTimeout(() => {
+        bubble.classList.add('hidden');
+      }, STICKER_DISPLAY_MS);
+    }
+
+    function showOpponentSticker(stickerKey) {
+      const bubble = document.getElementById('opponentSticker');
+      if (!bubble) return;
+      const img = document.createElement('img');
+      img.src = HAND_IMAGES[stickerKey] || HAND_IMAGES.default;
+      img.alt = stickerKey;
+      bubble.innerHTML = '';
+      bubble.appendChild(img);
+      bubble.classList.remove('hidden');
+      setTimeout(() => {
+        bubble.classList.add('hidden');
+      }, STICKER_DISPLAY_MS);
+    }
+
+    function startStickerCooldown() {
+      stickerCooldownUntil = Date.now() + STICKER_COOLDOWN_MS;
+      updateStickerTriggerState();
+      if (stickerCooldownTimer) {
+        clearInterval(stickerCooldownTimer);
+      }
+      stickerCooldownTimer = setInterval(() => {
+        if (!isStickerOnCooldown()) {
+          clearInterval(stickerCooldownTimer);
+          stickerCooldownTimer = null;
+          updateStickerTriggerState();
+        }
+      }, 250);
+    }
+
+    function isStickerOnCooldown() {
+      return Date.now() < stickerCooldownUntil;
+    }
+
+    function updateStickerTriggerState() {
+      const trigger = document.getElementById('stickerTrigger');
+      if (!trigger) return;
+      const onCooldown = isStickerOnCooldown();
+      trigger.disabled = onCooldown;
+      trigger.classList.toggle('disabled', onCooldown);
+      if (!onCooldown) {
+        trigger.title = 'Send hand sticker';
+        return;
+      }
+      const waitSec = Math.ceil((stickerCooldownUntil - Date.now()) / 1000);
+      trigger.title = `Please wait ${waitSec}s`;
+    }
+
+    function isSameRoom(payloadRoomId, localRoomId) {
+      if (!payloadRoomId || !localRoomId) return false;
+      const normalizedLocal = `betting_room_${localRoomId}`;
+      return payloadRoomId === normalizedLocal || payloadRoomId === localRoomId;
+    }
+
+    window.onChatStickerReceived = function(payload) {
+      try {
+        if (!payload?.roomId || !isSameRoom(payload.roomId, currentRoomId)) return;
+        if (!payload?.sticker) return;
+        // Skip echo for sender; show only when it comes from opponent
+        if (payload.wallet && walletPublicKey && payload.wallet === walletPublicKey) return;
+        showOpponentSticker(payload.sticker);
+      } catch (err) {
+        console.warn('[Betting] sticker receive handler error:', err);
+      }
+    };
 
     async function forceDisconnect(options = {}) {
       const {
@@ -2251,7 +2664,6 @@
 
         if (typeof chatManager !== 'undefined' && walletPublicKey) {
           chatManager.init(walletPublicKey);
-          chatManager.createUI('betting_lobby', 'lobby');
         }
       }
 
@@ -2607,6 +3019,7 @@
       
       if (message.type === 'rps_betting_room_created') {
         loadRooms();
+        maybeAutoJoinRematch(message);
       } else if (message.type === 'rps_betting_room_joined') {
         if (message.roomId === currentRoomId) {
           opponentWallet = message.opponent;
@@ -2648,6 +3061,8 @@
         if (message.roomId === currentRoomId) {
           await handleMatchResult(message);
         }
+      } else if (message.type === 'rps_betting_rematch_state') {
+        handleRematchStateMessage(message);
       }
     }
 
@@ -2969,9 +3384,15 @@
             alert(`Joined room! Game starting...\n\nFee collected: ${formatSol(feeInSol)} SOL (${FEE_PERCENTAGE_LABEL} of ${formatSol(lunaToSol(betAmount))} SOL)`);
           }
           
-          // Initialize chat for this room
+          // Initialize chat for this room (room-only stickers)
           if (typeof chatManager !== 'undefined' && walletPublicKey) {
-            chatManager.createUI(`betting_room_${roomId}`, 'betting');
+            if (!chatManager.wallet) {
+              chatManager.init(walletPublicKey);
+            }
+            chatManager.createUI(`betting_room_${roomId}`, 'betting', {
+              enableStickers: true,
+              autoOpen: true
+            });
           }
           
           startGame();
@@ -3136,9 +3557,15 @@
           document.getElementById('feeDisplay').style.display = 'none';
           await loadRooms();
           
-          // Initialize chat for this room
+          // Initialize chat for this room (room-only stickers)
           if (typeof chatManager !== 'undefined' && walletPublicKey) {
-            chatManager.createUI(`betting_room_${data.roomId}`, 'betting');
+            if (!chatManager.wallet) {
+              chatManager.init(walletPublicKey);
+            }
+            chatManager.createUI(`betting_room_${data.roomId}`, 'betting', {
+              enableStickers: true,
+              autoOpen: true
+            });
           }
         } else {
           if (window.showToast) {
@@ -3175,6 +3602,12 @@
       if (gameActive) {
         return;
       }
+      // Hide rematch modal if it is still open
+      closeRematchPrompt(true);
+      if (rematchCountdownTimer) {
+        clearInterval(rematchCountdownTimer);
+        rematchCountdownTimer = null;
+      }
       clearChoiceCountdown();
       gameActive = true;
       choiceSubmitted = false;
@@ -3202,6 +3635,8 @@
       // Reset hands
       updateHand('playerHand', 'default');
       updateHand('opponentHand', 'default');
+      clearPlayerSticker();
+      clearOpponentSticker();
 
       document.getElementById('status').textContent = 'Choose your hand!';
       playStartGameSound();
@@ -3224,6 +3659,7 @@
     
     const CHOICE_TIMEOUT_MS = 13000;
     const CHOICE_TIMEOUT_SECONDS = Math.ceil(CHOICE_TIMEOUT_MS / 1000);
+    const CHOICE_COUNTDOWN_KEY_PREFIX = 'betting_choice_start_';
     const SOL_FEE_BUFFER = 0.00005; // Extra SOL to cover network fees
     const BETTING_HAND_CHOICES = ['rock', 'paper', 'scissors'];
     let handSelectAudioContext = null;
@@ -3253,6 +3689,40 @@
         osc.stop(handSelectAudioContext.currentTime + 0.2);
       } catch (error) {
         console.warn('[betting] hand select sound failed:', error);
+      }
+    }
+
+    function getChoiceCountdownKey(roomId) {
+      return `${CHOICE_COUNTDOWN_KEY_PREFIX}${roomId || 'unknown'}`;
+    }
+
+    function setChoiceCountdownStart(roomId, timestampMs) {
+      if (!roomId) return;
+      try {
+        localStorage.setItem(getChoiceCountdownKey(roomId), String(timestampMs));
+      } catch (err) {
+        console.warn('[Betting] Failed to persist countdown start:', err);
+      }
+    }
+
+    function getChoiceCountdownStart(roomId) {
+      if (!roomId) return null;
+      try {
+        const val = localStorage.getItem(getChoiceCountdownKey(roomId));
+        const parsed = val ? Number(val) : NaN;
+        return Number.isFinite(parsed) ? parsed : null;
+      } catch (err) {
+        console.warn('[Betting] Failed to read countdown start:', err);
+        return null;
+      }
+    }
+
+    function clearChoiceCountdownStart(roomId) {
+      if (!roomId) return;
+      try {
+        localStorage.removeItem(getChoiceCountdownKey(roomId));
+      } catch (err) {
+        console.warn('[Betting] Failed to clear countdown start:', err);
       }
     }
 
@@ -3384,6 +3854,218 @@
       handEl.appendChild(img);
     }
 
+    function clearPlayerSticker() {
+      const bubble = document.getElementById('playerSticker');
+      if (!bubble) return;
+      bubble.innerHTML = '';
+      bubble.classList.add('hidden');
+    }
+
+    function clearOpponentSticker() {
+      const bubble = document.getElementById('opponentSticker');
+      if (!bubble) return;
+      bubble.innerHTML = '';
+      bubble.classList.add('hidden');
+    }
+
+    // Rematch helpers
+    function getRematchRole(creatorWallet, challengerWallet) {
+      if (!walletPublicKey) return null;
+      if (walletPublicKey === creatorWallet) return 'creator';
+      if (walletPublicKey === challengerWallet) return 'challenger';
+      return null;
+    }
+
+    function openRematchPrompt({ roomId, betAmount, player1Wallet, player2Wallet }) {
+      const role = getRematchRole(player1Wallet, player2Wallet);
+      if (!role) return;
+      rematchSession = {
+        roomId,
+        betAmount,
+        creatorWallet: player1Wallet,
+        challengerWallet: player2Wallet,
+        role,
+        bothReady: false,
+        cancelled: false,
+        waitForRoom: false,
+        createInProgress: false,
+        joinInProgress: false,
+        readySent: false,
+      };
+      const modal = document.getElementById('rematchModal');
+      if (modal) modal.classList.remove('rematch-hidden');
+      startRematchCountdown();
+      updateRematchStatus('Both players must agree within 6s. Bet stays the same.');
+      const readyBtn = document.getElementById('rematchReadyBtn');
+      const cancelBtn = document.getElementById('rematchCancelBtn');
+      if (readyBtn) {
+        readyBtn.disabled = false;
+        readyBtn.onclick = () => sendRematchState('ready');
+      }
+      if (cancelBtn) {
+        cancelBtn.onclick = () => sendRematchState('cancel');
+      }
+    }
+
+    function closeRematchPrompt(clearState = false) {
+      const modal = document.getElementById('rematchModal');
+      if (modal) modal.classList.add('rematch-hidden');
+      if (rematchCountdownTimer) {
+        clearInterval(rematchCountdownTimer);
+        rematchCountdownTimer = null;
+      }
+      if (clearState) {
+        rematchSession = null;
+      }
+    }
+
+    function startRematchCountdown() {
+      const endAt = Date.now() + REMATCH_COUNTDOWN_MS;
+      const countdownEl = document.getElementById('rematchCountdown');
+      if (rematchCountdownTimer) clearInterval(rematchCountdownTimer);
+      const tick = () => {
+        const remaining = Math.max(0, endAt - Date.now());
+        const sec = Math.ceil(remaining / 1000);
+        if (countdownEl) countdownEl.textContent = `${sec}s`;
+        if (remaining <= 0 && rematchSession && !rematchSession.bothReady) {
+          sendRematchState('cancel');
+          return;
+        }
+      };
+      tick();
+      rematchCountdownTimer = setInterval(tick, 250);
+    }
+
+    function updateRematchStatus(text) {
+      const statusEl = document.getElementById('rematchStatus');
+      if (statusEl) statusEl.textContent = text;
+    }
+
+    async function sendRematchState(action) {
+      if (!rematchSession || !walletPublicKey) return;
+      if (action === 'ready' && rematchSession.readySent) {
+        return;
+      }
+      try {
+        const body = {
+          roomId: rematchSession.roomId,
+          betAmount: rematchSession.betAmount,
+          creatorWallet: rematchSession.creatorWallet,
+          challengerWallet: rematchSession.challengerWallet,
+          wallet: walletPublicKey,
+          action,
+        };
+        await fetch(REMATCH_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        if (action === 'cancel') {
+          closeRematchPrompt(true);
+          resetGame();
+        } else if (action === 'ready') {
+          rematchSession.readySent = true;
+          const readyBtn = document.getElementById('rematchReadyBtn');
+          if (readyBtn) {
+            readyBtn.disabled = true;
+            readyBtn.textContent = 'Waiting...';
+          }
+          updateRematchStatus('Waiting for opponent to ready...');
+        }
+      } catch (err) {
+        console.error('[Betting] rematch state send error:', err);
+      }
+    }
+
+    function handleRematchStateMessage(payload) {
+      if (!rematchSession) return;
+      if (!payload || payload.roomId !== rematchSession.roomId) return;
+      if (payload.cancelledBy) {
+        updateRematchStatus('Opponent cancelled. Rematch closed.');
+        closeRematchPrompt(true);
+        resetGame();
+        return;
+      }
+      rematchSession.bothReady = !!payload.bothReady;
+      if (payload.bothReady) {
+        if (rematchCountdownTimer) {
+          clearInterval(rematchCountdownTimer);
+          rematchCountdownTimer = null;
+        }
+        updateRematchStatus('Both ready. Starting payment for both players...');
+        if (window.showToast) {
+          window.showToast('Rematch accepted. Payment will open for both players...', 'info', 2500);
+        }
+        // Small sync delay so both sides update UI before payment prompts open
+        setTimeout(() => {
+          if (rematchSession.role === 'creator' && !rematchSession.createInProgress) {
+            rematchSession.createInProgress = true;
+            rematchCreateRoom(rematchSession.betAmount);
+          } else if (rematchSession.role === 'challenger') {
+            rematchSession.waitForRoom = true;
+            updateRematchStatus('Waiting for room to be created...');
+          }
+        }, 300);
+        return;
+      }
+      const readyCount = Array.isArray(payload.ready) ? payload.ready.length : 0;
+      updateRematchStatus(`Ready: ${readyCount}/2`);
+    }
+
+    function maybeAutoJoinRematch(message) {
+      if (!rematchSession || !rematchSession.waitForRoom) return;
+      if (rematchSession.role !== 'challenger') return;
+      if (!message || message.type !== 'rps_betting_room_created') return;
+      if (message.creator !== rematchSession.creatorWallet) return;
+      if (Number(message.betAmount) !== Number(rematchSession.betAmount)) return;
+      // Auto-join the newly created room
+      joinRoom(message.roomId, rematchSession.betAmount);
+      rematchSession.waitForRoom = false;
+    }
+
+    async function rematchCreateRoom(betAmount) {
+      try {
+        const txSignature = await requestStakeSignature(betAmount);
+        if (!txSignature) {
+          rematchSession.createInProgress = false;
+          return;
+        }
+        const response = await (window.lunaUtils?.retryFetch || fetch)(`${API_BASE}/luna/rps/betting/create`, addCSRFToken({
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            wallet: walletPublicKey,
+            betAmount: betAmount,
+            txSignature: txSignature
+          })
+        }));
+
+        const data = await response.json();
+        if (data.ok) {
+          currentRoomId = data.roomId;
+          currentPlayerRole = 'creator';
+          pendingCreatedRoomId = data.roomId;
+          const feeInSol = calculateFee(betAmount);
+          if (window.showToast) {
+            window.showToast('Rematch room created. Waiting for opponent...', 'success', 5000);
+          }
+          await loadRooms();
+        } else {
+          if (window.showToast) {
+            window.showToast('Failed to create rematch room: ' + (data.message || 'Unknown error'), 'error');
+          }
+        }
+      } catch (err) {
+        console.error('[Betting] rematch create error:', err);
+        if (window.showToast) {
+          window.showToast('Failed to create rematch room', 'error');
+        }
+      } finally {
+        rematchSession.createInProgress = false;
+      }
+    }
+
+
     function setChoiceButtonsWarning(isWarning) {
       document.querySelectorAll('.choice-btn').forEach((btn) => {
         btn.classList.toggle('choice-btn--warning', !!isWarning);
@@ -3442,7 +4124,18 @@
       if (!gameActive) return;
 
       const statusEl = document.getElementById('status');
-      let remainingSeconds = CHOICE_TIMEOUT_SECONDS;
+      const startMs = getChoiceCountdownStart(currentRoomId) || Date.now();
+      setChoiceCountdownStart(currentRoomId, startMs);
+      let remainingMs = CHOICE_TIMEOUT_MS - (Date.now() - startMs);
+      if (remainingMs <= 0) {
+        if (statusEl) {
+          statusEl.textContent = 'Auto-selecting your hand...';
+        }
+        autoSelectChoice();
+        return;
+      }
+
+      let remainingSeconds = Math.ceil(remainingMs / 1000);
       const updateStatus = () => {
         if (statusEl) {
           statusEl.textContent = `Choose your hand! (${remainingSeconds}s)`;
@@ -3453,7 +4146,8 @@
 
       choiceCountdownInterval = setInterval(() => {
         remainingSeconds -= 1;
-        if (remainingSeconds <= 0) {
+        remainingMs -= 1000;
+        if (remainingSeconds <= 0 || remainingMs <= 0) {
           updateChoiceCountdownUI(0);
           clearInterval(choiceCountdownInterval);
           choiceCountdownInterval = null;
@@ -3470,7 +4164,7 @@
         activeTimeouts.delete(timeoutId);
         choiceAutoSelectTimeout = null;
         autoSelectChoice();
-      }, CHOICE_TIMEOUT_MS);
+      }, remainingMs);
       choiceAutoSelectTimeout = timeoutId;
       activeTimeouts.add(timeoutId);
     }
@@ -3489,6 +4183,7 @@
       if (!gameActive || !currentRoomId || choiceSubmitted) return;
       choiceSubmitted = true;
       gameActive = false;
+      clearChoiceCountdownStart(currentRoomId);
       clearChoiceCountdown();
 
       const selectedChoice = BETTING_HAND_CHOICES.includes(choice) ? choice : BETTING_HAND_CHOICES[0];
@@ -3851,10 +4546,17 @@
         console.warn('[Betting] Failed to refresh history after match:', err);
       });
 
-      // Return to lobby after result shown briefly
+      // Open rematch prompt after a short grace period (2s) to avoid flashing too fast
       setTimeout(() => {
-        resetGame();
+        if (rematchSession) return;
+        openRematchPrompt({
+          roomId: data.roomId,
+          betAmount,
+          player1Wallet,
+          player2Wallet,
+        });
       }, 2000);
+
     }
 
     function resetGame() {
@@ -3862,6 +4564,8 @@
       gameActive = false;
       choiceSubmitted = false;
       clearChoiceCountdown();
+      clearChoiceCountdownStart(currentRoomId);
+      closeRematchPrompt(true);
       if (currentRoomId) {
         const roomToIgnore = currentRoomId;
         ignoredRoomIds.add(roomToIgnore);
@@ -3899,6 +4603,11 @@
       }
       updateHand('playerHand', 'default');
       updateHand('opponentHand', 'default');
+      rematchSession = null;
+      if (rematchCountdownTimer) {
+        clearInterval(rematchCountdownTimer);
+        rematchCountdownTimer = null;
+      }
       loadRooms();
     }
 
@@ -4538,6 +5247,7 @@
       initSmoothScroll();
       loadLiveWinnersVisibilityPreference();
       setupWalletConnection();
+      setupStickerControls();
       hydrateFeeBreakdownFromCache();
       hydrateLiveWinnersFromStorage();
       connectWebSocket();
@@ -4666,7 +5376,9 @@
         if (typeof chatManager !== 'undefined') {
           chatManager.init(walletPublicKey);
           // Create chat for betting lobby
-          chatManager.createUI('betting_lobby', 'lobby');
+          chatManager.createUI('betting_lobby', 'betting', {
+            enableStickers: true
+          });
         }
       }
     }
@@ -4686,7 +5398,6 @@
       // Initialize Chat System (show chat even without wallet)
       if (typeof chatManager !== 'undefined') {
         chatManager.init(walletPublicKey || null);
-        chatManager.createUI('betting_lobby', 'lobby');
       }
     });
     
@@ -4700,7 +5411,13 @@
     // Initialize chat for specific betting room when room is created/joined
     window.initializeRoomChat = function(roomId) {
       if (typeof chatManager !== 'undefined') {
-        chatManager.createUI(`betting_room_${roomId}`, 'betting');
+        if (walletPublicKey && !chatManager.wallet) {
+          chatManager.init(walletPublicKey);
+        }
+        chatManager.createUI(`betting_room_${roomId}`, 'betting', {
+          enableStickers: true,
+          autoOpen: true
+        });
       }
     };
   </script>

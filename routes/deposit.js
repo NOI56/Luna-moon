@@ -248,6 +248,15 @@ export function setupDepositRoutes(app, dependencies) {
       if (info) {
         return;
       }
+      const rentLamports = await connection.getMinimumBalanceForRentExemption(165);
+      const balanceLamports = await connection.getBalance(escrowPublicKey);
+      const minLamports = rentLamports + 5000; // add small fee buffer
+      if (balanceLamports < minLamports) {
+        log.warn(
+          `[deposit] Escrow wallet has ${balanceLamports} lamports (< ${minLamports}). Top up SOL to create escrow ATA.`
+        );
+        return;
+      }
       log.info("[deposit] Creating escrow ATA for", escrowPublicKey.toBase58());
       const tx = new Transaction().add(
         createAssociatedTokenAccountInstruction(
