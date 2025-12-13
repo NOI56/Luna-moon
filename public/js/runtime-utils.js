@@ -395,7 +395,8 @@
   ]);
   const STYLE_ID = 'group-chat-widget-style';
   const SCRIPT_ID = 'group-chat-widget-script';
-  const ASSET_VERSION = '20251203b';
+  // Bump when widget assets change to force cache refresh
+  const ASSET_VERSION = '20251214a';
 
   function pathIsExcluded() {
     const pathname = (window.location.pathname || '').toLowerCase();
